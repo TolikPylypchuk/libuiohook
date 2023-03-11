@@ -22,11 +22,13 @@
 
 #include "input_helper.h"
 #include "logger.h"
+#include "monitor_helper.h"
 
 // Thread and hook handles.
 static DWORD hook_thread_id = 0;
 static HHOOK keyboard_event_hhook = NULL, mouse_event_hhook = NULL;
 static HWINEVENTHOOK win_event_hhook = NULL;
+static HWND invisible_win_hwnd = NULL;
 
 // The handle to the DLL module pulled in DllMain on DLL_PROCESS_ATTACH.
 extern HINSTANCE hInst;
@@ -721,6 +723,67 @@ void CALLBACK win_hook_event_proc(HWINEVENTHOOK hook, DWORD event, HWND hWnd, LO
     }
 }
 
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+        case WM_CLOSE:
+            DestroyWindow(hwnd);
+            break;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
+        case WM_DISPLAYCHANGE:
+            enumerate_displays();
+            break;
+        default:
+            return DefWindowProc(hwnd, message, wParam, lParam);
+    }
+    return 0;
+}
+
+static int create_invisible_window()
+{
+    WNDCLASSEX wcex = { 0 };
+    wcex.cbSize = sizeof(WNDCLASSEX);
+    wcex.style = WS_EX_NOACTIVATE;
+    wcex.lpfnWndProc = WndProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance = hInst;
+    wcex.hIcon = NULL;
+    wcex.hCursor = NULL;
+    wcex.hbrBackground = NULL;
+    wcex.lpszMenuName = NULL;
+    wcex.lpszClassName = "libuiohook";
+    wcex.hIconSm = NULL;
+
+    if (!RegisterClassEx(&wcex)) {
+        return 0;
+    }
+
+    invisible_win_hwnd = CreateWindowEx(
+            WS_EX_NOACTIVATE,
+            "libuiohook",
+            "Hidden Window to Monitor Display Change Events",
+            WS_DISABLED,
+            0,
+            0,
+            1,
+            1,
+            NULL,
+            NULL,
+            hInst,
+            NULL
+    );
+    if (!invisible_win_hwnd) {
+        return 0;
+    }
+
+    ShowWindow(invisible_win_hwnd, SW_HIDE);
+
+    return 1;
+}
 
 UIOHOOK_API int hook_run() {
     int status = UIOHOOK_FAILURE;
@@ -744,6 +807,15 @@ UIOHOOK_API int hook_run() {
 
             status = UIOHOOK_ERROR_GET_MODULE_HANDLE;
         }
+    }
+
+    // Create invisible window to receive monitor change events
+    if(!create_invisible_window() || invisible_win_hwnd == NULL)
+    {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Create invisible window failed! (%#lX)\n",
+               __FUNCTION__, __LINE__, (unsigned long) GetLastError());
+
+        status = UIOHOOK_ERROR_CREATE_INVISIBLE_WINDOW;
     }
 
     // Create the native hooks.
@@ -805,9 +877,12 @@ UIOHOOK_API int hook_run() {
 UIOHOOK_API int hook_stop() {
     int status = UIOHOOK_FAILURE;
 
-    // Try to exit the thread naturally.
-    if (PostThreadMessage(hook_thread_id, WM_QUIT, (WPARAM) NULL, (LPARAM) NULL)) {
-        status = UIOHOOK_SUCCESS;
+    // Destroy the invisible window
+    if (PostMessage(invisible_win_hwnd, WM_CLOSE, 0, 0)) {
+        // Try to exit the thread naturally.
+        if (PostThreadMessage(hook_thread_id, WM_QUIT, (WPARAM) NULL, (LPARAM) NULL)) {
+            status = UIOHOOK_SUCCESS;
+        }
     }
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Status: %#X.\n",
