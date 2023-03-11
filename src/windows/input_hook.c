@@ -755,7 +755,7 @@ static int create_invisible_window()
     wcex.hCursor = NULL;
     wcex.hbrBackground = NULL;
     wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = "Empty";
+    wcex.lpszClassName = "libuiohook";
     wcex.hIconSm = NULL;
 
     if (!RegisterClassEx(&wcex)) {
@@ -764,8 +764,8 @@ static int create_invisible_window()
 
     invisible_win_hwnd = CreateWindowEx(
             WS_EX_NOACTIVATE,
-            "Empty",
-            "Empty",
+            "libuiohook",
+            "Hidden Window to Monitor Display Change Events",
             WS_DISABLED,
             0,
             0,
