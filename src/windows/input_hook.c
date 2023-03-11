@@ -28,7 +28,7 @@
 // Thread and hook handles.
 static DWORD hook_thread_id = 0;
 static HHOOK keyboard_event_hhook = NULL, mouse_event_hhook = NULL;
-static HWND hWnd = NULL;
+static HWND invisible_win_hwnd = NULL;
 
 // The handle to the DLL module pulled in DllMain on DLL_PROCESS_ATTACH.
 extern HINSTANCE hInst;
@@ -228,6 +228,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 {
     switch (message)
     {
+        case WM_CLOSE:
+            DestroyWindow(hwnd);
+            break;
         case WM_DESTROY:
             PostQuitMessage(0);
             break;
@@ -256,9 +259,11 @@ static int create_invisible_window()
     wcex.lpszClassName = "Empty";
     wcex.hIconSm = NULL;
 
-    if (!RegisterClassEx(&wcex)) return 0;
+    if (!RegisterClassEx(&wcex)) {
+        return 0;
+    }
 
-    hWnd = CreateWindowEx(
+    invisible_win_hwnd = CreateWindowEx(
             WS_EX_NOACTIVATE,
             "Empty",
             "Empty",
@@ -272,9 +277,11 @@ static int create_invisible_window()
             hInst,
             NULL
     );
-    if (!hWnd) return 0;
+    if (!invisible_win_hwnd) {
+        return 0;
+    }
 
-    ShowWindow(hWnd, SW_HIDE);
+    ShowWindow(invisible_win_hwnd, SW_HIDE);
 
     return 1;
 }
@@ -301,7 +308,7 @@ UIOHOOK_API int hook_run() {
     }
 
     // Create invisible window to receive monitor change events
-    if(!create_invisible_window() || hWnd == NULL)
+    if(!create_invisible_window() || invisible_win_hwnd == NULL)
     {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Create invisible window failed! (%#lX)\n",
                __FUNCTION__, __LINE__, (unsigned long) GetLastError());
@@ -374,9 +381,12 @@ UIOHOOK_API int hook_run() {
 UIOHOOK_API int hook_stop() {
     int status = UIOHOOK_FAILURE;
 
-    // Try to exit the thread naturally.
-    if (PostThreadMessage(hook_thread_id, WM_QUIT, (WPARAM) NULL, (LPARAM) NULL)) {
-        status = UIOHOOK_SUCCESS;
+    // Destroy the invisible window
+    if (PostMessage(invisible_win_hwnd, WM_CLOSE, 0, 0)) {
+        // Try to exit the thread naturally.
+        if (PostThreadMessage(hook_thread_id, WM_QUIT, (WPARAM) NULL, (LPARAM) NULL)) {
+            status = UIOHOOK_SUCCESS;
+        }
     }
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Status: %#X.\n",
