@@ -70,6 +70,17 @@ int main() {
 
     sleep(1);
 
+    //* Right mouse button click at current mouse location
+    event->type = EVENT_MOUSE_PRESSED_IGNORE_COORDS;
+    event->data.mouse.button = MOUSE_BUTTON2;
+    hook_post_event(event);
+
+    event->type = EVENT_MOUSE_RELEASED_IGNORE_COORDS;
+    hook_post_event(event);
+    //*/
+
+    sleep(1);
+
     //* Click drag example
     event->type = EVENT_MOUSE_PRESSED;
     event->data.mouse.button = MOUSE_BUTTON1;

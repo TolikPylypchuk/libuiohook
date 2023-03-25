@@ -143,6 +143,7 @@ static int post_mouse_event(uiohook_event * const event, CGEventSourceRef src) {
 
     switch (event->type) {
         case EVENT_MOUSE_PRESSED:
+        case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
             if (event->data.mouse.button == MOUSE_NOBUTTON) {
                 // FIXME Warning
                 return UIOHOOK_FAILURE;
@@ -163,6 +164,7 @@ static int post_mouse_event(uiohook_event * const event, CGEventSourceRef src) {
             break;
 
         case EVENT_MOUSE_RELEASED:
+        case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
             if (event->data.mouse.button == MOUSE_NOBUTTON) {
                 // FIXME Warning
                 return UIOHOOK_FAILURE;
@@ -200,15 +202,27 @@ static int post_mouse_event(uiohook_event * const event, CGEventSourceRef src) {
             return UIOHOOK_FAILURE;
     }
 
-    CGEventRef cg_event = CGEventCreateMouseEvent(
-        src,
-        type,
-        CGPointMake(
-            (CGFloat) event->data.mouse.x,
-            (CGFloat) event->data.mouse.y
-        ),
-        button
-    );
+    CGEventRef cg_event;
+    if (event->type == EVENT_MOUSE_PRESSED_IGNORE_COORDS || event->type == EVENT_MOUSE_RELEASED_IGNORE_COORDS) {
+        CGEventRef null_event = CGEventCreate(NULL);
+        cg_event = CGEventCreateMouseEvent(
+                src,
+                type,
+                CGEventGetLocation(null_event),
+                button
+        );
+        CFRelease(null_event);
+    } else {
+        cg_event = CGEventCreateMouseEvent(
+                src,
+                type,
+                CGPointMake(
+                        (CGFloat) event->data.mouse.x,
+                        (CGFloat) event->data.mouse.y
+                ),
+                button
+        );
+    }
 
     if (cg_event == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: CGEventCreateMouseEvent failed!\n",
@@ -273,6 +287,8 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
 
         case EVENT_MOUSE_PRESSED:
         case EVENT_MOUSE_RELEASED:
+        case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
+        case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
 
         case EVENT_MOUSE_MOVED:
         case EVENT_MOUSE_DRAGGED:
