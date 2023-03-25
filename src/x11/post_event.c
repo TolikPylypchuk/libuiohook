@@ -78,12 +78,15 @@ static int post_mouse_button_event(uiohook_event * const event) {
         .same_screen = True
     };
 
-    // Move the pointer to the specified position.
-    XTestFakeMotionEvent(btn_event.display, -1, btn_event.x, btn_event.y, 0);
+    if (!(event->type == EVENT_MOUSE_PRESSED_IGNORE_COORDS || event->type == EVENT_MOUSE_RELEASED_IGNORE_COORDS)) {
+        // Move the pointer to the specified position.
+        XTestFakeMotionEvent(btn_event.display, -1, btn_event.x, btn_event.y, 0);
+    }
 
     int status = UIOHOOK_FAILURE;
     switch (event->type) {
         case EVENT_MOUSE_PRESSED:
+        case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
             if (event->data.mouse.button < MOUSE_BUTTON1 || event->data.mouse.button > MOUSE_BUTTON5) {
                 logger(LOG_LEVEL_WARN, "%s [%u]: Invalid button specified for mouse pressed event! (%u)\n",
                         __FUNCTION__, __LINE__, event->data.mouse.button);
@@ -96,6 +99,7 @@ static int post_mouse_button_event(uiohook_event * const event) {
             break;
 
         case EVENT_MOUSE_RELEASED:
+        case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
             if (event->data.mouse.button < MOUSE_BUTTON1 || event->data.mouse.button > MOUSE_BUTTON5) {
                 logger(LOG_LEVEL_WARN, "%s [%u]: Invalid button specified for mouse released event! (%u)\n",
                         __FUNCTION__, __LINE__, event->data.mouse.button);
@@ -184,6 +188,8 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
 
         case EVENT_MOUSE_PRESSED:
         case EVENT_MOUSE_RELEASED:
+        case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
+        case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
             status = post_mouse_button_event(event);
             break;
 

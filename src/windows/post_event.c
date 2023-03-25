@@ -148,11 +148,12 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
 
     normalized_coordinate nc = normalize_coordinates(event->data.mouse.x, event->data.mouse.y, screen_width, screen_height, lnc);
 
-    input->mi.dx = nc.x;
     input->mi.dy = nc.y;
+    input->mi.dx = nc.x;
 
     switch (event->type) {
         case EVENT_MOUSE_PRESSED:
+        case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
             if (event->data.mouse.button == MOUSE_NOBUTTON) {
                 logger(LOG_LEVEL_WARN, "%s [%u]: No button specified for mouse pressed event!\n",
                         __FUNCTION__, __LINE__);
@@ -174,14 +175,18 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
                 }
             }
 
-            // We need to move the mouse to the correct location prior to clicking.
-            event->type = EVENT_MOUSE_MOVED;
-            // TODO Remember to check the status here.
-            hook_post_event(event);
-            event->type = EVENT_MOUSE_PRESSED;
+            if (event->type == EVENT_MOUSE_PRESSED) {
+                // We need to move the mouse to the correct location prior to clicking.
+                event->type = EVENT_MOUSE_MOVED;
+                // TODO Remember to check the status here.
+                hook_post_event(event);
+                event->type = EVENT_MOUSE_PRESSED;
+            }
+
             break;
 
         case EVENT_MOUSE_RELEASED:
+        case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
             if (event->data.mouse.button == MOUSE_NOBUTTON) {
                 logger(LOG_LEVEL_WARN, "%s [%u]: No button specified for mouse released event!\n",
                         __FUNCTION__, __LINE__);
@@ -203,11 +208,14 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
                 }
             }
 
-            // We need to move the mouse to the correct location prior to clicking.
-            event->type = EVENT_MOUSE_MOVED;
-            // TODO Remember to check the status here.
-            hook_post_event(event);
-            event->type = EVENT_MOUSE_PRESSED;
+            if (event->type == EVENT_MOUSE_RELEASED) {
+                // We need to move the mouse to the correct location prior to clicking.
+                event->type = EVENT_MOUSE_MOVED;
+                // TODO Remember to check the status here.
+                hook_post_event(event);
+                event->type = EVENT_MOUSE_PRESSED;
+            }
+
             break;
 
         case EVENT_MOUSE_WHEEL:
@@ -251,11 +259,14 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
         case EVENT_MOUSE_WHEEL:
         case EVENT_MOUSE_MOVED:
         case EVENT_MOUSE_DRAGGED:
+        case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
+        case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
             status = map_mouse_event(event, input);
             break;
 
         case EVENT_KEY_TYPED:
         case EVENT_MOUSE_CLICKED:
+        case EVENT_MOUSE_CLICKED_IGNORE_COORDS:
 
         case EVENT_HOOK_ENABLED:
         case EVENT_HOOK_DISABLED:
