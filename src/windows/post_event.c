@@ -266,7 +266,6 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
 
         case EVENT_KEY_TYPED:
         case EVENT_MOUSE_CLICKED:
-        case EVENT_MOUSE_CLICKED_IGNORE_COORDS:
 
         case EVENT_HOOK_ENABLED:
         case EVENT_HOOK_DISABLED:
