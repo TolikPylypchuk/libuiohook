@@ -192,6 +192,7 @@ static int post_mouse_event(uiohook_event * const event, CGEventSourceRef src) {
 
         case EVENT_MOUSE_MOVED:
         case EVENT_MOUSE_DRAGGED:
+        case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
             type = current_motion_event;
             button = current_motion_button;
             break;
@@ -213,13 +214,24 @@ static int post_mouse_event(uiohook_event * const event, CGEventSourceRef src) {
         );
         CFRelease(null_event);
     } else {
+        CGPoint point;
+        if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
+            CGEventRef null_event = CGEventCreate(NULL);
+            point = CGEventGetLocation(null_event);
+            CFRelease(null_event);
+            point.x += (CGFloat) event->data.mouse.x;
+            point.y += (CGFloat) event->data.mouse.y;
+        } else {
+            point = CGPointMake(
+                    (CGFloat) event->data.mouse.x,
+                    (CGFloat) event->data.mouse.y
+            );
+        }
+
         cg_event = CGEventCreateMouseEvent(
                 src,
                 type,
-                CGPointMake(
-                        (CGFloat) event->data.mouse.x,
-                        (CGFloat) event->data.mouse.y
-                ),
+                point,
                 button
         );
     }
@@ -292,6 +304,7 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
 
         case EVENT_MOUSE_MOVED:
         case EVENT_MOUSE_DRAGGED:
+        case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
             status = post_mouse_event(event, src);
             break;
 

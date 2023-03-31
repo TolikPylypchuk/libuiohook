@@ -162,8 +162,19 @@ static int post_mouse_wheel_event(uiohook_event * const event) {
 static int post_mouse_motion_event(uiohook_event * const event) {
     int status = UIOHOOK_FAILURE;
 
-    if (XTestFakeMotionEvent(helper_disp, -1, event->data.mouse.x, event->data.mouse.y, 0) != 0) {
-        status = UIOHOOK_SUCCESS;
+    if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
+        Window window;
+        int x, y;
+        unsigned int mask;
+        if (XQueryPointer(helper_disp, XDefaultRootWindow(helper_disp), &window, &window, &x, &y, &x, &y, &mask) != 0) {
+            if (XTestFakeMotionEvent(helper_disp, -1, x + event->data.mouse.x, y + event->data.mouse.y, 0) != 0) {
+                status = UIOHOOK_SUCCESS;
+            }
+        }
+    } else {
+        if (XTestFakeMotionEvent(helper_disp, -1, event->data.mouse.x, event->data.mouse.y, 0) != 0) {
+            status = UIOHOOK_SUCCESS;
+        }
     }
 
     return status;
@@ -199,6 +210,7 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
 
         case EVENT_MOUSE_MOVED:
         case EVENT_MOUSE_DRAGGED:
+        case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
             status = post_mouse_motion_event(event);
             break;
 

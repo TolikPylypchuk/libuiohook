@@ -70,6 +70,34 @@ int main() {
 
     sleep(1);
 
+    //* Move the mouse cursor in a square shape relative to the current mouse position.
+    // Affected by dpi on Windows.
+    event->type = EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR;
+    event->data.mouse.x = 0;
+    event->data.mouse.y = 100;
+    hook_post_event(event);
+
+    sleep(1);
+
+    event->data.mouse.x = 100;
+    event->data.mouse.y = 0;
+    hook_post_event(event);
+
+    sleep(1);
+
+    event->data.mouse.x = 0;
+    event->data.mouse.y = -100;
+    hook_post_event(event);
+
+    sleep(1);
+
+    event->data.mouse.x = -100;
+    event->data.mouse.y = 0;
+    hook_post_event(event);
+    //*/
+
+    sleep(1);
+
     //* Right mouse button click at current mouse location
     event->type = EVENT_MOUSE_PRESSED_IGNORE_COORDS;
     event->data.mouse.button = MOUSE_BUTTON2;

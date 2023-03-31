@@ -143,7 +143,15 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
 
     LARGESTNEGATIVECOORDINATES lnc = get_largest_negative_coordinates();
 
-    normalized_coordinate nc = normalize_coordinates(event->data.mouse.x, event->data.mouse.y, screen_width, screen_height, lnc);
+    normalized_coordinate nc;
+    if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
+        POINT p;
+        if (GetCursorPos(&p)) {
+            nc = normalize_coordinates(p.x + event->data.mouse.x, p.y + event->data.mouse.y, screen_width, screen_height, lnc);
+        }
+    } else {
+        nc = normalize_coordinates(event->data.mouse.x, event->data.mouse.y, screen_width, screen_height, lnc);
+    }
 
     input->mi.dy = nc.y;
     input->mi.dx = nc.x;
@@ -224,6 +232,7 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
 
         case EVENT_MOUSE_DRAGGED:
         case EVENT_MOUSE_MOVED:
+        case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
             input->mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
             break;
 
@@ -255,6 +264,7 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
         case EVENT_MOUSE_RELEASED:
         case EVENT_MOUSE_WHEEL:
         case EVENT_MOUSE_MOVED:
+        case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
         case EVENT_MOUSE_DRAGGED:
         case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
         case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
