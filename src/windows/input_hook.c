@@ -30,6 +30,7 @@ static DWORD hook_thread_id = 0;
 static HHOOK keyboard_event_hhook = NULL, mouse_event_hhook = NULL;
 static HWINEVENTHOOK win_event_hhook = NULL;
 static HWND invisible_win_hwnd = NULL;
+static BOOL invisible_win_class_initialized = FALSE;
 
 // The handle to the DLL module pulled in DllMain on DLL_PROCESS_ATTACH.
 extern HINSTANCE hInst;
@@ -309,9 +310,26 @@ static int create_invisible_window()
     wcex.lpszClassName = "libuiohook";
     wcex.hIconSm = NULL;
 
-    if (!RegisterClassEx(&wcex)) {
-        return 0;
+    if (!invisible_win_class_initialized) {
+        if (!RegisterClassEx(&wcex)) {
+            DWORD error = GetLastError();
+
+            if (error == 1410) { // Class already exists
+                logger(LOG_LEVEL_WARN, "%s [%u]: RegisterClassEx: class already exists\n",
+                    __FUNCTION__, __LINE__);
+            }
+            else {
+                logger(LOG_LEVEL_ERROR, "%s [%u]: RegisterClassEx failed: %#X\n",
+                    __FUNCTION__, __LINE__, error);
+                return 0;
+            }
+        }
+    } else {
+        logger(LOG_LEVEL_DEBUG, "%s [%u]: Not calling RegisterClassEx; class already exists\n",
+            __FUNCTION__, __LINE__);
     }
+
+    invisible_win_class_initialized = TRUE;
 
     invisible_win_hwnd = CreateWindowEx(
             WS_EX_NOACTIVATE,
@@ -327,7 +345,11 @@ static int create_invisible_window()
             hInst,
             NULL
     );
+
     if (!invisible_win_hwnd) {
+        DWORD error = GetLastError();
+        logger(LOG_LEVEL_ERROR, "%s [%u]: CreateWindowEx failed: %#X\n",
+                __FUNCTION__, __LINE__, error);
         return 0;
     }
 
