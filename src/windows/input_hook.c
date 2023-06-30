@@ -269,8 +269,8 @@ static int create_invisible_window()
                     __FUNCTION__, __LINE__);
             }
             else {
-                logger(LOG_LEVEL_ERROR, "%s [%u]: RegisterClassEx failed: %#X\n",
-                    __FUNCTION__, __LINE__, error);
+                logger(LOG_LEVEL_ERROR, "%s [%u]: RegisterClassEx failed! (%#lX)\n",
+                    __FUNCTION__, __LINE__, (unsigned long) error);
                 return 0;
             }
         }
@@ -297,9 +297,8 @@ static int create_invisible_window()
     );
 
     if (!invisible_win_hwnd) {
-        DWORD error = GetLastError();
-        logger(LOG_LEVEL_ERROR, "%s [%u]: CreateWindowEx failed: %#X\n",
-                __FUNCTION__, __LINE__, error);
+        logger(LOG_LEVEL_ERROR, "%s [%u]: CreateWindowEx failed! (%#lX)\n",
+                __FUNCTION__, __LINE__, (unsigned long) GetLastError());
         return 0;
     }
 
@@ -335,7 +334,7 @@ UIOHOOK_API int hook_run() {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Create invisible window failed! (%#lX)\n",
                __FUNCTION__, __LINE__, (unsigned long) GetLastError());
 
-        status = UIOHOOK_ERROR_CREATE_INVISIBLE_WINDOW;
+        return UIOHOOK_ERROR_CREATE_INVISIBLE_WINDOW;
     }
 
     // Create the native hooks.
