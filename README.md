@@ -36,6 +36,7 @@ $ cmake --build . --parallel 2 --target install
 | __OSX__   | USE_APPLICATION_SERVICES:BOOL | framework              | ON      |
 |           | USE_IOKIT:BOOL                | framework              | ON      |
 |           | USE_APPKIT:BOOL               | obj-c api              | ON      |
+|           | MAC_CATALYST:BOOL             | build for Mac Catalyst | ON      |
 | __Win32__ |                               |                        |         |
 | __Linux__ | USE_EVDEV:BOOL                | generic input driver   | ON      |
 | __*nix__  | USE_XF86MISC:BOOL             | xfree86-misc extension | OFF     |

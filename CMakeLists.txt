@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19.5)
 
-project(uiohook VERSION 1.2.0 LANGUAGES C)
+project(uiohook VERSION 1.3.0 LANGUAGES C)
 
 
 if (WIN32 OR WIN64)
@@ -211,14 +211,25 @@ if(UNIX AND NOT APPLE)
     endif()
 elseif(APPLE)
     set(CMAKE_MACOSX_RPATH 1)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.5")
 
-    find_package(Threads REQUIRED)
-    target_link_libraries(uiohook "${CMAKE_THREAD_LIBS_INIT}")
+    option(MAC_CATALYST "Build for Mac Catalyst (default: OFF)" OFF)
+    if(MAC_CATALYST)
+        add_compile_definitions(uiohook PRIVATE MAC_CATALYST)
+        find_library(CORE_FOUNDATION CoreFoundation REQUIRED)
+        target_include_directories(uiohook PRIVATE "${CORE_FOUNDATION}")
+        target_link_libraries(uiohook "${CORE_FOUNDATION}")
+        find_library(CORE_GRAPHICS CoreGraphics REQUIRED)
+        target_include_directories(uiohook PRIVATE "${CORE_GRAPHICS}")
+        target_link_libraries(uiohook "${CORE_GRAPHICS}")
+    else()
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15")
+        find_package(Threads REQUIRED)
+        target_link_libraries(uiohook "${CMAKE_THREAD_LIBS_INIT}")
 
-    find_library(CARBON Carbon REQUIRED)
-    target_include_directories(uiohook PRIVATE "${CARBON}")
-    target_link_libraries(uiohook "${CARBON}")
+        find_library(CARBON Carbon REQUIRED)
+        target_include_directories(uiohook PRIVATE "${CARBON}")
+        target_link_libraries(uiohook "${CARBON}")
+    endif()
 
     option(USE_APPLICATION_SERVICES "ApplicationServices framework (default: ON)" ON)
     if(USE_APPLICATION_SERVICES)

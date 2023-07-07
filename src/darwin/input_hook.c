@@ -44,10 +44,6 @@ static CFRunLoopRef event_loop;
 static id auto_release_pool;
 #endif
 
-#if __MAC_OS_X_VERSION_MAX_ALLOWED <= 1050
-typedef void* dispatch_queue_t;
-#endif
-
 
 #ifdef USE_EPOCH_TIME
 #include <sys/time.h>
