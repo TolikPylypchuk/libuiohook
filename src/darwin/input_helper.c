@@ -95,7 +95,7 @@ static const uint16_t keycode_scancode_table[][2] = {
     /*   7 */    { VC_X,                    kVK_ANSI_6               },    // 0x08
     /*   8 */    { VC_C,                    kVK_ANSI_7               },    // 0x09
     /*   9 */    { VC_V,                    kVK_ANSI_8               },    // 0x0A
-    /*  10 */    { VC_UNDEFINED,            kVK_ANSI_9               },    // 0x0B
+    /*  10 */    { VC_SECTION,              kVK_ANSI_9               },    // 0x0B
     /*  11 */    { VC_B,                    kVK_ANSI_0               },    // 0x0C
     /*  12 */    { VC_Q,                    kVK_ANSI_Minus           },    // 0x0D
     /*  13 */    { VC_W,                    kVK_ANSI_Equal           },    // 0x0E

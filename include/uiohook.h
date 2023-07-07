@@ -169,6 +169,7 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 // Begin Alphanumeric Zone
 #define VC_BACK_QUOTE                            0x00C0    // GRAVE
 #define VC_BACKQUOTE                      VC_BACK_QUOTE    // Deprecated
+#define VC_SECTION                               0x00C1    // macOS only
 
 #define VC_0                                     0x0030
 #define VC_1                                     0x0031
