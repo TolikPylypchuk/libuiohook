@@ -105,7 +105,6 @@ static int post_key_event(uiohook_event * const event, CGEventSourceRef src) {
         case VC_KP_SEPARATOR:
         case VC_KP_SUBTRACT:
         case VC_KP_DIVIDE:
-        case VC_KP_COMMA:
             event_mask |= kCGEventFlagMaskNumericPad;
             break;
     }
