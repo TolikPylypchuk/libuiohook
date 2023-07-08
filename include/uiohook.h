@@ -168,7 +168,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 
 // Begin Alphanumeric Zone
 #define VC_BACK_QUOTE                            0x00C0    // GRAVE
-#define VC_BACKQUOTE                      VC_BACK_QUOTE    // Deprecated
 #define VC_SECTION                               0x00C1    // macOS only
 
 #define VC_0                                     0x0030
@@ -254,11 +253,9 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 
 // Begin Edit Key Zone
 #define VC_PRINT_SCREEN                          0x009A    // SYSRQ
-#define VC_PRINTSCREEN                  VC_PRINT_SCREEN    // Deprecated
 #define VC_SCROLL_LOCK                           0x0091
 #define VC_PAUSE                                 0x0013
 #define VC_CANCEL                                0x00D3    // BREAK
-#define VC_LESSER_GREATER                  VC_UNDEFINED    // Deprecated
 
 #define VC_INSERT                                0x009B
 #define VC_DELETE                                0x007F
@@ -281,7 +278,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 // Begin Numeric Zone
 #define VC_NUM_LOCK                              0x0090
 #define VC_KP_CLEAR                              0x000C
-#define VC_CLEAR                            VC_KP_CLEAR    // Deprecated
 
 #define VC_KP_DIVIDE                             0x006F
 #define VC_KP_MULTIPLY                           0x006A
@@ -291,7 +287,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_KP_ENTER                              0x007D
 #define VC_KP_DECIMAL                            0x006E
 #define VC_KP_SEPARATOR                          0x006C
-#define VC_KP_COMMA                              0x007E    // This may only be available on OS X?
 
 #define VC_KP_0                                  0x0060
 #define VC_KP_1                                  0x0061
@@ -329,10 +324,14 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_META_L                                0xA09D    // Windows or Command Key
 #define VC_META_R                                0xB09D    // Windows or Command Key
 #define VC_CONTEXT_MENU                          0x020D
+#define VC_FUNCTION                              0x020E    // macOS only
+#define VC_CHANGE_INPUT_SOURCE                   0x020F    // macOS only
 // End Modifier and Control Keys
 
 
 // Begin Shortcut Keys
+#define VC_HELP                                  0xE026
+
 #define VC_POWER                                 0xE05E
 #define VC_SLEEP                                 0xE05F
 #define VC_WAKE                                  0xE063
@@ -392,6 +391,7 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 
 #define VC_KANJI                                 0x0019
 #define VC_HIRAGANA                              0x00F2
+#define VC_EISU                                  0x00E9
 
 #define VC_ACCEPT                                0x001E
 #define VC_CONVERT                               0x001C
@@ -408,7 +408,7 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_ROMAN_CHARACTERS                      0x00F5
 
 #define VC_UNDERSCORE                            0x020B
-#define VC_YEN                             VC_UNDEFINED    // Deprecated
+#define VC_YEN                                   0x020C
 // End Asian Language Keys
 
 // Begin Sun Keys
@@ -423,7 +423,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_SUN_UNDO                              0xFF7A
 #define VC_SUN_COPY                              0xFF7C
 #define VC_SUN_PASTE                             0xFF7D
-#define VC_SUN_INSERT                      VC_SUN_PASTE    // Deprecated
 #define VC_SUN_CUT                               0xFF7B
 // End Sun Keys
 

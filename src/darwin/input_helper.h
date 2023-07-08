@@ -156,6 +156,7 @@
 #define kVK_RightCommand             0x36
 #endif
 #define kVK_ContextMenu              0x6E // AKA kMenuPowerGlyph
+#define kVK_ChangeInputSource        0xB3
 #define kVK_Undefined                0xFF
 
 // These button codes do not appear to be defined by Apple.
