@@ -348,7 +348,7 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_VOLUME_DOWN                           0xE030
 #define VC_VOLUME_UP                             0xE02E
 
-#define VC_APP_BROWSER                           0xE020
+#define VC_APP_BROWSER                           0xE025
 #define VC_APP_CALCULATOR                        0xE021
 #define VC_APP_MAIL                              0xE06C
 #define VC_APP_MUSIC                             0xE03C
@@ -418,7 +418,7 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_SUN_PROPS                             0xFF76
 #define VC_SUN_FRONT                             0xFF77
 #define VC_SUN_OPEN                              0xFF74
-#define VC_SUN_FIND                              0xFF7E
+#define VC_SUN_FIND                              0xFF70
 #define VC_SUN_AGAIN                             0xFF79
 #define VC_SUN_UNDO                              0xFF7A
 #define VC_SUN_COPY                              0xFF7C
