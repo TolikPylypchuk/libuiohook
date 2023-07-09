@@ -277,6 +277,9 @@ static const uint32_t keysym_vcode_table[][2] = {
 
 
     // Begin Shortcut Keys
+    { VC_HELP,                  XK_Help                  },
+    { VC_HELP,                  osfXK_Help               },
+
     { VC_POWER,                 XF86XK_PowerOff          },
     { VC_SLEEP,                 XF86XK_Sleep             },
     { VC_WAKE,                  XF86XK_WakeUp            },
@@ -368,9 +371,9 @@ static const uint32_t keysym_vcode_table[][2] = {
     { VC_HIRAGANA,              XK_Hiragana              },
 
     { VC_ACCEPT,                XK_Execute               }, // Type 5c Japanese keyboard: kakutei
-    { VC_CONVERT,               XK_Kanji                 }, // Type 5c Japanese keyboard: henkan
+    { VC_CONVERT,               XK_Henkan_Mode           }, // Type 5c Japanese keyboard: henkan
+    { VC_NONCONVERT,            XK_Muhenkan              },
     { VC_COMPOSE,               XK_Multi_key             },
-    { VC_INPUT_METHOD_ON_OFF,   XK_Henkan_Mode           }, // Type 5c Japanese keyboard: nihongo
 
     { VC_ALL_CANDIDATES,        XK_Zen_Koho              },
     { VC_ALPHANUMERIC,          XK_Eisu_Shift            },
@@ -378,7 +381,6 @@ static const uint32_t keysym_vcode_table[][2] = {
     { VC_CODE_INPUT,            XK_Kanji_Bangou          },
     { VC_FULL_WIDTH,            XK_Zenkaku               },
     { VC_HALF_WIDTH,            XK_Hankaku               },
-    { VC_NONCONVERT,            XK_Muhenkan              },
     { VC_PREVIOUS_CANDIDATE,    XK_Mae_Koho              },
     { VC_ROMAN_CHARACTERS,      XK_Romaji                },
 
@@ -387,9 +389,6 @@ static const uint32_t keysym_vcode_table[][2] = {
 
 
     // Begin Sun Keys
-    { VC_SUN_HELP,              XK_Help                  },
-    { VC_SUN_HELP,              osfXK_Help               },
-
     { VC_SUN_STOP,              XK_Cancel                }, // FIXME Already used...
     { VC_SUN_STOP,              SunXK_Stop               }, // Same as XK_Cancel in Sunkeysym.h
     { VC_SUN_STOP,              XK_L1                    },

@@ -183,7 +183,7 @@ static const uint16_t scancode_keycode_table[][2] = {
     { VC_F3,                   kVK_F3                   },
     { VC_F8,                   kVK_F8                   },
     { VC_F9,                   kVK_F9                   },
-    { VC_EISU,                 kVK_JIS_Eisu             },
+    { VC_ALPHANUMERIC,         kVK_JIS_Eisu             },
     { VC_F11,                  kVK_F11                  },
     { VC_KANA,                 kVK_JIS_Kana             },
     { VC_F13,                  kVK_F13                  },

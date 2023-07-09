@@ -253,9 +253,13 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 
 // Begin Edit Key Zone
 #define VC_PRINT_SCREEN                          0x009A    // SYSRQ
+#define VC_PRINT                                 0x009C
+#define VC_SELECT                                0x009D
+#define VC_EXECUTE                               0x009E
 #define VC_SCROLL_LOCK                           0x0091
 #define VC_PAUSE                                 0x0013
 #define VC_CANCEL                                0x00D3    // BREAK
+#define VC_HELP                                  0x009F
 
 #define VC_INSERT                                0x009B
 #define VC_DELETE                                0x007F
@@ -330,8 +334,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 
 
 // Begin Shortcut Keys
-#define VC_HELP                                  0xE026
-
 #define VC_POWER                                 0xE05E
 #define VC_SLEEP                                 0xE05F
 #define VC_WAKE                                  0xE063
@@ -391,19 +393,25 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 
 #define VC_KANJI                                 0x0019
 #define VC_HIRAGANA                              0x00F2
-#define VC_EISU                                  0x00E9
+#define VC_HANGUL                                0x00E9
+#define VC_JUNJA                                 0x00E8
+#define VC_FINAL                                 0x00E7
+#define VC_HANJA                                 0x00E6
 
 #define VC_ACCEPT                                0x001E
 #define VC_CONVERT                               0x001C
+#define VC_NONCONVERT                            0x001D
 #define VC_COMPOSE                               0xFF20
-#define VC_INPUT_METHOD_ON_OFF                   0x0107
+#define VC_IME_ON                                0x0109
+#define VC_IME_OFF                               0x0108
+#define VC_MODE_CHANGE                           0x0107
+#define VC_PROCESS                               0x0105
 
 #define VC_ALL_CANDIDATES                        0x0100
 #define VC_ALPHANUMERIC                          0x00F0
 #define VC_CODE_INPUT                            0x0102
 #define VC_FULL_WIDTH                            0x00F3
 #define VC_HALF_WIDTH                            0x00F4
-#define VC_NONCONVERT                            0x001D
 #define VC_PREVIOUS_CANDIDATE                    0x0101
 #define VC_ROMAN_CHARACTERS                      0x00F5
 
@@ -412,8 +420,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 // End Asian Language Keys
 
 // Begin Sun Keys
-#define VC_SUN_HELP                              0xFF75
-
 #define VC_SUN_STOP                              0xFF78
 #define VC_SUN_PROPS                             0xFF76
 #define VC_SUN_FRONT                             0xFF77
