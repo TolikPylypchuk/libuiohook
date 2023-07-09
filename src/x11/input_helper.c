@@ -269,9 +269,12 @@ static const uint32_t uiocode_keysym_table[][2] = {
 
 
     // Begin Shortcut Keys
-    /* 175 */    { VC_POWER,                 XF86XK_PowerOff          }, // 0x0AF
-    /* 176 */    { VC_SLEEP,                 XF86XK_Sleep             }, // 0x0B0
-    /* 177 */    { VC_WAKE,                  XF86XK_WakeUp            }, // 0x0B1
+    { VC_HELP,                  XK_Help                  },
+    { VC_HELP,                  osfXK_Help               },
+
+    { VC_POWER,                 XF86XK_PowerOff          },
+    { VC_SLEEP,                 XF86XK_Sleep             },
+    { VC_WAKE,                  XF86XK_WakeUp            },
 
     /* 178 */    { VC_MEDIA_PLAY,            XF86XK_AudioPlay         }, // 0x0B2
     /* 179 */    { VC_MEDIA_STOP,            XF86XK_AudioStop         }, // 0x0B3
@@ -359,30 +362,28 @@ static const uint32_t uiocode_keysym_table[][2] = {
     /* 240 */    { VC_KANJI,                 XK_Kanji                 }, // 0x0F0
     /* 241 */    { VC_HIRAGANA,              XK_Hiragana              }, // 0x0F1
 
-    /* 242 */    { VC_ACCEPT,                XK_Execute               }, // 0x0F2 Type 5c Japanese keyboard: kakutei
-    /* 243 */    { VC_CONVERT,               XK_Kanji                 }, // 0x0F3 Type 5c Japanese keyboard: henkan
-    /* 244 */    { VC_COMPOSE,               XK_Multi_key             }, // 0x0F4
-    /* 245 */    { VC_INPUT_METHOD_ON_OFF,   XK_Henkan_Mode           }, // 0x0F5 Type 5c Japanese keyboard: nihongo
+    { VC_ACCEPT,                XK_Execute               }, // Type 5c Japanese keyboard: kakutei
+    { VC_CONVERT,               XK_Henkan_Mode           }, // Type 5c Japanese keyboard: henkan
+    { VC_NONCONVERT,            XK_Muhenkan              },
+    { VC_COMPOSE,               XK_Multi_key             },
 
-    /* 246 */    { VC_ALL_CANDIDATES,        XK_Zen_Koho              }, // 0x0F6
-    /* 247 */    { VC_ALPHANUMERIC,          XK_Eisu_Shift            }, // 0x0F7
-    /* 248 */    { VC_ALPHANUMERIC,          XK_Eisu_toggle           }, // 0x0F8
-    /* 249 */    { VC_CODE_INPUT,            XK_Kanji_Bangou          }, // 0x0F9
-    /* 250 */    { VC_FULL_WIDTH,            XK_Zenkaku               }, // 0x0FA
-    /* 251 */    { VC_HALF_WIDTH,            XK_Hankaku               }, // 0x0FB
-    /* 252 */    { VC_NONCONVERT,            XK_Muhenkan              }, // 0x0FC
-    /* 253 */    { VC_PREVIOUS_CANDIDATE,    XK_Mae_Koho              }, // 0x0FD
-    /* 254 */    { VC_ROMAN_CHARACTERS,      XK_Romaji                }, // 0x0FE
+    { VC_ALL_CANDIDATES,        XK_Zen_Koho              },
+    { VC_ALPHANUMERIC,          XK_Eisu_Shift            },
+    { VC_ALPHANUMERIC,          XK_Eisu_toggle           },
+    { VC_CODE_INPUT,            XK_Kanji_Bangou          },
+    { VC_FULL_WIDTH,            XK_Zenkaku               },
+    { VC_HALF_WIDTH,            XK_Hankaku               },
+    { VC_PREVIOUS_CANDIDATE,    XK_Mae_Koho              },
+    { VC_ROMAN_CHARACTERS,      XK_Romaji                },
 
     /* 255 */    { VC_UNDERSCORE,            XK_underscore            }, // 0x0FF
     // End Asian Language Keys
 
 
     // Begin Sun Keys
-    /* 256 */    { VC_SUN_HELP,              XK_Help                  }, // 0x100
-    /* 257 */    { VC_SUN_HELP,              osfXK_Help               }, // 0x101
-
-    /* 258 */    { VC_SUN_STOP,              XK_L1                    }, // 0x102
+    { VC_SUN_STOP,              XK_Cancel                }, // FIXME Already used...
+    { VC_SUN_STOP,              SunXK_Stop               }, // Same as XK_Cancel in Sunkeysym.h
+    { VC_SUN_STOP,              XK_L1                    },
 
     /* 259 */    { VC_SUN_PROPS,             SunXK_Props              }, // 0x103
     /* 260 */    { VC_SUN_PROPS,             XK_L3                    }, // 0x104
