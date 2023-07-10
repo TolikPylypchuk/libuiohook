@@ -529,7 +529,7 @@ static int refresh_locale_list() {
 }
 
 // Returns the number of chars written to the buffer.
-SIZE_T keycode_to_unicode(DWORD keycode, PWCHAR buffer, SIZE_T size) {
+SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, LPWORD char_types, int size) {
     // Get the thread id that currently has focus and ask for its current locale.
     DWORD focus_pid = GetWindowThreadProcessId(GetForegroundWindow(), NULL);
     HKL locale_id = GetKeyboardLayout(focus_pid);
@@ -570,150 +570,34 @@ SIZE_T keycode_to_unicode(DWORD keycode, PWCHAR buffer, SIZE_T size) {
 
     // Initialize to empty.
     SIZE_T charCount = 0;
-    // buffer[i] = WCH_NONE;
 
     // Check and make sure the Unicode helper was loaded.
     if (locale_current != NULL) {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: Using keyboard layout %#p.\n",
                 __FUNCTION__, __LINE__, locale_current->id);
 
-        int mod = 0;
-
-        int capsLock = (GetKeyState(VK_CAPITAL) & 0x01);
-
-        PVK_TO_BIT pVkToBit = locale_current->pVkToBit;
-        PVK_TO_WCHAR_TABLE pVkToWcharTable = locale_current->pVkToWcharTable;
-        PDEADKEY pDeadKey = locale_current->pDeadKey;
-
-        /* Loop over the modifier keys for this locale and determine what is
-         * currently depressed.  Because this is only a structure of two
-         * bytes, we don't need to worry about the structure padding of __ptr64
-         * offsets on Wow64.
-         */
-        bool is_shift = false, is_ctrl = false, is_alt = false;
-        for (int i = 0; pVkToBit[i].Vk != 0; i++) {
-            short state = GetAsyncKeyState(pVkToBit[i].Vk);
-
-            // Check to see if the most significant bit is active.
-            if (state & ~SHRT_MAX) {
-                if (pVkToBit[i].Vk == VK_SHIFT) {
-                    is_shift = true;
-                } else if (pVkToBit[i].Vk == VK_CONTROL) {
-                    is_ctrl = true;
-                } else if (pVkToBit[i].Vk == VK_MENU) {
-                    is_alt = true;
-                }
-            }
-        }
-
-        // Check the Shift modifier.
-        if (is_shift) {
-            mod = 1;
-        }
-
-        // Check for the AltGr modifier.
-        if (is_ctrl && is_alt) {
-            mod += 3;
-        }
-
-        // Default 32 bit structure size should be 6 bytes (4 for the pointer and 2
-        // additional byte fields) that are padded out to 8 bytes by the compiler.
-        unsigned short sizeVkToWcharTable = sizeof(VK_TO_WCHAR_TABLE);
-        #if defined(_WIN32) && !defined(_WIN64)
-        if (is_wow64()) {
-            // If we are running under Wow64 the size of the first pointer will be
-            // 8 bringing the total size to 10 bytes padded out to 16.
-            sizeVkToWcharTable = (sizeVkToWcharTable + ptr_padding + 7) & -8;
-        }
-        #endif
-
-        BYTE *ptrCurrentVkToWcharTable = (BYTE *) pVkToWcharTable;
-
-        int cbSize, n;
-        do {
-            // cbSize is used to calculate n, and n is used for the size of pVkToWchars[j].wch[n]
-            cbSize = *(ptrCurrentVkToWcharTable + offsetof(VK_TO_WCHAR_TABLE, cbSize) + ptr_padding);
-            n = (cbSize - 2) / 2;
-
-            // Same as VK_TO_WCHARS pVkToWchars[] = pVkToWcharTable[i].pVkToWchars
-            PVK_TO_WCHARS pVkToWchars = (PVK_TO_WCHARS) ((PVK_TO_WCHAR_TABLE) ptrCurrentVkToWcharTable)->pVkToWchars;
-
-            if (pVkToWchars != NULL && mod < n) {
-                // pVkToWchars[j].VirtualKey
-                BYTE *pCurrentVkToWchars = (BYTE *) pVkToWchars;
-
-                do {
-                    if (((PVK_TO_WCHARS) pCurrentVkToWchars)->VirtualKey == keycode) {
-                        if ((((PVK_TO_WCHARS) pCurrentVkToWchars)->Attributes == CAPLOK) && capsLock) {
-                            if (is_shift && mod > 0) {
-                                mod -= 1;
-                            } else {
-                                mod += 1;
-                            }
-                        }
-                        
-                        // Set the initial unicode char.
-                        WCHAR unicode = ((PVK_TO_WCHARS) pCurrentVkToWchars)->wch[mod];
+        BYTE keyboard_state[256] = { 0 };
+        GetKeyState(0); // This apparently forces GetKeyboardState to get more up-to-date data
         
-                        // Increment the pCurrentVkToWchars by the size of wch[n].
-                        pCurrentVkToWchars += sizeof(VK_TO_WCHARS) + (sizeof(WCHAR) * n);
+        // Get current keyboard state (to known which modifiers have been pressed, as well as Caps Lock).
+        BOOL success = GetKeyboardState(keyboard_state);
 
-                        
-                        if (unicode == WCH_DEAD) {
-                            // The current unicode char is a dead key...
-                            if (deadChar == WCH_NONE) {
-                                // No previous dead key was set so cache the next 
-                                // wchar so we know what to do next time its pressed.
-                                deadChar = ((PVK_TO_WCHARS) pCurrentVkToWchars)->wch[mod];
-                            } else {
-                                if (size >= 2) {
-                                    // Received a second dead key.
-                                    memset(buffer, deadChar, 2);
-                                    //buffer[0] = deadChar;
-                                    //buffer[1] = deadChar;
-                                    
-                                    deadChar = WCH_NONE;
-                                    charCount = 2;
-                                }
-                            }
-                        } else if (unicode != WCH_NONE) {
-                            // We are not WCH_NONE or WCH_DEAD
-                            if (size >= 1) {
-                                buffer[0] = unicode;
-                                charCount = 1;
-                            }
-                        }
+        if (!success) {
+            logger(LOG_LEVEL_ERROR, "%s [%u]: GetKeyboardState() failed! (%#lX)\n",
+                __FUNCTION__, __LINE__, (unsigned long)GetLastError());
+            return 0;
+        }
 
-                        break;
-                    } else {
-                        // Add sizeof WCHAR because we are really an array of WCHAR[n] not WCHAR[]
-                        pCurrentVkToWchars += sizeof(VK_TO_WCHARS) + (sizeof(WCHAR) * n);
-                    }
-                } while ( ((PVK_TO_WCHARS) pCurrentVkToWchars)->VirtualKey != 0 );
-            }
+        // Look up the Unicode code for the key without changing the keyboard state.
+        int result = ToUnicodeEx(keycode, scancode, keyboard_state, buffer, size, 1 << 2, locale_current->id);
+        charCount = result > 0 ? result : 0;
 
-            // This is effectively the same as: ptrCurrentVkToWcharTable = pVkToWcharTable[++i];
-            ptrCurrentVkToWcharTable += sizeVkToWcharTable;
-        } while (cbSize != 0);
+        success = GetStringTypeW(CT_CTYPE1, buffer, size, char_types);
 
-
-        // If the current local has a dead key set.
-        if (deadChar != WCH_NONE) {
-            // Loop over the pDeadKey lookup table for the locale.
-            for (int i = 0; pDeadKey[i].dwBoth != 0; i++) {
-                WCHAR baseChar = (WCHAR) pDeadKey[i].dwBoth;
-                WCHAR diacritic = (WCHAR) (pDeadKey[i].dwBoth >> 16);
-
-                // If we locate an extended dead char, set it.
-                if (size >= 1 && baseChar == buffer[0] && diacritic == deadChar) {
-                    deadChar = WCH_NONE;
-                    
-                    if (charCount <= size) {
-                        memset(buffer, (WCHAR) pDeadKey[i].wchComposed, charCount);
-                        //buffer[i] = (WCHAR) pDeadKey[i].wchComposed;
-                    }
-                }
-            }
+        if (!success) {
+            logger(LOG_LEVEL_ERROR, "%s [%u]: GetStringTypeW() failed! (%#lX)\n",
+                __FUNCTION__, __LINE__, (unsigned long)GetLastError());
+            return 0;
         }
     }
 
