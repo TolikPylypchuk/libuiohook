@@ -126,7 +126,6 @@ typedef struct tagKbdLayer {
     DWORD dwSubType;
 } KBDTABLES, *PKBDTABLES;               // __ptr64
 
-
 /* Converts a uiohook virtual key code to the appropriate Windows VK key code. */
 extern DWORD uiocode_to_vkcode(uint16_t uiocode);
 
@@ -134,7 +133,7 @@ extern DWORD uiocode_to_vkcode(uint16_t uiocode);
 extern uint16_t vkcode_to_uiocode(DWORD vk_code, DWORD flags);
 
 /* Converts a Windows vk code to it's unicode representation */
-extern SIZE_T vkcode_to_unicode(DWORD keycode, PWCHAR buffer, SIZE_T size);
+extern SIZE_T vkcode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, PWORD char_types, int size);
 
 /* Set the native modifier mask for future events. */
 extern void set_modifier_mask(uint16_t mask);

@@ -144,11 +144,16 @@ bool dispatch_key_press(uint64_t timestamp, KBDLLHOOKSTRUCT *kbhook) {
     // If the pressed event was not consumed...
     if (!consumed) {
         // Buffer for unicode typed chars. No more than 2 needed.
-        WCHAR buffer[2]; // = { WCH_NONE };
+        WCHAR buffer[2] = { WCH_NONE };
+        WORD char_types[2] = { 0 };
 
         // If the pressed event was not consumed and a unicode char exists...
-        SIZE_T count = vkcode_to_unicode(kbhook->vkCode, buffer, sizeof(buffer));
+        SIZE_T count = vkcode_to_unicode(kbhook->vkCode, kbhook->scanCode, buffer, char_types, 2);
         for (unsigned int i = 0; i < count; i++) {
+            if (char_types[i] & C1_CNTRL) {
+                continue;
+            }
+
             // Populate key typed event.
             uio_event.time = timestamp;
             uio_event.type = EVENT_KEY_TYPED;
