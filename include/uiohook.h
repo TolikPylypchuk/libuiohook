@@ -248,6 +248,8 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_CLOSE_PARENTHESIS                     0x020A
 
 #define VC_SPACE                                 0x0020
+
+#define VC_MISC                                  0x0E01
 // End Alphanumeric Zone
 
 
@@ -349,6 +351,8 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_VOLUME_DOWN                           0xE030
 #define VC_VOLUME_UP                             0xE02E
 
+#define VC_APP_1                                 0xE026
+#define VC_APP_2                                 0xE027
 #define VC_APP_BROWSER                           0xE025
 #define VC_APP_CALCULATOR                        0xE021
 #define VC_APP_MAIL                              0xE06C
