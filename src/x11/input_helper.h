@@ -52,8 +52,8 @@ extern Display *helper_disp;
 /* Converts a uiohook virtual key code to the appropriate X11 key code. */
 extern KeyCode uiocode_to_keycode(uint16_t uiocode);
 
-/* Converts a X11 key symbol to the appropriate uiohook virtual key code. */
-extern uint16_t keysym_to_uiocode(KeySym keysym);
+/* Converts a X11 key code to the appropriate uiohook virtual key code. */
+extern uint16_t keycode_to_uiocode(KeyCode keycode);
 
 /* Converts a X11 key event to a key symbol and retrieves it's appropriate unicode representation. */
 extern size_t event_to_unicode(XKeyEvent *x_event, wchar_t *surrogate, size_t length, KeySym *keysym);

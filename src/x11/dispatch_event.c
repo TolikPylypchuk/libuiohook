@@ -97,26 +97,17 @@ bool dispatch_hook_disabled(uint64_t timestamp) {
 
 bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
     bool consumed = false;
-    KeySym keysym = 0x00;
 
-    wchar_t surrogate[2] = {};
-    size_t count = event_to_unicode(x_event, surrogate, sizeof(surrogate) - 1, &keysym);
+    uint16_t uiocode = keycode_to_uiocode(x_event->keycode);
 
-    uint16_t uiocode = keysym_to_uiocode(keysym);
-
-    // TODO VC_ALT_GRAPH MASK?
-    if      (uiocode == VC_SHIFT_L)     { set_modifier_mask(MASK_SHIFT_L);     }
-    else if (uiocode == VC_SHIFT_R)     { set_modifier_mask(MASK_SHIFT_R);     }
-    else if (uiocode == VC_CONTROL_L)   { set_modifier_mask(MASK_CTRL_L);      }
-    else if (uiocode == VC_CONTROL_R)   { set_modifier_mask(MASK_CTRL_R);      }
-    else if (uiocode == VC_ALT_L)       { set_modifier_mask(MASK_ALT_L);       }
-    else if (uiocode == VC_ALT_R)       { set_modifier_mask(MASK_ALT_R);       }
-    else if (uiocode == VC_META_L)      { set_modifier_mask(MASK_META_L);      }
-    else if (uiocode == VC_META_R)      { set_modifier_mask(MASK_META_R);      }
-    else if (uiocode == VC_NUM_LOCK)    { set_modifier_mask(MASK_NUM_LOCK);    }
-    else if (uiocode == VC_CAPS_LOCK)   { set_modifier_mask(MASK_CAPS_LOCK);   }
-    else if (uiocode == VC_SCROLL_LOCK) { set_modifier_mask(MASK_SCROLL_LOCK); }
-
+    if      (uiocode == VC_SHIFT_L)   { set_modifier_mask(MASK_SHIFT_L); }
+    else if (uiocode == VC_SHIFT_R)   { set_modifier_mask(MASK_SHIFT_R); }
+    else if (uiocode == VC_CONTROL_L) { set_modifier_mask(MASK_CTRL_L);  }
+    else if (uiocode == VC_CONTROL_R) { set_modifier_mask(MASK_CTRL_R);  }
+    else if (uiocode == VC_ALT_L)     { set_modifier_mask(MASK_ALT_L);   }
+    else if (uiocode == VC_ALT_R)     { set_modifier_mask(MASK_ALT_R);   }
+    else if (uiocode == VC_META_L)    { set_modifier_mask(MASK_META_L);  }
+    else if (uiocode == VC_META_R)    { set_modifier_mask(MASK_META_R);  }
 
     // Populate key pressed event.
     uio_event.time = x_event->serial;
@@ -127,7 +118,7 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
     }
 
     uio_event.data.keyboard.keycode = uiocode;
-    uio_event.data.keyboard.rawcode = keysym;
+    uio_event.data.keyboard.rawcode = x_event->keycode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Key %#X pressed. (%#X)\n",
@@ -140,6 +131,11 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
 
     // If the pressed event was not consumed and we got a char in the buffer.
     if (!consumed) {
+        KeySym keysym = 0x00;
+
+        wchar_t surrogate[2] = {};
+        size_t count = event_to_unicode(x_event, surrogate, sizeof(surrogate) - 1, &keysym);
+    
         for (unsigned int i = 0; i < count; i++) {
             // Populate key typed event.
             uio_event.time = x_event->serial;
@@ -169,25 +165,17 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
 
 bool dispatch_key_release(uint64_t timestamp, XKeyReleasedEvent * const x_event) {
     bool consumed = false;
-    KeySym keysym = 0x00;
 
-    event_to_unicode(x_event, NULL, 0, &keysym);
+    uint16_t uiocode = keycode_to_uiocode(x_event->keycode);
 
-    uint16_t uiocode = keysym_to_uiocode(keysym);
-
-    // TODO VC_ALT_GRAPH MASK?
-    if      (uiocode == VC_SHIFT_L)     { unset_modifier_mask(MASK_SHIFT_L);     }
-    else if (uiocode == VC_SHIFT_R)     { unset_modifier_mask(MASK_SHIFT_R);     }
-    else if (uiocode == VC_CONTROL_L)   { unset_modifier_mask(MASK_CTRL_L);      }
-    else if (uiocode == VC_CONTROL_R)   { unset_modifier_mask(MASK_CTRL_R);      }
-    else if (uiocode == VC_ALT_L)       { unset_modifier_mask(MASK_ALT_L);       }
-    else if (uiocode == VC_ALT_R)       { unset_modifier_mask(MASK_ALT_R);       }
-    else if (uiocode == VC_META_L)      { unset_modifier_mask(MASK_META_L);      }
-    else if (uiocode == VC_META_R)      { unset_modifier_mask(MASK_META_R);      }
-    else if (uiocode == VC_NUM_LOCK)    { unset_modifier_mask(MASK_NUM_LOCK);    }
-    else if (uiocode == VC_CAPS_LOCK)   { unset_modifier_mask(MASK_CAPS_LOCK);   }
-    else if (uiocode == VC_SCROLL_LOCK) { unset_modifier_mask(MASK_SCROLL_LOCK); }
-
+    if      (uiocode == VC_SHIFT_L)   { unset_modifier_mask(MASK_SHIFT_L); }
+    else if (uiocode == VC_SHIFT_R)   { unset_modifier_mask(MASK_SHIFT_R); }
+    else if (uiocode == VC_CONTROL_L) { unset_modifier_mask(MASK_CTRL_L);  }
+    else if (uiocode == VC_CONTROL_R) { unset_modifier_mask(MASK_CTRL_R);  }
+    else if (uiocode == VC_ALT_L)     { unset_modifier_mask(MASK_ALT_L);   }
+    else if (uiocode == VC_ALT_R)     { unset_modifier_mask(MASK_ALT_R);   }
+    else if (uiocode == VC_META_L)    { unset_modifier_mask(MASK_META_L);  }
+    else if (uiocode == VC_META_R)    { unset_modifier_mask(MASK_META_R);  }
 
     // Populate key released event.
     uio_event.time = x_event->serial;
@@ -198,7 +186,7 @@ bool dispatch_key_release(uint64_t timestamp, XKeyReleasedEvent * const x_event)
     }
 
     uio_event.data.keyboard.keycode = uiocode;
-    uio_event.data.keyboard.rawcode = keysym;
+    uio_event.data.keyboard.rawcode = x_event->keycode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Key %#X released. (%#X)\n",
