@@ -176,7 +176,7 @@ static const uint16_t scancode_keycode_table[][2] = {
     { VC_KP_9,                 kVK_ANSI_Keypad9         },
     { VC_YEN,                  kVK_JIS_Yen              },
     { VC_UNDERSCORE,           kVK_JIS_Underscore       },
-    { VC_KP_SEPARATOR,         kVK_JIS_KeypadComma      },
+    { VC_JP_COMMA,             kVK_JIS_KeypadComma      },
     { VC_F5,                   kVK_F5                   },
     { VC_F6,                   kVK_F6                   },
     { VC_F7,                   kVK_F7                   },

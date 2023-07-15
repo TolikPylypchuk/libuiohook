@@ -97,16 +97,8 @@ void dispatch_hook_disabled(XAnyEvent * const x_event) {
 }
 
 void dispatch_key_press(XKeyPressedEvent * const x_event) {
-    KeySym keysym = 0x00;
+    uint16_t uiocode = keycode_to_vcode(x_event->keycode);
 
-    wchar_t surrogate[2] = {};
-    size_t count = x_key_event_lookup(x_event, surrogate, sizeof(surrogate) - 1, &keysym);
-
-
-    uint16_t uiocode = keysym_to_vcode(keysym);
-
-    // FIXME This can happen inside of keysym_to_vcode()
-    // TODO VC_ALT_GRAPH MASK?
     if      (uiocode == VC_SHIFT_L)   { set_modifier_mask(MASK_SHIFT_L); }
     else if (uiocode == VC_SHIFT_R)   { set_modifier_mask(MASK_SHIFT_R); }
     else if (uiocode == VC_CONTROL_L) { set_modifier_mask(MASK_CTRL_L);  }
@@ -116,12 +108,6 @@ void dispatch_key_press(XKeyPressedEvent * const x_event) {
     else if (uiocode == VC_META_L)    { set_modifier_mask(MASK_META_L);  }
     else if (uiocode == VC_META_R)    { set_modifier_mask(MASK_META_R);  }
 
-    // FIXME We shouldn't be doing this on each key press, do something similar to above.
-    //initialize_locks();
-
-
-
-
     // Populate key pressed event.
     uio_event.time = x_event->serial;
     uio_event.reserved = x_event->send_event ? 0x02 : 0x00;
@@ -130,7 +116,7 @@ void dispatch_key_press(XKeyPressedEvent * const x_event) {
     uio_event.mask = get_modifiers();
 
     uio_event.data.keyboard.keycode = uiocode;
-    uio_event.data.keyboard.rawcode = keysym;
+    uio_event.data.keyboard.rawcode = x_event->keycode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Key %#X pressed. (%#X)\n",
@@ -142,6 +128,11 @@ void dispatch_key_press(XKeyPressedEvent * const x_event) {
 
     // If the pressed event was not consumed and we got a char in the buffer.
     if (uio_event.reserved ^ 0x01) {
+        KeySym keysym = 0x00;
+
+        wchar_t surrogate[2] = {};
+        size_t count = x_key_event_lookup(x_event, surrogate, sizeof(surrogate) - 1, &keysym);
+
         for (unsigned int i = 0; i < count; i++) {
             // Populate key typed event.
             uio_event.time = x_event->serial;
@@ -166,14 +157,8 @@ void dispatch_key_press(XKeyPressedEvent * const x_event) {
 }
 
 void dispatch_key_release(XKeyReleasedEvent * const x_event) {
-    // The X11 KeyCode associated with this event.
-    KeySym keysym = 0x00;
+    uint16_t uiocode = keycode_to_vcode(x_event->keycode);
 
-    x_key_event_lookup(x_event, NULL, 0, &keysym);
-
-    uint16_t uiocode = keysym_to_vcode(keysym);
-
-    // FIXME This can happen inside of keycode_to_scancode()
     if      (uiocode == VC_SHIFT_L)   { unset_modifier_mask(MASK_SHIFT_L); }
     else if (uiocode == VC_SHIFT_R)   { unset_modifier_mask(MASK_SHIFT_R); }
     else if (uiocode == VC_CONTROL_L) { unset_modifier_mask(MASK_CTRL_L);  }
@@ -183,10 +168,6 @@ void dispatch_key_release(XKeyReleasedEvent * const x_event) {
     else if (uiocode == VC_META_L)    { unset_modifier_mask(MASK_META_L);  }
     else if (uiocode == VC_META_R)    { unset_modifier_mask(MASK_META_R);  }
 
-    // FIXME We shouldn't be doing this on each key release.
-    //initialize_locks();
-
-
     // Populate key released event.
     uio_event.time = x_event->serial;
     uio_event.reserved = x_event->send_event ? 0x02 : 0x00;
@@ -195,7 +176,7 @@ void dispatch_key_release(XKeyReleasedEvent * const x_event) {
     uio_event.mask = get_modifiers();
 
     uio_event.data.keyboard.keycode = uiocode;
-    uio_event.data.keyboard.rawcode = keysym;
+    uio_event.data.keyboard.rawcode = x_event->keycode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Key %#X released. (%#X)\n",

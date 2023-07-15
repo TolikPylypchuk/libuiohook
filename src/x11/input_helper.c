@@ -23,23 +23,8 @@
 #include <sys/time.h>
 #endif
 
-#include <X11/keysym.h>
-#include <X11/keysymdef.h>
-#include <X11/ap_keysym.h>
-#include <X11/DECkeysym.h>
-#include <X11/HPkeysym.h>
-#include <X11/Sunkeysym.h>
-#include <X11/XF86keysym.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-
-#ifndef osfXK_Prior
-#define osfXK_Prior 0x1004FF55
-#endif
-
-#ifndef osfXK_Next
-#define osfXK_Next 0x1004FF56
-#endif
 
 #include <X11/XKBlib.h>
 static XkbDescPtr keyboard_map;
@@ -49,434 +34,327 @@ static XkbDescPtr keyboard_map;
 
 #define BUTTON_TABLE_MAX 256
 
+typedef struct _key_mapping {
+    uint16_t uiohook_key;
+    char *x11_key;
+    unsigned int x11_keycode;
+} key_mapping;
+
 static unsigned char *mouse_button_table;
 Display *helper_disp;  // Where do we open this display?  FIXME Use the ctrl display via init param
 
 static uint16_t modifier_mask;
 
-static const uint32_t keysym_vcode_table[][2] = {
-    { VC_ESCAPE,                XK_Escape,               },
-    { VC_ESCAPE,                osfXK_Escape             }, // HP OSF KeySym in HPkeysym.h
-
-    // Begin Function Keys
-    { VC_F1,                    XK_F1                    },
-    { VC_F2,                    XK_F2                    },
-    { VC_F3,                    XK_F3                    },
-    { VC_F4,                    XK_F4                    },
-    { VC_F5,                    XK_F5                    },
-    { VC_F6,                    XK_F6                    },
-    { VC_F7,                    XK_F7                    },
-    { VC_F8,                    XK_F8                    },
-    { VC_F9,                    XK_F9                    },
-    { VC_F10,                   XK_F10                   },
-    { VC_F11,                   XK_F11                   },
-    { VC_F11,                   SunXK_F36                }, // Labeled F11 in Sunkeysym.h
-    { VC_F12,                   XK_F12                   },
-    { VC_F12,                   SunXK_F37                }, // Labeled F12 in Sunkeysym.h
-
-    { VC_F13,                   XK_F13                   },
-    { VC_F14,                   XK_F14                   },
-    { VC_F15,                   XK_F15                   },
-    { VC_F16,                   XK_F16                   },
-    { VC_F17,                   XK_F17                   },
-    { VC_F18,                   XK_F18                   },
-    { VC_F19,                   XK_F19                   },
-    { VC_F20,                   XK_F20                   },
-    { VC_F21,                   XK_F21                   },
-    { VC_F22,                   XK_F22                   },
-    { VC_F23,                   XK_F23                   },
-    { VC_F24,                   XK_F24                   },
-    // End Function Keys
-
-
-    // Begin Alphanumeric Zone
-    { VC_BACK_QUOTE,            XK_grave                 },
-
-    { VC_0,                     XK_0                     },
-    { VC_1,                     XK_1                     },
-    { VC_2,                     XK_2                     },
-    { VC_3,                     XK_3                     },
-    { VC_4,                     XK_4                     },
-    { VC_5,                     XK_5                     },
-    { VC_6,                     XK_6                     },
-    { VC_7,                     XK_7                     },
-    { VC_8,                     XK_8                     },
-    { VC_9,                     XK_9                     },
-
-    { VC_MINUS,                 XK_minus                 },
-    { VC_PLUS,                  XK_plus                  },
-    { VC_EQUALS,                XK_equal                 },
-    { VC_ASTERISK,              XK_asterisk              },
-
-    { VC_AT,                    XK_at                    },
-    { VC_AMPERSAND,             XK_ampersand             },
-    { VC_DOLLAR,                XK_dollar                },
-    { VC_EXCLAMATION_MARK,      XK_exclam                },
-    { VC_EXCLAMATION_DOWN,      XK_exclamdown            },
-
-    { VC_BACKSPACE,             XK_BackSpace             },
-    { VC_BACKSPACE,             osfXK_BackSpace          }, // HP OSF KeySym in HPkeysym.h
-
-    { VC_TAB,                   XK_Tab                   },
-    { VC_TAB,                   XK_ISO_Left_Tab          },
-    { VC_CAPS_LOCK,             XK_Caps_Lock             },
-    { VC_CAPS_LOCK,             XK_Shift_Lock            },
-
-    { VC_A,                     XK_a                     },
-    { VC_B,                     XK_b                     },
-    { VC_C,                     XK_c                     },
-    { VC_D,                     XK_d                     },
-    { VC_E,                     XK_e                     },
-    { VC_F,                     XK_f                     },
-    { VC_G,                     XK_g                     },
-    { VC_H,                     XK_h                     },
-    { VC_I,                     XK_i                     },
-    { VC_J,                     XK_j                     },
-    { VC_K,                     XK_k                     },
-    { VC_L,                     XK_l                     },
-    { VC_M,                     XK_m                     },
-    { VC_N,                     XK_n                     },
-    { VC_O,                     XK_o                     },
-    { VC_P,                     XK_p                     },
-    { VC_Q,                     XK_q                     },
-    { VC_R,                     XK_r                     },
-    { VC_S,                     XK_s                     },
-    { VC_T,                     XK_t                     },
-    { VC_U,                     XK_u                     },
-    { VC_V,                     XK_v                     },
-    { VC_W,                     XK_w                     },
-    { VC_X,                     XK_x                     },
-    { VC_Y,                     XK_y                     },
-    { VC_Z,                     XK_z                     },
-
-    { VC_OPEN_BRACKET,          XK_bracketleft           },
-    { VC_CLOSE_BRACKET,         XK_bracketright          },
-    { VC_BACK_SLASH,            XK_backslash             },
-
-    { VC_COLON,                 XK_colon                 },
-    { VC_SEMICOLON,             XK_semicolon             },
-    { VC_QUOTE,                 XK_apostrophe            },
-    { VC_QUOTEDBL,              XK_quotedbl              },
-    { VC_ENTER,                 XK_Return,               },
-    { VC_ENTER,                 XK_Linefeed,             },
-
-    { VC_LESS,                  XK_less                  },
-    { VC_GREATER,               XK_greater               },
-    { VC_COMMA,                 XK_comma                 },
-    { VC_PERIOD,                XK_period                },
-    { VC_SLASH,                 XK_slash                 },
-    { VC_NUMBER_SIGN,           XK_numbersign            },
-
-    { VC_OPEN_BRACE,            XK_braceleft             },
-    { VC_CLOSE_BRACE,           XK_braceright            },
-
-    { VC_OPEN_PARENTHESIS,      XK_parenleft             },
-    { VC_CLOSE_PARENTHESIS,     XK_parenright            },
-
-    { VC_SPACE,                 XK_space                 },
-    // End Alphanumeric Zone
-
-
-    // Begin Edit Key Zone
-    { VC_PRINT_SCREEN,          XK_Print                 },
-    { VC_PRINT_SCREEN,          SunXK_Print_Screen       }, // Same as XK_Print in Sunkeysym.h
-    { VC_PRINT_SCREEN,          SunXK_Sys_Req            }, // SysReq should be the same as Print Screen
-    { VC_SCROLL_LOCK,           XK_Scroll_Lock,          },
-    { VC_PAUSE,                 XK_Pause                 },
-    { VC_CANCEL,                XK_Cancel                },
-    { VC_CANCEL,                osfXK_Cancel             }, // HP OSF KeySym in HPkeysym.h
-    { VC_INSERT,                XK_Insert                },
-    { VC_INSERT,                osfXK_Insert             }, // HP OSF KeySym in HPkeysym.h
-    { VC_DELETE,                XK_Delete                },
-    { VC_DELETE,                osfXK_Delete             }, // HP OSF KeySym in HPkeysym.h
-    { VC_HOME,                  XK_Home                  },
-    { VC_END,                   XK_End                   },
-    { VC_END,                   osfXK_EndLine            }, // HP OSF KeySym in HPkeysym.h
-    { VC_PAGE_UP,               XK_Page_Up               },
-    { VC_PAGE_UP,               XK_Prior                 },
-    { VC_PAGE_UP,               osfXK_PageUp             }, // HP OSF KeySym in HPkeysym.h
-    { VC_PAGE_UP,               osfXK_Prior              }, // HP OSF KeySym in HPkeysym.h
-    { VC_PAGE_DOWN,             XK_Page_Down             },
-    { VC_PAGE_DOWN,             XK_Next                  },
-    { VC_PAGE_DOWN,             osfXK_PageDown           }, // HP OSF KeySym in HPkeysym.h
-    { VC_PAGE_DOWN,             osfXK_Next               }, // HP OSF KeySym in HPkeysym.h
-    // End Edit Key Zone
-
-
-    // Begin Cursor Key Zone
-    { VC_UP,                    XK_Up                    },
-    { VC_UP,                    osfXK_Up                 }, // HP OSF KeySym in HPkeysym.h
-    { VC_LEFT,                  XK_Left                  },
-    { VC_LEFT,                  osfXK_Left               }, // HP OSF KeySym in HPkeysym.h
-    { VC_BEGIN,                 XK_Begin                 },
-    { VC_RIGHT,                 XK_Right                 },
-    { VC_RIGHT,                 osfXK_Right              }, // HP OSF KeySym in HPkeysym.h
-    { VC_DOWN,                  XK_Down                  },
-    { VC_DOWN,                  osfXK_Down               }, // HP OSF KeySym in HPkeysym.h
-    // End Cursor Key Zone
-
-
-    // Begin Numeric Zone
-    { VC_NUM_LOCK,              XK_Num_Lock              },
-    { VC_KP_CLEAR,              XK_Clear,                },
-    { VC_KP_CLEAR,              osfXK_Clear              }, // HP OSF KeySym in HPkeysym.h
-
-    { VC_KP_DIVIDE,             XK_KP_Divide             },
-    { VC_KP_MULTIPLY,           XK_KP_Multiply           },
-    { VC_KP_SUBTRACT,           XK_KP_Subtract           },
-    { VC_KP_EQUALS,             XK_KP_Equal              },
-    { VC_KP_ADD,                XK_KP_Add                },
-    { VC_KP_ENTER,              XK_KP_Enter              },
-    { VC_KP_DECIMAL,            XK_KP_Decimal            },
-    { VC_KP_SEPARATOR,          XK_KP_Separator          },
-
-    /* TODO Implement
-    { VC_KP_SPACE,              XK_KP_Space  },
-    { VC_KP_TAB,                XK_KP_Tab      },
-    */
-
-    { VC_KP_0,                  XK_KP_0                  },
-    { VC_KP_1,                  XK_KP_1                  },
-    { VC_KP_2,                  XK_KP_2                  },
-    { VC_KP_3,                  XK_KP_3                  },
-    { VC_KP_4,                  XK_KP_4                  },
-    { VC_KP_5,                  XK_KP_5                  },
-    { VC_KP_6,                  XK_KP_6                  },
-    { VC_KP_7,                  XK_KP_7                  },
-    { VC_KP_8,                  XK_KP_8                  },
-    { VC_KP_9,                  XK_KP_9                  },
-
-    { VC_KP_END,                XK_KP_End                },
-    { VC_KP_DOWN,               XK_KP_Down               },
-    { VC_KP_PAGE_DOWN,          XK_KP_Page_Down          },
-    { VC_KP_PAGE_DOWN,          XK_KP_Next               },
-    { VC_KP_LEFT,               XK_KP_Left               },
-    { VC_KP_BEGIN,              XK_KP_Begin,             },
-    { VC_KP_RIGHT,              XK_KP_Right              },
-    { VC_KP_HOME,               XK_KP_Home               },
-    { VC_KP_UP,                 XK_KP_Up                 },
-    { VC_KP_PAGE_UP,            XK_KP_Page_Up            },
-    { VC_KP_PAGE_UP,            XK_KP_Prior              },
-    { VC_KP_INSERT,             XK_KP_Insert             },
-    { VC_KP_DELETE,             XK_KP_Delete             },
-    // End Numeric Zone
-
-
-    // Begin Modifier and Control Keys
-    { VC_SHIFT_L,               XK_Shift_L               },
-    { VC_SHIFT_R,               XK_Shift_R               },
-    { VC_CONTROL_L,             XK_Control_L             },
-    { VC_CONTROL_R,             XK_Control_R             },
-    { VC_ALT_L,                 XK_Alt_L                 },
-    { VC_ALT_R,                 XK_Alt_R                 },
-    { VC_ALT_GRAPH,             XK_ISO_Level3_Shift      },
-    { VC_META_L,                XK_Meta_L                },
-    { VC_META_R,                XK_Meta_R                },
-    { VC_CONTEXT_MENU,          XK_Menu                  },
-    // End Modifier and Control Keys
-
-
-    // Begin Shortcut Keys
-    { VC_HELP,                  XK_Help                  },
-    { VC_HELP,                  osfXK_Help               },
-
-    { VC_POWER,                 XF86XK_PowerOff          },
-    { VC_SLEEP,                 XF86XK_Sleep             },
-    { VC_WAKE,                  XF86XK_WakeUp            },
-
-    { VC_MEDIA_PLAY,            XF86XK_AudioPlay         },
-    { VC_MEDIA_STOP,            XF86XK_AudioStop         },
-    { VC_MEDIA_PREVIOUS,        XF86XK_AudioPrev         },
-    { VC_MEDIA_NEXT,            XF86XK_AudioNext         },
-    { VC_MEDIA_SELECT,          XF86XK_Select            },
-    { VC_MEDIA_EJECT,           XF86XK_Eject             },
-
-    { VC_VOLUME_MUTE,           XF86XK_AudioMute         },
-    { VC_VOLUME_MUTE,           SunXK_AudioMute          },
-    { VC_VOLUME_DOWN,           XF86XK_AudioLowerVolume  },
-    { VC_VOLUME_DOWN,           SunXK_AudioLowerVolume   },
-    { VC_VOLUME_UP,             XF86XK_AudioRaiseVolume  },
-    { VC_VOLUME_UP,             SunXK_AudioRaiseVolume   },
-
-    { VC_APP_BROWSER,           XF86XK_WWW               },
-    { VC_APP_CALCULATOR,        XF86XK_Calculator        },
-    { VC_APP_MAIL,              XF86XK_Mail              },
-    { VC_APP_MUSIC,             XF86XK_Music             },
-    { VC_APP_PICTURES,          XF86XK_Pictures          },
-
-    { VC_BROWSER_SEARCH,        XF86XK_Search            },
-    { VC_BROWSER_HOME,          XF86XK_HomePage          },
-    { VC_BROWSER_BACK,          XF86XK_Back              },
-    { VC_BROWSER_FORWARD,       XF86XK_Forward           },
-    { VC_BROWSER_STOP,          XF86XK_Stop              },
-    { VC_BROWSER_REFRESH,       XF86XK_Refresh           },
-    { VC_BROWSER_FAVORITES,     XF86XK_Favorites         },
-    // End Shortcut Keys
-
-
-    // Begin European Language Keys
-    { VC_CIRCUMFLEX,            XK_asciicircum           },
-
-    { VC_DEAD_GRAVE,            XK_dead_grave            },
-    { VC_DEAD_GRAVE,            SunXK_FA_Grave           },
-    { VC_DEAD_GRAVE,            DXK_grave_accent         }, // DEC private keysym in DECkeysym.h
-    { VC_DEAD_GRAVE,            hpXK_mute_grave          }, // HP OSF KeySym in HPkeysym.h
-
-    { VC_DEAD_ACUTE,            XK_dead_acute            },
-    { VC_DEAD_ACUTE,            SunXK_FA_Acute           },
-    { VC_DEAD_ACUTE,            DXK_acute_accent         }, // DEC private keysym in DECkeysym.h
-    { VC_DEAD_ACUTE,            hpXK_mute_acute          }, // HP OSF KeySym in HPkeysym.h
-
-    { VC_DEAD_CIRCUMFLEX,       XK_dead_circumflex       },
-    { VC_DEAD_CIRCUMFLEX,       SunXK_FA_Circum          },
-    { VC_DEAD_CIRCUMFLEX,       DXK_circumflex_accent    }, // DEC private keysym in DECkeysym.h
-    { VC_DEAD_CIRCUMFLEX,       hpXK_mute_asciicircum    }, // HP OSF KeySym in HPkeysym.h
-
-    { VC_DEAD_TILDE,            XK_dead_tilde            },
-    { VC_DEAD_TILDE,            SunXK_FA_Tilde           },
-    { VC_DEAD_TILDE,            DXK_tilde                }, // DEC private keysym in DECkeysym.h
-    { VC_DEAD_TILDE,            hpXK_mute_asciitilde     }, // HP OSF KeySym in HPkeysym.h
-
-    { VC_DEAD_MACRON,           XK_dead_macron           },
-    { VC_DEAD_BREVE,            XK_dead_breve            },
-    { VC_DEAD_ABOVEDOT,         XK_dead_abovedot         },
-
-    { VC_DEAD_DIAERESIS,        XK_dead_diaeresis        },
-    { VC_DEAD_DIAERESIS,        SunXK_FA_Diaeresis       },
-    { VC_DEAD_DIAERESIS,        DXK_diaeresis            }, // DEC private keysym in DECkeysym.h
-    { VC_DEAD_DIAERESIS,        hpXK_mute_diaeresis      }, // HP OSF KeySym in HPkeysym.h
-
-    { VC_DEAD_ABOVERING,        XK_dead_abovering        },
-    { VC_DEAD_ABOVERING,        DXK_ring_accent          }, // DEC private keysym in DECkeysym.h
-    { VC_DEAD_DOUBLEACUTE,      XK_dead_doubleacute      },
-    { VC_DEAD_CARON,            XK_dead_caron            },
-
-    { VC_DEAD_CEDILLA,          XK_dead_cedilla          },
-    { VC_DEAD_CEDILLA,          SunXK_FA_Cedilla         },
-    { VC_DEAD_CEDILLA,          DXK_cedilla_accent       }, // DEC private keysym in DECkeysym.h
-
-    { VC_DEAD_OGONEK,           XK_dead_ogonek           },
-    { VC_DEAD_IOTA,             XK_dead_iota             },
-    { VC_DEAD_VOICED_SOUND,     XK_dead_voiced_sound     },
-    { VC_DEAD_SEMIVOICED_SOUND, XK_dead_semivoiced_sound },
-    // End European Language Keys
-
-
-    // Begin Asian Language Keys
-    { VC_KATAKANA,              XK_Katakana              },
-    { VC_KANA,                  XK_Kana_Shift            },
-    { VC_KANA_LOCK,             XK_Kana_Lock             },
-
-    { VC_KANJI,                 XK_Kanji                 },
-    { VC_HIRAGANA,              XK_Hiragana              },
-
-    { VC_ACCEPT,                XK_Execute               }, // Type 5c Japanese keyboard: kakutei
-    { VC_CONVERT,               XK_Henkan_Mode           }, // Type 5c Japanese keyboard: henkan
-    { VC_NONCONVERT,            XK_Muhenkan              },
-    { VC_COMPOSE,               XK_Multi_key             },
-
-    { VC_ALL_CANDIDATES,        XK_Zen_Koho              },
-    { VC_ALPHANUMERIC,          XK_Eisu_Shift            },
-    { VC_ALPHANUMERIC,          XK_Eisu_toggle           },
-    { VC_CODE_INPUT,            XK_Kanji_Bangou          },
-    { VC_FULL_WIDTH,            XK_Zenkaku               },
-    { VC_HALF_WIDTH,            XK_Hankaku               },
-    { VC_PREVIOUS_CANDIDATE,    XK_Mae_Koho              },
-    { VC_ROMAN_CHARACTERS,      XK_Romaji                },
-
-    { VC_UNDERSCORE,            XK_underscore            },
-    // End Asian Language Keys
-
-
-    // Begin Sun Keys
-    { VC_SUN_STOP,              XK_Cancel                }, // FIXME Already used...
-    { VC_SUN_STOP,              SunXK_Stop               }, // Same as XK_Cancel in Sunkeysym.h
-    { VC_SUN_STOP,              XK_L1                    },
-
-    { VC_SUN_PROPS,             SunXK_Props              },
-    { VC_SUN_PROPS,             XK_L3                    },
-
-    { VC_SUN_FRONT,             SunXK_Front              },
-    { VC_SUN_OPEN,              SunXK_Open               },
-
-    { VC_SUN_FIND,              XK_Find                  },
-    { VC_SUN_FIND,              XK_L9                    },
-    { VC_SUN_FIND,              SunXK_Find               }, // Same as XK_Find in Sunkeysym.h
-
-    { VC_SUN_AGAIN,             XK_Redo                  },
-    { VC_SUN_AGAIN,             XK_L2                    },
-    { VC_SUN_AGAIN,             SunXK_Again              }, // Same as XK_Redo in Sunkeysym.h
-
-    { VC_SUN_UNDO,              XK_Undo                  },
-    { VC_SUN_UNDO,              XK_L4                    },
-    { VC_SUN_UNDO,              SunXK_Undo               }, // Same as XK_Undo in Sunkeysym.h
-    { VC_SUN_UNDO,              osfXK_Undo               },
-
-    { VC_SUN_COPY,              XK_L6                    },
-    { VC_SUN_COPY,              apXK_Copy                },
-    { VC_SUN_COPY,              SunXK_Copy               },
-    { VC_SUN_COPY,              osfXK_Copy               },
-
-    { VC_SUN_PASTE,             XK_L8                    },
-    { VC_SUN_PASTE,             SunXK_Paste              },
-    { VC_SUN_PASTE,             apXK_Paste               },
-    { VC_SUN_PASTE,             osfXK_Paste              },
-
-    { VC_SUN_CUT,               XK_L10                   },
-    { VC_SUN_CUT,               SunXK_Cut                },
-    { VC_SUN_CUT,               apXK_Cut                 },
-    { VC_SUN_CUT,               osfXK_Cut                },
-    // End Sun Keys
-
-    { VC_UNDEFINED,             NoSymbol                 }
+static key_mapping keycode_table[] = {
+    { .uiohook_key = VC_ESCAPE,                .x11_key = "ESC"  },
+    { .uiohook_key = VC_F1,                    .x11_key = "FK01" },
+    { .uiohook_key = VC_F2,                    .x11_key = "FK02" },
+    { .uiohook_key = VC_F3,                    .x11_key = "FK03" },
+    { .uiohook_key = VC_F4,                    .x11_key = "FK04" },
+    { .uiohook_key = VC_F5,                    .x11_key = "FK05" },
+    { .uiohook_key = VC_F6,                    .x11_key = "FK06" },
+    { .uiohook_key = VC_F7,                    .x11_key = "FK07" },
+    { .uiohook_key = VC_F8,                    .x11_key = "FK08" },
+    { .uiohook_key = VC_F9,                    .x11_key = "FK09" },
+    { .uiohook_key = VC_F10,                   .x11_key = "FK10" },
+    { .uiohook_key = VC_F11,                   .x11_key = "FK11" },
+    { .uiohook_key = VC_F12,                   .x11_key = "FK12" },
+    { .uiohook_key = VC_F13,                   .x11_key = "FK13" },
+    { .uiohook_key = VC_F14,                   .x11_key = "FK14" },
+    { .uiohook_key = VC_F15,                   .x11_key = "FK15" },
+    { .uiohook_key = VC_F16,                   .x11_key = "FK16" },
+    { .uiohook_key = VC_F17,                   .x11_key = "FK17" },
+    { .uiohook_key = VC_F18,                   .x11_key = "FK18" },
+    { .uiohook_key = VC_F19,                   .x11_key = "FK19" },
+    { .uiohook_key = VC_F20,                   .x11_key = "FK20" },
+    { .uiohook_key = VC_F21,                   .x11_key = "FK21" },
+    { .uiohook_key = VC_F22,                   .x11_key = "FK22" },
+    { .uiohook_key = VC_F23,                   .x11_key = "FK23" },
+    { .uiohook_key = VC_F24,                   .x11_key = "FK24" },
+    { .uiohook_key = VC_BACK_QUOTE,            .x11_key = "TLDE" },
+    { .uiohook_key = VC_1,                     .x11_key = "AE01" },
+    { .uiohook_key = VC_2,                     .x11_key = "AE02" },
+    { .uiohook_key = VC_3,                     .x11_key = "AE03" },
+    { .uiohook_key = VC_4,                     .x11_key = "AE04" },
+    { .uiohook_key = VC_5,                     .x11_key = "AE05" },
+    { .uiohook_key = VC_6,                     .x11_key = "AE06" },
+    { .uiohook_key = VC_7,                     .x11_key = "AE07" },
+    { .uiohook_key = VC_8,                     .x11_key = "AE08" },
+    { .uiohook_key = VC_9,                     .x11_key = "AE09" },
+    { .uiohook_key = VC_0,                     .x11_key = "AE10" },
+    { .uiohook_key = VC_MINUS,                 .x11_key = "AE11" },
+    { .uiohook_key = VC_EQUALS,                .x11_key = "AE12" },
+    { .uiohook_key = VC_BACKSPACE,             .x11_key = "BKSP" },
+    { .uiohook_key = VC_Q,                     .x11_key = "AD01" },
+    { .uiohook_key = VC_W,                     .x11_key = "AD02" },
+    { .uiohook_key = VC_E,                     .x11_key = "AD03" },
+    { .uiohook_key = VC_R,                     .x11_key = "AD04" },
+    { .uiohook_key = VC_T,                     .x11_key = "AD05" },
+    { .uiohook_key = VC_Y,                     .x11_key = "AD06" },
+    { .uiohook_key = VC_U,                     .x11_key = "AD07" },
+    { .uiohook_key = VC_I,                     .x11_key = "AD08" },
+    { .uiohook_key = VC_O,                     .x11_key = "AD09" },
+    { .uiohook_key = VC_P,                     .x11_key = "AD10" },
+    { .uiohook_key = VC_OPEN_BRACKET,          .x11_key = "AD11" },
+    { .uiohook_key = VC_CLOSE_BRACKET,         .x11_key = "AD12" },
+    { .uiohook_key = VC_ENTER,                 .x11_key = "RTRN" },
+    { .uiohook_key = VC_CAPS_LOCK,             .x11_key = "CAPS" },
+    { .uiohook_key = VC_A,                     .x11_key = "AC01" },
+    { .uiohook_key = VC_S,                     .x11_key = "AC02" },
+    { .uiohook_key = VC_D,                     .x11_key = "AC03" },
+    { .uiohook_key = VC_F,                     .x11_key = "AC04" },
+    { .uiohook_key = VC_G,                     .x11_key = "AC05" },
+    { .uiohook_key = VC_H,                     .x11_key = "AC06" },
+    { .uiohook_key = VC_J,                     .x11_key = "AC07" },
+    { .uiohook_key = VC_K,                     .x11_key = "AC08" },
+    { .uiohook_key = VC_L,                     .x11_key = "AC09" },
+    { .uiohook_key = VC_SEMICOLON,             .x11_key = "AC10" },
+    { .uiohook_key = VC_QUOTE,                 .x11_key = "AC11" },
+    { .uiohook_key = VC_BACK_SLASH,            .x11_key = "AC12" },
+    { .uiohook_key = VC_BACK_SLASH,            .x11_key = "BKSL" },
+    { .uiohook_key = VC_SHIFT_L,               .x11_key = "LFSH" },
+    { .uiohook_key = VC_Z,                     .x11_key = "AB01" },
+    { .uiohook_key = VC_X,                     .x11_key = "AB02" },
+    { .uiohook_key = VC_C,                     .x11_key = "AB03" },
+    { .uiohook_key = VC_V,                     .x11_key = "AB04" },
+    { .uiohook_key = VC_B,                     .x11_key = "AB05" },
+    { .uiohook_key = VC_N,                     .x11_key = "AB06" },
+    { .uiohook_key = VC_M,                     .x11_key = "AB07" },
+    { .uiohook_key = VC_COMMA,                 .x11_key = "AB08" },
+    { .uiohook_key = VC_PERIOD,                .x11_key = "AB09" },
+    { .uiohook_key = VC_SLASH,                 .x11_key = "AB10" },
+    { .uiohook_key = VC_SHIFT_R,               .x11_key = "RTSH" },
+    { .uiohook_key = VC_102,                   .x11_key = "LSGT" },
+    { .uiohook_key = VC_ALT_L,                 .x11_key = "LALT" },
+    { .uiohook_key = VC_CONTROL_L,             .x11_key = "LCTL" },
+    { .uiohook_key = VC_META_L,                .x11_key = "LWIN" },
+    { .uiohook_key = VC_META_L,                .x11_key = "LMTA" },
+    { .uiohook_key = VC_SPACE,                 .x11_key = "SPCE" },
+    { .uiohook_key = VC_META_R,                .x11_key = "RWIN" },
+    { .uiohook_key = VC_META_R,                .x11_key = "RMTA" },
+    { .uiohook_key = VC_CONTROL_R,             .x11_key = "RCTL" },
+    { .uiohook_key = VC_ALT_R,                 .x11_key = "RALT" },
+    { .uiohook_key = VC_COMPOSE,               .x11_key = "COMP" },
+    { .uiohook_key = VC_COMPOSE,               .x11_key = "MENU" },
+    { .uiohook_key = VC_PRINT_SCREEN,          .x11_key = "PRSC" },
+    { .uiohook_key = VC_SCROLL_LOCK,           .x11_key = "SCLK" },
+    { .uiohook_key = VC_PAUSE,                 .x11_key = "PAUS" },
+    { .uiohook_key = VC_INSERT,                .x11_key = "INS"  },
+    { .uiohook_key = VC_HOME,                  .x11_key = "HOME" },
+    { .uiohook_key = VC_PAGE_UP,               .x11_key = "PGUP" },
+    { .uiohook_key = VC_DELETE,                .x11_key = "DELE" },
+    { .uiohook_key = VC_END,                   .x11_key = "END"  },
+    { .uiohook_key = VC_PAGE_DOWN,             .x11_key = "PGDN" },
+    { .uiohook_key = VC_UP,                    .x11_key = "UP"   },
+    { .uiohook_key = VC_LEFT,                  .x11_key = "LEFT" },
+    { .uiohook_key = VC_DOWN,                  .x11_key = "DOWN" },
+    { .uiohook_key = VC_RIGHT,                 .x11_key = "RGHT" },
+    { .uiohook_key = VC_NUM_LOCK,              .x11_key = "NMLK" },
+    { .uiohook_key = VC_KP_DIVIDE,             .x11_key = "KPDV" },
+    { .uiohook_key = VC_KP_MULTIPLY,           .x11_key = "KPMU" },
+    { .uiohook_key = VC_KP_SUBTRACT,           .x11_key = "KPSU" },
+    { .uiohook_key = VC_KP_SUBTRACT,           .x11_key = "KPSU" },
+    { .uiohook_key = VC_KP_7,                  .x11_key = "KP7"  },
+    { .uiohook_key = VC_KP_8,                  .x11_key = "KP8"  },
+    { .uiohook_key = VC_KP_9,                  .x11_key = "KP9"  },
+    { .uiohook_key = VC_KP_ADD,                .x11_key = "KPAD" },
+    { .uiohook_key = VC_KP_4,                  .x11_key = "KP4"  },
+    { .uiohook_key = VC_KP_5,                  .x11_key = "KP5"  },
+    { .uiohook_key = VC_KP_6,                  .x11_key = "KP6"  },
+    { .uiohook_key = VC_KP_1,                  .x11_key = "KP1"  },
+    { .uiohook_key = VC_KP_2,                  .x11_key = "KP2"  },
+    { .uiohook_key = VC_KP_3,                  .x11_key = "KP3"  },
+    { .uiohook_key = VC_KP_ENTER,              .x11_key = "KPEN" },
+    { .uiohook_key = VC_KP_0,                  .x11_key = "KP0"  },
+    { .uiohook_key = VC_KP_DECIMAL,            .x11_key = "KPDL" },
+    { .uiohook_key = VC_KP_EQUALS,             .x11_key = "KPEQ" },
+    { .uiohook_key = VC_KATAKANA_HIRAGANA,     .x11_key = "HKTG" },
+    { .uiohook_key = VC_UNDERSCORE,            .x11_key = "AB11" },
+    { .uiohook_key = VC_CONVERT,               .x11_key = "HENK" },
+    { .uiohook_key = VC_NONCONVERT,            .x11_key = "MUHE" },
+    { .uiohook_key = VC_YEN,                   .x11_key = "AE13" },
+    { .uiohook_key = VC_KATAKANA,              .x11_key = "KATA" },
+    { .uiohook_key = VC_HIRAGANA,              .x11_key = "HIRA" },
+    { .uiohook_key = VC_JP_COMMA,              .x11_key = "JPCM" },
+    { .uiohook_key = VC_HANGUL,                .x11_key = "HNGL" },
+    { .uiohook_key = VC_HANJA,                 .x11_key = "HJCV" },
+    { .uiohook_key = VC_VOLUME_MUTE,           .x11_key = "MUTE" },
+    { .uiohook_key = VC_VOLUME_DOWN,           .x11_key = "VOL-" },
+    { .uiohook_key = VC_VOLUME_UP,             .x11_key = "VOL+" },
+    { .uiohook_key = VC_POWER,                 .x11_key = "POWR" },
+    { .uiohook_key = VC_STOP,                  .x11_key = "STOP" },
+    { .uiohook_key = VC_AGAIN,                 .x11_key = "AGAI" },
+    { .uiohook_key = VC_PROPS,                 .x11_key = "PROP" },
+    { .uiohook_key = VC_UNDO,                  .x11_key = "UNDO" },
+    { .uiohook_key = VC_FRONT,                 .x11_key = "FRNT" },
+    { .uiohook_key = VC_COPY,                  .x11_key = "COPY" },
+    { .uiohook_key = VC_OPEN,                  .x11_key = "OPEN" },
+    { .uiohook_key = VC_PASTE,                 .x11_key = "PAST" },
+    { .uiohook_key = VC_FIND,                  .x11_key = "FIND" },
+    { .uiohook_key = VC_CUT,                   .x11_key = "CUT"  },
+    { .uiohook_key = VC_HELP,                  .x11_key = "HELP" },
+    { .uiohook_key = VC_SWITCH_VIDEO_MODE,     .x11_key = "OUTP" },
+    { .uiohook_key = VC_KEYBOARD_LIGHT_TOGGLE, .x11_key = "KITG" },
+    { .uiohook_key = VC_KEYBOARD_LIGHT_DOWN,   .x11_key = "KIDN" },
+    { .uiohook_key = VC_KEYBOARD_LIGHT_UP,     .x11_key = "KIUP" },
+    { .uiohook_key = VC_LINE_FEED,             .x11_key = "LNFD" },
+    { .uiohook_key = VC_MACRO,                 .x11_key = "I120" },
+    { .uiohook_key = VC_VOLUME_MUTE,           .x11_key = "I121" },
+    { .uiohook_key = VC_VOLUME_DOWN,           .x11_key = "I122" },
+    { .uiohook_key = VC_VOLUME_UP,             .x11_key = "I123" },
+    { .uiohook_key = VC_POWER,                 .x11_key = "I124" },
+    { .uiohook_key = VC_KP_EQUALS,             .x11_key = "I125" },
+    { .uiohook_key = VC_KP_PLUS_MINUS,         .x11_key = "I126" },
+    { .uiohook_key = VC_PAUSE,                 .x11_key = "I127" },
+    { .uiohook_key = VC_SCALE,                 .x11_key = "I128" },
+    { .uiohook_key = VC_KP_SEPARATOR,          .x11_key = "I129" },
+    { .uiohook_key = VC_HANGUL,                .x11_key = "I130" },
+    { .uiohook_key = VC_HANJA,                 .x11_key = "I131" },
+    { .uiohook_key = VC_YEN,                   .x11_key = "I132" },
+    { .uiohook_key = VC_META_L,                .x11_key = "I133" },
+    { .uiohook_key = VC_META_R,                .x11_key = "I134" },
+    { .uiohook_key = VC_COMPOSE,               .x11_key = "I135" },
+    { .uiohook_key = VC_STOP,                  .x11_key = "I136" },
+    { .uiohook_key = VC_AGAIN,                 .x11_key = "I137" },
+    { .uiohook_key = VC_PROPS,                 .x11_key = "I138" },
+    { .uiohook_key = VC_UNDO,                  .x11_key = "I139" },
+    { .uiohook_key = VC_FRONT,                 .x11_key = "I140" },
+    { .uiohook_key = VC_COPY,                  .x11_key = "I141" },
+    { .uiohook_key = VC_OPEN,                  .x11_key = "I142" },
+    { .uiohook_key = VC_PASTE,                 .x11_key = "I143" },
+    { .uiohook_key = VC_FIND,                  .x11_key = "I144" },
+    { .uiohook_key = VC_CUT,                   .x11_key = "I145" },
+    { .uiohook_key = VC_HELP,                  .x11_key = "I146" },
+    { .uiohook_key = VC_CONTEXT_MENU,          .x11_key = "I147" },
+    { .uiohook_key = VC_APP_CALCULATOR,        .x11_key = "I148" },
+    { .uiohook_key = VC_SETUP,                 .x11_key = "I149" },
+    { .uiohook_key = VC_SLEEP,                 .x11_key = "I150" },
+    { .uiohook_key = VC_WAKE,                  .x11_key = "I151" },
+    { .uiohook_key = VC_FILE,                  .x11_key = "I152" },
+    { .uiohook_key = VC_SEND_FILE,             .x11_key = "I153" },
+    { .uiohook_key = VC_DELETE_FILE,           .x11_key = "I154" },
+    { .uiohook_key = VC_MODE_CHANGE,           .x11_key = "I155" },
+    { .uiohook_key = VC_APP_1,                 .x11_key = "I156" },
+    { .uiohook_key = VC_APP_2,                 .x11_key = "I157" },
+    { .uiohook_key = VC_APP_BROWSER,           .x11_key = "I158" },
+    { .uiohook_key = VC_MS_DOS,                .x11_key = "I159" },
+    { .uiohook_key = VC_LOCK,                  .x11_key = "I160" },
+    { .uiohook_key = VC_ROTATE_DISPLAY,        .x11_key = "I161" },
+    { .uiohook_key = VC_CYCLE_WINDOWS,         .x11_key = "I162" },
+    { .uiohook_key = VC_APP_MAIL,              .x11_key = "I163" },
+    { .uiohook_key = VC_BROWSER_FAVORITES,     .x11_key = "I164" },
+    { .uiohook_key = VC_COMPUTER,              .x11_key = "I165" },
+    { .uiohook_key = VC_BROWSER_BACK,          .x11_key = "I166" },
+    { .uiohook_key = VC_BROWSER_FORWARD,       .x11_key = "I167" },
+    { .uiohook_key = VC_MEDIA_CLOSE,           .x11_key = "I168" },
+    { .uiohook_key = VC_MEDIA_EJECT,           .x11_key = "I169" },
+    { .uiohook_key = VC_MEDIA_EJECT_CLOSE,     .x11_key = "I170" },
+    { .uiohook_key = VC_MEDIA_NEXT,            .x11_key = "I171" },
+    { .uiohook_key = VC_MEDIA_PLAY,            .x11_key = "I172" },
+    { .uiohook_key = VC_MEDIA_PREVIOUS,        .x11_key = "I173" },
+    { .uiohook_key = VC_MEDIA_STOP,            .x11_key = "I174" },
+    { .uiohook_key = VC_MEDIA_RECORD,          .x11_key = "I175" },
+    { .uiohook_key = VC_MEDIA_REWIND,          .x11_key = "I176" },
+    { .uiohook_key = VC_PHONE,                 .x11_key = "I177" },
+    { .uiohook_key = VC_ISO,                   .x11_key = "I178" },
+    { .uiohook_key = VC_CONFIG,                .x11_key = "I179" },
+    { .uiohook_key = VC_BROWSER_HOME,          .x11_key = "I180" },
+    { .uiohook_key = VC_BROWSER_REFRESH,       .x11_key = "I181" },
+    { .uiohook_key = VC_EXIT,                  .x11_key = "I182" },
+    { .uiohook_key = VC_MOVE,                  .x11_key = "I183" },
+    { .uiohook_key = VC_EDIT,                  .x11_key = "I184" },
+    { .uiohook_key = VC_SCROLL_UP,             .x11_key = "I185" },
+    { .uiohook_key = VC_SCROLL_DOWN,           .x11_key = "I186" },
+    { .uiohook_key = VC_KP_LEFT_PARENTHESIS,   .x11_key = "I187" },
+    { .uiohook_key = VC_KP_RIGHT_PARENTHESIS,  .x11_key = "I188" },
+    { .uiohook_key = VC_NEW,                   .x11_key = "I189" },
+    { .uiohook_key = VC_REDO,                  .x11_key = "I190" },
+    { .uiohook_key = VC_F13,                   .x11_key = "I191" },
+    { .uiohook_key = VC_F14,                   .x11_key = "I192" },
+    { .uiohook_key = VC_F15,                   .x11_key = "I193" },
+    { .uiohook_key = VC_F16,                   .x11_key = "I194" },
+    { .uiohook_key = VC_F17,                   .x11_key = "I195" },
+    { .uiohook_key = VC_F18,                   .x11_key = "I196" },
+    { .uiohook_key = VC_F19,                   .x11_key = "I197" },
+    { .uiohook_key = VC_F20,                   .x11_key = "I198" },
+    { .uiohook_key = VC_F21,                   .x11_key = "I199" },
+    { .uiohook_key = VC_F22,                   .x11_key = "I200" },
+    { .uiohook_key = VC_F23,                   .x11_key = "I201" },
+    { .uiohook_key = VC_F24,                   .x11_key = "I202" },
+    { .uiohook_key = VC_PLAY_CD,               .x11_key = "I208" },
+    { .uiohook_key = VC_PAUSE_CD,              .x11_key = "I209" },
+    { .uiohook_key = VC_APP_3,                 .x11_key = "I210" },
+    { .uiohook_key = VC_APP_4,                 .x11_key = "I211" },
+    { .uiohook_key = VC_DASHBOARD,             .x11_key = "I212" },
+    { .uiohook_key = VC_SUSPEND,               .x11_key = "I213" },
+    { .uiohook_key = VC_CLOSE,                 .x11_key = "I214" },
+    { .uiohook_key = VC_PLAY,                  .x11_key = "I215" },
+    { .uiohook_key = VC_FAST_FORWARD,          .x11_key = "I216" },
+    { .uiohook_key = VC_BASS_BOOST,            .x11_key = "I217" },
+    { .uiohook_key = VC_PRINT,                 .x11_key = "I218" },
+    { .uiohook_key = VC_HP,                    .x11_key = "I219" },
+    { .uiohook_key = VC_CAMERA,                .x11_key = "I220" },
+    { .uiohook_key = VC_SOUND,                 .x11_key = "I221" },
+    { .uiohook_key = VC_QUESTION,              .x11_key = "I222" },
+    { .uiohook_key = VC_EMAIL,                 .x11_key = "I223" },
+    { .uiohook_key = VC_CHAT,                  .x11_key = "I224" },
+    { .uiohook_key = VC_BROWSER_SEARCH,        .x11_key = "I225" },
+    { .uiohook_key = VC_CONNECT,               .x11_key = "I226" },
+    { .uiohook_key = VC_FINANCE,               .x11_key = "I227" },
+    { .uiohook_key = VC_SPORT,                 .x11_key = "I228" },
+    { .uiohook_key = VC_SHOP,                  .x11_key = "I229" },
+    { .uiohook_key = VC_ALT_ERASE,             .x11_key = "I230" },
+    { .uiohook_key = VC_CANCEL,                .x11_key = "I231" },
+    { .uiohook_key = VC_BRIGTNESS_DOWN,        .x11_key = "I232" },
+    { .uiohook_key = VC_BRIGTNESS_UP,          .x11_key = "I233" },
+    { .uiohook_key = VC_MEDIA,                 .x11_key = "I234" },
+    { .uiohook_key = VC_SWITCH_VIDEO_MODE,     .x11_key = "I235" },
+    { .uiohook_key = VC_KEYBOARD_LIGHT_TOGGLE, .x11_key = "I236" },
+    { .uiohook_key = VC_KEYBOARD_LIGHT_DOWN,   .x11_key = "I237" },
+    { .uiohook_key = VC_KEYBOARD_LIGHT_UP,     .x11_key = "I238" },
+    { .uiohook_key = VC_SEND,                  .x11_key = "I239" },
+    { .uiohook_key = VC_REPLY,                 .x11_key = "I240" },
+    { .uiohook_key = VC_FORWARD_MAIL,          .x11_key = "I241" },
+    { .uiohook_key = VC_SAVE,                  .x11_key = "I242" },
+    { .uiohook_key = VC_DOCUMENTS,             .x11_key = "I243" },
+    { .uiohook_key = VC_BATTERY,               .x11_key = "I244" },
+    { .uiohook_key = VC_BLUETOOTH,             .x11_key = "I245" },
+    { .uiohook_key = VC_WLAN,                  .x11_key = "I246" },
+    { .uiohook_key = VC_UWB,                   .x11_key = "I247" },
+    { .uiohook_key = VC_X11_UNKNOWN,           .x11_key = "I248" },
+    { .uiohook_key = VC_VIDEO_NEXT,            .x11_key = "I249" },
+    { .uiohook_key = VC_VIDEO_PREVIOUS,        .x11_key = "I250" },
+    { .uiohook_key = VC_BRIGTNESS_CYCLE,       .x11_key = "I251" },
+    { .uiohook_key = VC_BRIGTNESS_AUTO,        .x11_key = "I252" },
+    { .uiohook_key = VC_DISPLAY_OFF,           .x11_key = "I253" },
+    { .uiohook_key = VC_WWAN,                  .x11_key = "I254" },
+    { .uiohook_key = VC_RFKILL,                .x11_key = "I255" },
 };
 
+uint16_t keycode_to_vcode(KeyCode keycode) {
+    uint16_t vcode = VC_UNDEFINED;
 
-uint16_t keysym_to_vcode(KeySym keysym) {
-    uint16_t uiocode = VC_UNDEFINED;
-
-    for (unsigned int i = 0; i < sizeof(keysym_vcode_table) / sizeof(keysym_vcode_table[0]); i++) {
-        if (keysym == keysym_vcode_table[i][1]) {
-            uiocode = keysym_vcode_table[i][0];
+    for (unsigned int i = 0; i < sizeof(keycode_table) / sizeof(keycode_table[0]); i++) {
+        if (keycode == keycode_table[i].x11_keycode) {
+            vcode = keycode_table[i].uiohook_key;
             break;
         }
     }
 
-    if ((get_modifiers() & MASK_NUM_LOCK) == 0) {
-        switch (uiocode) {
-            case VC_KP_SEPARATOR:
-            case VC_KP_1:
-            case VC_KP_2:
-            case VC_KP_3:
-            case VC_KP_4:
-            case VC_KP_5:
-            case VC_KP_6:
-            case VC_KP_7:
-            case VC_KP_8:
-            case VC_KP_0:
-            case VC_KP_9:
-                uiocode |= 0xEE00;
-                break;
-        }
-    }
-
-    return uiocode;
+    return vcode;
 }
 
 KeyCode vcode_to_keycode(uint16_t vcode) {
-    KeyCode keycode = 0x0000;
-    KeyCode keysym = NoSymbol;
+    KeyCode key_code = 0x0;
 
-    for (unsigned int i = 0; i < sizeof(keysym_vcode_table) / sizeof(keysym_vcode_table[0]); i++) {
-        if (vcode == keysym_vcode_table[i][0]) {
-            keycode = keysym_vcode_table[i][1];
-            if (keysym = XKeysymToKeycode(helper_disp, keycode)) {
-                break;
-            }
+    for (unsigned int i = 0; i < sizeof(keycode_table) / sizeof(keycode_table[0]); i++) {
+        if (vcode == keycode_table[i].uiohook_key) {
+            key_code = keycode_table[i].x11_keycode;
+            break;
         }
     }
 
-    return keysym;
+    return key_code;
 }
 
 // Set the native modifier mask for future events.
@@ -795,19 +673,27 @@ size_t x_key_event_lookup(XKeyEvent *x_event, wchar_t *surrogate, size_t length,
 }
 
 void load_input_helper() {
-    /*
-    int min_keycodes, max_keycodes;
-    XDisplayKeycodes(helper_disp, &min_keycodes, &max_keycodes);
+    int ev, err, major = XkbMajorVersion, minor = XkbMinorVersion, res;
+    Display* dpy = XkbOpenDisplay(NULL, &ev, &err, &major, &minor, &res);
 
-    int keysyms_per_keycode;
-    KeySym *keysym_map = XGetKeyboardMapping(helper_disp, min_keycodes, (max_keycodes - min_keycodes + 1), &keysyms_per_keycode);
+    if(!dpy) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: XkbOpenDisplay failed! (%#X)\n",
+                __FUNCTION__, __LINE__, res);
 
-    unsigned int event_mask = ShiftMask | LockMask;
-    KeySym keysym = KeyCodeToKeySym(display, keycode, event_mask);
-    printf("KeySym: %s\n", XKeysymToString(keysym));
+        return;
+    }
 
-    XFree(keysym_map);
-    */
+    XkbDescPtr xkb = XkbGetKeyboard(dpy, XkbAllComponentsMask, XkbUseCoreKbd);
+    for (int key_code = xkb->min_key_code; key_code < xkb->max_key_code; key_code++) {
+        for (int i = 0; i < sizeof(keycode_table) / sizeof(*keycode_table); i++) {
+            if (strncmp(keycode_table[i].x11_key, xkb->names->keys[key_code].name, XkbKeyNameLength) == 0) {
+                keycode_table[i].x11_keycode = key_code;
+            }
+        }
+    }
+
+    XkbFreeKeyboard(xkb, XkbAllComponentsMask, True);
+    XFree(dpy);
 
     // Setup memory for mouse button mapping.
     mouse_button_table = malloc(sizeof(unsigned char) * BUTTON_TABLE_MAX);

@@ -193,7 +193,15 @@ static const uint16_t scancode_keycode_table[][2] = {
     { VC_CLOSE_BRACKET,       VK_OEM_6               },
     { VC_QUOTE,               VK_OEM_7               },
     { VC_MISC,                VK_OEM_8               },
+    { VC_102,                 VK_OEM_102             },
     { VC_PROCESS,             VK_PROCESSKEY          },
+    { VC_ATTN,                VK_ATTN                },
+    { VC_CR_SEL,              VK_CRSEL               },
+    { VC_EX_SEL,              VK_EXSEL               },
+    { VC_ERASE_EOF,           VK_EREOF               },
+    { VC_PLAY,                VK_PLAY                },
+    { VC_ZOOM,                VK_ZOOM                },
+    { VC_PA1,                 VK_PA1                 },
 };
 
 unsigned short keycode_to_scancode(DWORD vk_code, DWORD flags) {
@@ -577,9 +585,9 @@ SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, LPWORD c
                 __FUNCTION__, __LINE__, locale_current->id);
 
         BYTE keyboard_state[256] = { 0 };
-        GetKeyState(0); // This apparently forces GetKeyboardState to get more up-to-date data
+        GetKeyState(0); // This apparently forces GetKeyboardState to get more up-to-date data.
         
-        // Get current keyboard state (to known which modifiers have been pressed, as well as Caps Lock).
+        // Get current keyboard state (to know which modifiers have been pressed, as well as Caps Lock).
         BOOL success = GetKeyboardState(keyboard_state);
 
         if (!success) {

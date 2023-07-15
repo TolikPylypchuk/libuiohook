@@ -48,12 +48,11 @@ typedef union {
 // Helper display used by input helper, properties and post event.
 extern Display *helper_disp;
 
-
-/* Converts a X11 key symbol to the appropriate uiohook virtual key code. */
-extern uint16_t keysym_to_vcode(KeySym keycode);
+/* Converts a X11 key code to the appropriate uiohook virtual key code. */
+extern uint16_t keycode_to_vcode(KeyCode keycode);
 
 /* Converts a uiohook virtual key code to the appropriate X11 key code. */
-extern KeyCode vcode_to_keycode(uint16_t uiocod);
+extern KeyCode vcode_to_keycode(uint16_t vcode);
 
 /* Set the native modifier mask for future events. */
 extern void set_modifier_mask(uint16_t mask);

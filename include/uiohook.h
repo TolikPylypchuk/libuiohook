@@ -167,8 +167,8 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 
 
 // Begin Alphanumeric Zone
-#define VC_BACK_QUOTE                            0x00C0    // GRAVE
-#define VC_SECTION                               0x00C1    // macOS only
+#define VC_BACK_QUOTE                            0x00C0
+#define VC_SECTION                               0x00C1 // macOS only
 
 #define VC_0                                     0x0030
 #define VC_1                                     0x0031
@@ -181,16 +181,8 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_8                                     0x0038
 #define VC_9                                     0x0039
 
-#define VC_PLUS                                  0x0209
 #define VC_MINUS                                 0x002D
 #define VC_EQUALS                                0x003D
-#define VC_ASTERISK                              0x0097
-
-#define VC_AT                                    0x0200
-#define VC_AMPERSAND                             0x0096
-#define VC_DOLLAR                                0x0203
-#define VC_EXCLAMATION_MARK                      0x0205
-#define VC_EXCLAMATION_DOWN                      0x0206    // Colombia & Mexico replaces '+/='
 
 #define VC_BACKSPACE                             0x0008
 
@@ -228,39 +220,29 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_CLOSE_BRACKET                         0x005C
 #define VC_BACK_SLASH                            0x005D
 
-#define VC_COLON                                 0x0201
 #define VC_SEMICOLON                             0x003B
 #define VC_QUOTE                                 0x00DE
-#define VC_QUOTEDBL                              0x0098
 #define VC_ENTER                                 0x000A
 
-#define VC_LESS                                  0x0099
-#define VC_GREATER                               0x00A0
 #define VC_COMMA                                 0x002C
 #define VC_PERIOD                                0x002E
 #define VC_SLASH                                 0x002F
-#define VC_NUMBER_SIGN                           0x0208     // Used by Germany where the '/" key would be
-
-#define VC_OPEN_BRACE                            0x00A1
-#define VC_CLOSE_BRACE                           0x00A2
-
-#define VC_OPEN_PARENTHESIS                      0x0207
-#define VC_CLOSE_PARENTHESIS                     0x020A
 
 #define VC_SPACE                                 0x0020
 
+#define VC_102                                   0x0099
 #define VC_MISC                                  0x0E01
 // End Alphanumeric Zone
 
 
 // Begin Edit Key Zone
-#define VC_PRINT_SCREEN                          0x009A    // SYSRQ
+#define VC_PRINT_SCREEN                          0x009A // SYSRQ
 #define VC_PRINT                                 0x009C
 #define VC_SELECT                                0x009D
 #define VC_EXECUTE                               0x009E
 #define VC_SCROLL_LOCK                           0x0091
 #define VC_PAUSE                                 0x0013
-#define VC_CANCEL                                0x00D3    // BREAK
+#define VC_CANCEL                                0x00D3 // BREAK
 #define VC_HELP                                  0x009F
 
 #define VC_INSERT                                0x009B
@@ -275,7 +257,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 // Begin Cursor Key Zone
 #define VC_UP                                    0x0026
 #define VC_LEFT                                  0x0025
-#define VC_BEGIN                                 0xFF58
 #define VC_RIGHT                                 0x0027
 #define VC_DOWN                                  0x0028
 // End Cursor Key Zone
@@ -283,6 +264,7 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 
 // Begin Numeric Zone
 #define VC_NUM_LOCK                              0x0090
+
 #define VC_KP_CLEAR                              0x000C
 
 #define VC_KP_DIVIDE                             0x006F
@@ -293,6 +275,7 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_KP_ENTER                              0x007D
 #define VC_KP_DECIMAL                            0x006E
 #define VC_KP_SEPARATOR                          0x006C
+#define VC_KP_PLUS_MINUS                         0x007E
 
 #define VC_KP_0                                  0x0060
 #define VC_KP_1                                  0x0061
@@ -305,17 +288,8 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_KP_8                                  0x0068
 #define VC_KP_9                                  0x0069
 
-#define VC_KP_END                                0xEE00 | VC_KP_1
-#define VC_KP_DOWN                               0xEE00 | VC_KP_2
-#define VC_KP_PAGE_DOWN                          0xEE00 | VC_KP_3
-#define VC_KP_LEFT                               0xEE00 | VC_KP_4
-#define VC_KP_BEGIN                              0xEE00 | VC_KP_5
-#define VC_KP_RIGHT                              0xEE00 | VC_KP_6
-#define VC_KP_HOME                               0xEE00 | VC_KP_7
-#define VC_KP_UP                                 0xEE00 | VC_KP_8
-#define VC_KP_PAGE_UP                            0xEE00 | VC_KP_9
-#define VC_KP_INSERT                             0xEE00 | VC_KP_0
-#define VC_KP_DELETE                             0xEE00 | VC_KP_SEPARATOR
+#define VC_KP_LEFT_PARENTHESIS                   0xEE01
+#define VC_KP_RIGHT_PARENTHESIS                  0xEE02
 // End Numeric Zone
 
 
@@ -324,14 +298,14 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_SHIFT_R                               0xB010
 #define VC_CONTROL_L                             0xA011
 #define VC_CONTROL_R                             0xB011
-#define VC_ALT_L                                 0xA012    // Option or Alt Key
-#define VC_ALT_R                                 0xB012    // Option or Alt Key
-#define VC_ALT_GRAPH                             0xFF7E    // Replaces Right Alt Key
-#define VC_META_L                                0xA09D    // Windows or Command Key
-#define VC_META_R                                0xB09D    // Windows or Command Key
+#define VC_ALT_L                                 0xA012 // Option or Alt Key
+#define VC_ALT_R                                 0xB012 // Option or Alt Key
+#define VC_ALT_GRAPH                             0xFF7E // Replaces Right Alt Key
+#define VC_META_L                                0xA09D // Windows or Command Key
+#define VC_META_R                                0xB09D // Windows or Command Key
 #define VC_CONTEXT_MENU                          0x020D
-#define VC_FUNCTION                              0x020E    // macOS only
-#define VC_CHANGE_INPUT_SOURCE                   0x020F    // macOS only
+#define VC_FUNCTION                              0x020E // macOS only
+#define VC_CHANGE_INPUT_SOURCE                   0x020F // macOS only
 // End Modifier and Control Keys
 
 
@@ -340,24 +314,37 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_SLEEP                                 0xE05F
 #define VC_WAKE                                  0xE063
 
+#define VC_MEDIA                                 0xE023
 #define VC_MEDIA_PLAY                            0xE022
 #define VC_MEDIA_STOP                            0xE024
 #define VC_MEDIA_PREVIOUS                        0xE010
 #define VC_MEDIA_NEXT                            0xE019
 #define VC_MEDIA_SELECT                          0xE06D
 #define VC_MEDIA_EJECT                           0xE02C
+#define VC_MEDIA_CLOSE                           0xE02D
+#define VC_MEDIA_EJECT_CLOSE                     0xE02F
+#define VC_MEDIA_RECORD                          0xE031
+#define VC_MEDIA_REWIND                          0xE033
 
 #define VC_VOLUME_MUTE                           0xE020
 #define VC_VOLUME_DOWN                           0xE030
 #define VC_VOLUME_UP                             0xE02E
 
+#define VC_ATTN                                  0xE090
+#define VC_CR_SEL                                0xE091
+#define VC_EX_SEL                                0xE092
+#define VC_ERASE_EOF                             0xE093
+#define VC_PLAY                                  0xE094
+#define VC_ZOOM                                  0xE095
+#define VC_PA1                                   0xE096
+
 #define VC_APP_1                                 0xE026
 #define VC_APP_2                                 0xE027
+#define VC_APP_3                                 0xE028
+#define VC_APP_4                                 0xE029
 #define VC_APP_BROWSER                           0xE025
 #define VC_APP_CALCULATOR                        0xE021
 #define VC_APP_MAIL                              0xE06C
-#define VC_APP_MUSIC                             0xE03C
-#define VC_APP_PICTURES                          0xE064
 
 #define VC_BROWSER_SEARCH                        0xE065
 #define VC_BROWSER_HOME                          0xE032
@@ -368,32 +355,10 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_BROWSER_FAVORITES                     0xE066
 // End Shortcut Keys
 
-
-// Begin European Language Keys
-#define VC_CIRCUMFLEX                            0x0202
-#define VC_DEAD_GRAVE                            0x0080
-#define VC_DEAD_ACUTE                            0x0081
-#define VC_DEAD_CIRCUMFLEX                       0x0082
-#define VC_DEAD_TILDE                            0x0083
-#define VC_DEAD_MACRON                           0x0084
-#define VC_DEAD_BREVE                            0x0085
-#define VC_DEAD_ABOVEDOT                         0x0086
-#define VC_DEAD_DIAERESIS                        0x0087
-#define VC_DEAD_ABOVERING                        0x0088
-#define VC_DEAD_DOUBLEACUTE                      0x0089
-#define VC_DEAD_CARON                            0x008A
-#define VC_DEAD_CEDILLA                          0x008B
-#define VC_DEAD_OGONEK                           0x008C
-#define VC_DEAD_IOTA                             0x008D
-#define VC_DEAD_VOICED_SOUND                     0x008E
-#define VC_DEAD_SEMIVOICED_SOUND                 0x008F
-// End European Language Keys
-
-
 // Begin Asian Language Keys
 #define VC_KATAKANA                              0x00F1
 #define VC_KANA                                  0x0015
-#define VC_KANA_LOCK                             0x0106
+#define VC_KATAKANA_HIRAGANA                     0x0106
 
 #define VC_KANJI                                 0x0019
 #define VC_HIRAGANA                              0x00F2
@@ -411,30 +376,90 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_MODE_CHANGE                           0x0107
 #define VC_PROCESS                               0x0105
 
-#define VC_ALL_CANDIDATES                        0x0100
 #define VC_ALPHANUMERIC                          0x00F0
-#define VC_CODE_INPUT                            0x0102
-#define VC_FULL_WIDTH                            0x00F3
-#define VC_HALF_WIDTH                            0x00F4
-#define VC_PREVIOUS_CANDIDATE                    0x0101
-#define VC_ROMAN_CHARACTERS                      0x00F5
-
 #define VC_UNDERSCORE                            0x020B
 #define VC_YEN                                   0x020C
+#define VC_JP_COMMA                              0x0210
 // End Asian Language Keys
 
-// Begin Sun Keys
-#define VC_SUN_STOP                              0xFF78
-#define VC_SUN_PROPS                             0xFF76
-#define VC_SUN_FRONT                             0xFF77
-#define VC_SUN_OPEN                              0xFF74
-#define VC_SUN_FIND                              0xFF70
-#define VC_SUN_AGAIN                             0xFF79
-#define VC_SUN_UNDO                              0xFF7A
-#define VC_SUN_COPY                              0xFF7C
-#define VC_SUN_PASTE                             0xFF7D
-#define VC_SUN_CUT                               0xFF7B
-// End Sun Keys
+
+// Begin Other Linux Keys
+#define VC_STOP                                  0xFF78
+#define VC_PROPS                                 0xFF76
+#define VC_FRONT                                 0xFF77
+#define VC_OPEN                                  0xFF74
+#define VC_FIND                                  0xFF70
+#define VC_AGAIN                                 0xFF79
+#define VC_UNDO                                  0xFF7A
+#define VC_REDO                                  0xFF7F
+#define VC_COPY                                  0xFF7C
+#define VC_PASTE                                 0xFF7D
+#define VC_CUT                                   0xFF7B
+
+#define VC_LINE_FEED                             0xC001
+#define VC_MACRO                                 0xC002
+#define VC_SCALE                                 0xC003
+#define VC_SETUP                                 0xC004
+#define VC_FILE                                  0xC005
+#define VC_SEND_FILE                             0xC006
+#define VC_DELETE_FILE                           0xC007
+#define VC_MS_DOS                                0xC008
+#define VC_LOCK                                  0xC009
+#define VC_ROTATE_DISPLAY                        0xC00A
+#define VC_CYCLE_WINDOWS                         0xC00B
+#define VC_COMPUTER                              0xC00C
+#define VC_PHONE                                 0xC00D
+#define VC_ISO                                   0xC00E
+#define VC_CONFIG                                0xC00F
+#define VC_EXIT                                  0xC010
+#define VC_MOVE                                  0xC011
+#define VC_EDIT                                  0xC012
+#define VC_SCROLL_UP                             0xC013
+#define VC_SCROLL_DOWN                           0xC014
+#define VC_NEW                                   0xC015
+#define VC_PLAY_CD                               0xC016
+#define VC_PAUSE_CD                              0xC017
+#define VC_DASHBOARD                             0xC018
+#define VC_SUSPEND                               0xC019
+#define VC_CLOSE                                 0xC01A
+#define VC_FAST_FORWARD                          0xC01C
+#define VC_BASS_BOOST                            0xC01D
+#define VC_HP                                    0xC01E
+#define VC_CAMERA                                0xC01F
+#define VC_SOUND                                 0xC020
+#define VC_QUESTION                              0xC021
+#define VC_EMAIL                                 0xC022
+#define VC_CHAT                                  0xC023
+#define VC_CONNECT                               0xC024
+#define VC_FINANCE                               0xC025
+#define VC_SPORT                                 0xC026
+#define VC_SHOP                                  0xC027
+#define VC_ALT_ERASE                             0xC028
+#define VC_BRIGTNESS_DOWN                        0xC029
+#define VC_BRIGTNESS_UP                          0xC02A
+#define VC_BRIGTNESS_UP                          0xC02A
+#define VC_BRIGTNESS_CYCLE                       0xC02B
+#define VC_BRIGTNESS_AUTO                        0xC02C
+#define VC_SWITCH_VIDEO_MODE                     0xC02D
+#define VC_KEYBOARD_LIGHT_TOGGLE                 0xC02E
+#define VC_KEYBOARD_LIGHT_DOWN                   0xC02F
+#define VC_KEYBOARD_LIGHT_UP                     0xC030
+#define VC_SEND                                  0xC031
+#define VC_REPLY                                 0xC032
+#define VC_FORWARD_MAIL                          0xC033
+#define VC_SAVE                                  0xC034
+#define VC_DOCUMENTS                             0xC035
+#define VC_BATTERY                               0xC036
+#define VC_BLUETOOTH                             0xC037
+#define VC_WLAN                                  0xC038
+#define VC_UWB                                   0xC039
+#define VC_X11_UNKNOWN                           0xC03A
+#define VC_VIDEO_NEXT                            0xC03B
+#define VC_VIDEO_PREVIOUS                        0xC03C
+#define VC_DISPLAY_OFF                           0xC03D
+#define VC_WWAN                                  0xC03E
+#define VC_RFKILL                                0xC03F
+// End Other Linux Keys
 
 #define VC_UNDEFINED                             0x0000    // KeyCode Unknown
 
