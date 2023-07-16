@@ -129,7 +129,9 @@ bool dispatch_key_press(uint64_t timestamp, KBDLLHOOKSTRUCT *kbhook) {
         uio_event.mask |= MASK_EMULATED;
     }
 
-    uio_event.data.keyboard.keycode = vkcode_to_uiocode(kbhook->vkCode, kbhook->flags);
+    uint16_t uiocode = vkcode_to_uiocode(kbhook->vkCode, kbhook->flags);
+
+    uio_event.data.keyboard.keycode = uiocode;
     uio_event.data.keyboard.rawcode = (uint16_t) kbhook->vkCode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
@@ -162,7 +164,7 @@ bool dispatch_key_press(uint64_t timestamp, KBDLLHOOKSTRUCT *kbhook) {
                 uio_event.mask |= MASK_EMULATED;
             }
 
-            uio_event.data.keyboard.keycode = VC_UNDEFINED;
+            uio_event.data.keyboard.keycode = uiocode;
             uio_event.data.keyboard.rawcode = (uint16_t) kbhook->vkCode;
             uio_event.data.keyboard.keychar = buffer[i];
 

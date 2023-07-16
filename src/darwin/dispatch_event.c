@@ -115,7 +115,9 @@ bool dispatch_key_press(uint64_t timestamp, CGEventRef event_ref) {
         uio_event.mask |= MASK_EMULATED;
     }
 
-    uio_event.data.keyboard.keycode = keycode_to_uiocode(keycode);
+    uint16_t uiocode = keycode_to_uiocode(keycode);
+
+    uio_event.data.keyboard.keycode = uiocode;
     uio_event.data.keyboard.rawcode = keycode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
@@ -141,7 +143,7 @@ bool dispatch_key_press(uint64_t timestamp, CGEventRef event_ref) {
                 uio_event.mask |= MASK_EMULATED;
             }
 
-            uio_event.data.keyboard.keycode = VC_UNDEFINED;
+            uio_event.data.keyboard.keycode = uiocode;
             uio_event.data.keyboard.rawcode = keycode;
             uio_event.data.keyboard.keychar = buffer[i];
 

@@ -145,7 +145,7 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
                 uio_event.mask |= MASK_EMULATED;
             }
 
-            uio_event.data.keyboard.keycode = VC_UNDEFINED;
+            uio_event.data.keyboard.keycode = uiocode;
             uio_event.data.keyboard.rawcode = keysym;
             uio_event.data.keyboard.keychar = surrogate[i];
 
