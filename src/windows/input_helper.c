@@ -30,8 +30,8 @@
 
 static uint16_t modifier_mask;
 
-static const uint16_t scancode_keycode_table[][2] = {
-/*  { scancode,               vk_code                }, */
+static const uint16_t uiocode_keycode_table[][2] = {
+/*  { vcode,               vk_code                }, */
     { VC_CANCEL,              VK_CANCEL              },
     { VC_BACKSPACE,           VK_BACK                },
     { VC_TAB,                 VK_TAB                 },
@@ -201,15 +201,16 @@ static const uint16_t scancode_keycode_table[][2] = {
     { VC_ERASE_EOF,           VK_EREOF               },
     { VC_PLAY,                VK_PLAY                },
     { VC_ZOOM,                VK_ZOOM                },
+    { VC_NO_NAME,             VK_NONAME              },
     { VC_PA1,                 VK_PA1                 },
 };
 
 uint16_t vkcode_to_uiocode(DWORD vk_code, DWORD flags) {
     uint16_t uiocode = VC_UNDEFINED;
 
-    for (unsigned int i = 0; i < sizeof(scancode_keycode_table) / sizeof(scancode_keycode_table[0]); i++) {
-        if (vk_code == scancode_keycode_table[i][1]) {
-            uiocode = scancode_keycode_table[i][0];
+    for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
+        if (vk_code == uiocode_keycode_table[i][1]) {
+            uiocode = uiocode_keycode_table[i][0];
             break;
         }
     }
@@ -220,9 +221,9 @@ uint16_t vkcode_to_uiocode(DWORD vk_code, DWORD flags) {
 DWORD uiocode_to_vkcode(uint16_t uiocode) {
     DWORD vkcode = 0x0000;
 
-    for (unsigned int i = 0; i < sizeof(scancode_keycode_table) / sizeof(scancode_keycode_table[0]); i++) {
-        if (uiocode == scancode_keycode_table[i][0]) {
-            vkcode = scancode_keycode_table[i][1];
+    for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
+        if (uiocode == uiocode_keycode_table[i][0]) {
+            vkcode = uiocode_keycode_table[i][1];
             break;
         }
     }
