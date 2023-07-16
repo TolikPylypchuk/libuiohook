@@ -335,7 +335,7 @@ uint16_t keycode_to_vcode(KeyCode keycode) {
 
     for (unsigned int i = 0; i < sizeof(vcode_keycode_table) / sizeof(vcode_keycode_table[0]); i++) {
         if (keycode == vcode_keycode_table[i].x11_key_code) {
-            vcode = vcode_keycode_table[i].uiohook_key;
+            vcode = vcode_keycode_table[i].vcode;
             break;
         }
     }
@@ -347,7 +347,7 @@ KeyCode vcode_to_keycode(uint16_t vcode) {
     KeyCode key_code = 0x0;
 
     for (unsigned int i = 0; i < sizeof(vcode_keycode_table) / sizeof(vcode_keycode_table[0]); i++) {
-        if (vcode == vcode_keycode_table[i].uiohook_key) {
+        if (vcode == vcode_keycode_table[i].vcode) {
             key_code = vcode_keycode_table[i].x11_key_code;
             break;
         }
@@ -685,7 +685,7 @@ void load_input_helper() {
     XkbDescPtr xkb = XkbGetKeyboard(dpy, XkbAllComponentsMask, XkbUseCoreKbd);
     for (int key_code = xkb->min_key_code; key_code < xkb->max_key_code; key_code++) {
         for (int i = 0; i < sizeof(vcode_keycode_table) / sizeof(*vcode_keycode_table); i++) {
-            if (strncmp(vcode_keycode_table[i].x11_key, xkb->names->keys[key_code].name, XkbKeyNameLength) == 0) {
+            if (strncmp(vcode_keycode_table[i].x11_key_name, xkb->names->keys[key_code].name, XkbKeyNameLength) == 0) {
                 vcode_keycode_table[i].x11_key_code = key_code;
             }
         }

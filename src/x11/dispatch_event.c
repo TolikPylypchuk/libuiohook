@@ -97,16 +97,16 @@ void dispatch_hook_disabled(XAnyEvent * const x_event) {
 }
 
 void dispatch_key_press(XKeyPressedEvent * const x_event) {
-    uint16_t uiocode = keycode_to_vcode(x_event->keycode);
+    uint16_t vcode = keycode_to_vcode(x_event->keycode);
 
-    if      (uiocode == VC_SHIFT_L)   { set_modifier_mask(MASK_SHIFT_L); }
-    else if (uiocode == VC_SHIFT_R)   { set_modifier_mask(MASK_SHIFT_R); }
-    else if (uiocode == VC_CONTROL_L) { set_modifier_mask(MASK_CTRL_L);  }
-    else if (uiocode == VC_CONTROL_R) { set_modifier_mask(MASK_CTRL_R);  }
-    else if (uiocode == VC_ALT_L)     { set_modifier_mask(MASK_ALT_L);   }
-    else if (uiocode == VC_ALT_R)     { set_modifier_mask(MASK_ALT_R);   }
-    else if (uiocode == VC_META_L)    { set_modifier_mask(MASK_META_L);  }
-    else if (uiocode == VC_META_R)    { set_modifier_mask(MASK_META_R);  }
+    if      (vcode == VC_SHIFT_L)   { set_modifier_mask(MASK_SHIFT_L); }
+    else if (vcode == VC_SHIFT_R)   { set_modifier_mask(MASK_SHIFT_R); }
+    else if (vcode == VC_CONTROL_L) { set_modifier_mask(MASK_CTRL_L);  }
+    else if (vcode == VC_CONTROL_R) { set_modifier_mask(MASK_CTRL_R);  }
+    else if (vcode == VC_ALT_L)     { set_modifier_mask(MASK_ALT_L);   }
+    else if (vcode == VC_ALT_R)     { set_modifier_mask(MASK_ALT_R);   }
+    else if (vcode == VC_META_L)    { set_modifier_mask(MASK_META_L);  }
+    else if (vcode == VC_META_R)    { set_modifier_mask(MASK_META_R);  }
 
     // Populate key pressed event.
     uio_event.time = x_event->serial;
@@ -115,7 +115,7 @@ void dispatch_key_press(XKeyPressedEvent * const x_event) {
     uio_event.type = EVENT_KEY_PRESSED;
     uio_event.mask = get_modifiers();
 
-    uio_event.data.keyboard.keycode = uiocode;
+    uio_event.data.keyboard.keycode = vcode;
     uio_event.data.keyboard.rawcode = x_event->keycode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
@@ -141,7 +141,7 @@ void dispatch_key_press(XKeyPressedEvent * const x_event) {
             uio_event.type = EVENT_KEY_TYPED;
             uio_event.mask = get_modifiers();
 
-            uio_event.data.keyboard.keycode = VC_UNDEFINED;
+            uio_event.data.keyboard.keycode = vcode;
             uio_event.data.keyboard.rawcode = keysym;
             uio_event.data.keyboard.keychar = surrogate[i];
 
@@ -157,16 +157,16 @@ void dispatch_key_press(XKeyPressedEvent * const x_event) {
 }
 
 void dispatch_key_release(XKeyReleasedEvent * const x_event) {
-    uint16_t uiocode = keycode_to_vcode(x_event->keycode);
+    uint16_t vcode = keycode_to_vcode(x_event->keycode);
 
-    if      (uiocode == VC_SHIFT_L)   { unset_modifier_mask(MASK_SHIFT_L); }
-    else if (uiocode == VC_SHIFT_R)   { unset_modifier_mask(MASK_SHIFT_R); }
-    else if (uiocode == VC_CONTROL_L) { unset_modifier_mask(MASK_CTRL_L);  }
-    else if (uiocode == VC_CONTROL_R) { unset_modifier_mask(MASK_CTRL_R);  }
-    else if (uiocode == VC_ALT_L)     { unset_modifier_mask(MASK_ALT_L);   }
-    else if (uiocode == VC_ALT_R)     { unset_modifier_mask(MASK_ALT_R);   }
-    else if (uiocode == VC_META_L)    { unset_modifier_mask(MASK_META_L);  }
-    else if (uiocode == VC_META_R)    { unset_modifier_mask(MASK_META_R);  }
+    if      (vcode == VC_SHIFT_L)   { unset_modifier_mask(MASK_SHIFT_L); }
+    else if (vcode == VC_SHIFT_R)   { unset_modifier_mask(MASK_SHIFT_R); }
+    else if (vcode == VC_CONTROL_L) { unset_modifier_mask(MASK_CTRL_L);  }
+    else if (vcode == VC_CONTROL_R) { unset_modifier_mask(MASK_CTRL_R);  }
+    else if (vcode == VC_ALT_L)     { unset_modifier_mask(MASK_ALT_L);   }
+    else if (vcode == VC_ALT_R)     { unset_modifier_mask(MASK_ALT_R);   }
+    else if (vcode == VC_META_L)    { unset_modifier_mask(MASK_META_L);  }
+    else if (vcode == VC_META_R)    { unset_modifier_mask(MASK_META_R);  }
 
     // Populate key released event.
     uio_event.time = x_event->serial;
@@ -175,7 +175,7 @@ void dispatch_key_release(XKeyReleasedEvent * const x_event) {
     uio_event.type = EVENT_KEY_RELEASED;
     uio_event.mask = get_modifiers();
 
-    uio_event.data.keyboard.keycode = uiocode;
+    uio_event.data.keyboard.keycode = vcode;
     uio_event.data.keyboard.rawcode = x_event->keycode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
