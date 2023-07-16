@@ -178,7 +178,7 @@ bool dispatch_key_press(KBDLLHOOKSTRUCT *kbhook) {
         // If the pressed event was not consumed and a unicode char exists...
         SIZE_T count = keycode_to_unicode(kbhook->vkCode, kbhook->scanCode, buffer, char_types, 2);
         for (unsigned int i = 0; i < count; i++) {
-            if (char_types[i] & C1_CNTRL) {
+            if (char_types[i] & C1_CNTRL && buffer[i] != (WCHAR)'\t' && buffer[i] != (WCHAR)'\n' && buffer[i] != (WCHAR)'\r') {
                 continue;
             }
 
@@ -191,7 +191,7 @@ bool dispatch_key_press(KBDLLHOOKSTRUCT *kbhook) {
 
             uio_event.data.keyboard.keycode = vcode;
             uio_event.data.keyboard.rawcode = (uint16_t) kbhook->vkCode;
-            uio_event.data.keyboard.keychar = buffer[i];
+            uio_event.data.keyboard.keychar = buffer[i] != (WCHAR)'\r' ? buffer[i] : (WCHAR)'\n';
 
             logger(LOG_LEVEL_DEBUG, "%s [%u]: Key %#X typed. (%lc)\n",
                     __FUNCTION__, __LINE__,
