@@ -130,9 +130,9 @@ extern SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, P
 
 //extern DWORD unicode_to_keycode(wchar_t unicode);
 
-extern unsigned short keycode_to_scancode(DWORD vk_code, DWORD flags);
+extern unsigned short keycode_to_vcode(DWORD vk_code, DWORD flags);
 
-extern DWORD scancode_to_keycode(unsigned short scancode);
+extern DWORD vcode_to_keycode(unsigned short scancode);
 
 /* Set the native modifier mask for future events. */
 extern void set_modifier_mask(uint16_t mask);

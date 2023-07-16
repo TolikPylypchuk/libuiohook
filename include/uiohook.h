@@ -288,8 +288,8 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_KP_8                                  0x0068
 #define VC_KP_9                                  0x0069
 
-#define VC_KP_LEFT_PARENTHESIS                   0xEE01
-#define VC_KP_RIGHT_PARENTHESIS                  0xEE02
+#define VC_KP_OPEN_PARENTHESIS                   0xEE01
+#define VC_KP_CLOSE_PARENTHESIS                  0xEE02
 // End Numeric Zone
 
 
@@ -300,7 +300,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_CONTROL_R                             0xB011
 #define VC_ALT_L                                 0xA012 // Option or Alt Key
 #define VC_ALT_R                                 0xB012 // Option or Alt Key
-#define VC_ALT_GRAPH                             0xFF7E // Replaces Right Alt Key
 #define VC_META_L                                0xA09D // Windows or Command Key
 #define VC_META_R                                0xB09D // Windows or Command Key
 #define VC_CONTEXT_MENU                          0x020D
@@ -336,7 +335,8 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_ERASE_EOF                             0xE093
 #define VC_PLAY                                  0xE094
 #define VC_ZOOM                                  0xE095
-#define VC_PA1                                   0xE096
+#define VC_NO_NAME                               0xE096
+#define VC_PA1                                   0xE097
 
 #define VC_APP_1                                 0xE026
 #define VC_APP_2                                 0xE027
@@ -356,12 +356,11 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 // End Shortcut Keys
 
 // Begin Asian Language Keys
-#define VC_KATAKANA                              0x00F1
-#define VC_KANA                                  0x0015
 #define VC_KATAKANA_HIRAGANA                     0x0106
-
-#define VC_KANJI                                 0x0019
+#define VC_KATAKANA                              0x00F1
 #define VC_HIRAGANA                              0x00F2
+#define VC_KANA                                  0x0015
+#define VC_KANJI                                 0x0019
 #define VC_HANGUL                                0x00E9
 #define VC_JUNJA                                 0x00E8
 #define VC_FINAL                                 0x00E7
@@ -436,7 +435,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_SHOP                                  0xC027
 #define VC_ALT_ERASE                             0xC028
 #define VC_BRIGTNESS_DOWN                        0xC029
-#define VC_BRIGTNESS_UP                          0xC02A
 #define VC_BRIGTNESS_UP                          0xC02A
 #define VC_BRIGTNESS_CYCLE                       0xC02B
 #define VC_BRIGTNESS_AUTO                        0xC02C

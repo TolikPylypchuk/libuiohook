@@ -409,10 +409,10 @@ enum {
 extern bool is_accessibility_enabled();
 
 /* Converts an OSX keycode to the appropriate UIOHook scancode constant. */
-extern uint16_t keycode_to_scancode(UInt64 keycode);
+extern uint16_t keycode_to_vcode(UInt64 keycode);
 
 /* Converts a UIOHook scancode constant to the appropriate OSX keycode. */
-extern UInt64 scancode_to_keycode(uint16_t keycode);
+extern UInt64 vcode_to_keycode(uint16_t keycode);
 
 /* Fill the buffer with unicode chars produced by the event_ref, returns how many chars where written */
 extern UniCharCount event_to_unicode(CGEventRef event_ref, UniChar *buffer, UniCharCount size);

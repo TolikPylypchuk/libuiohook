@@ -155,7 +155,7 @@ bool dispatch_key_press(KBDLLHOOKSTRUCT *kbhook) {
     uio_event.type = EVENT_KEY_PRESSED;
     uio_event.mask = get_modifiers();
 
-    uio_event.data.keyboard.keycode = keycode_to_scancode(kbhook->vkCode, kbhook->flags);
+    uio_event.data.keyboard.keycode = keycode_to_vcode(kbhook->vkCode, kbhook->flags);
     uio_event.data.keyboard.rawcode = (uint16_t) kbhook->vkCode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
@@ -232,7 +232,7 @@ bool dispatch_key_release(KBDLLHOOKSTRUCT *kbhook) {
     uio_event.type = EVENT_KEY_RELEASED;
     uio_event.mask = get_modifiers();
 
-    uio_event.data.keyboard.keycode = keycode_to_scancode(kbhook->vkCode, kbhook->flags);
+    uio_event.data.keyboard.keycode = keycode_to_vcode(kbhook->vkCode, kbhook->flags);
     uio_event.data.keyboard.rawcode = (uint16_t) kbhook->vkCode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 

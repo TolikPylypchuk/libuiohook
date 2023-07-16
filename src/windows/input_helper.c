@@ -30,8 +30,8 @@
 
 static uint16_t modifier_mask;
 
-static const uint16_t scancode_keycode_table[][2] = {
-/*  { scancode,               vk_code                }, */
+static const uint16_t vcode_keycode_table[][2] = {
+/*  { vcode,               vk_code                }, */
     { VC_CANCEL,              VK_CANCEL              },
     { VC_BACKSPACE,           VK_BACK                },
     { VC_TAB,                 VK_TAB                 },
@@ -201,28 +201,29 @@ static const uint16_t scancode_keycode_table[][2] = {
     { VC_ERASE_EOF,           VK_EREOF               },
     { VC_PLAY,                VK_PLAY                },
     { VC_ZOOM,                VK_ZOOM                },
+    { VC_NO_NAME,             VK_NONAME              },
     { VC_PA1,                 VK_PA1                 },
 };
 
-unsigned short keycode_to_scancode(DWORD vk_code, DWORD flags) {
-    unsigned short scancode = VC_UNDEFINED;
+unsigned short keycode_to_vcode(DWORD vk_code, DWORD flags) {
+    unsigned short vcode = VC_UNDEFINED;
 
-    for (unsigned int i = 0; i < sizeof(scancode_keycode_table) / sizeof(scancode_keycode_table[0]); i++) {
-        if (vk_code == scancode_keycode_table[i][1]) {
-            scancode = scancode_keycode_table[i][0];
+    for (unsigned int i = 0; i < sizeof(vcode_keycode_table) / sizeof(vcode_keycode_table[0]); i++) {
+        if (vk_code == vcode_keycode_table[i][1]) {
+            vcode = vcode_keycode_table[i][0];
             break;
         }
     }
 
-    return scancode;
+    return vcode;
 }
 
-DWORD scancode_to_keycode(unsigned short scancode) {
+DWORD vcode_to_keycode(unsigned short vcode) {
     unsigned short keycode = 0x0000;
 
-    for (unsigned int i = 0; i < sizeof(scancode_keycode_table) / sizeof(scancode_keycode_table[0]); i++) {
-        if (scancode == scancode_keycode_table[i][0]) {
-            keycode = scancode_keycode_table[i][1];
+    for (unsigned int i = 0; i < sizeof(vcode_keycode_table) / sizeof(vcode_keycode_table[0]); i++) {
+        if (vcode == vcode_keycode_table[i][0]) {
+            keycode = vcode_keycode_table[i][1];
             break;
         }
     }

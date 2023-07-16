@@ -121,7 +121,7 @@ bool dispatch_key_press(uint64_t timestamp, CGEventRef event_ref) {
     uio_event.type = EVENT_KEY_PRESSED;
     uio_event.mask = get_modifiers();
 
-    uio_event.data.keyboard.keycode = keycode_to_scancode(keycode);
+    uio_event.data.keyboard.keycode = keycode_to_vcode(keycode);
     uio_event.data.keyboard.rawcode = keycode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 
@@ -176,7 +176,7 @@ bool dispatch_key_release(uint64_t timestamp, CGEventRef event_ref) {
     uio_event.type = EVENT_KEY_RELEASED;
     uio_event.mask = get_modifiers();
 
-    uio_event.data.keyboard.keycode = keycode_to_scancode(keycode);
+    uio_event.data.keyboard.keycode = keycode_to_vcode(keycode);
     uio_event.data.keyboard.rawcode = keycode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 

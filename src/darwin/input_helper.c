@@ -82,9 +82,8 @@ static pthread_cond_t main_runloop_cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t main_runloop_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-// Scancode lookup table
-static const uint16_t scancode_keycode_table[][2] = {
-/*  { scancode,                keycode                  }, */
+static const uint16_t vcode_keycode_table[][2] = {
+/*  { vcode,                   keycode                  }, */
     { VC_UNDEFINED,            kVK_Undefined            },
     { VC_A,                    kVK_ANSI_A               },
     { VC_S,                    kVK_ANSI_S               },
@@ -354,25 +353,25 @@ static void initialize_modifiers() {
 }
 
 
-uint16_t keycode_to_scancode(UInt64 keycode) {
-    uint16_t scancode = VC_UNDEFINED;
+uint16_t keycode_to_vcode(UInt64 keycode) {
+    uint16_t vcode = VC_UNDEFINED;
 
-    for (unsigned int i = 0; i < sizeof(scancode_keycode_table) / sizeof(scancode_keycode_table[0]); i++) {
-        if (keycode == scancode_keycode_table[i][1]) {
-            scancode = scancode_keycode_table[i][0];
+    for (unsigned int i = 0; i < sizeof(vcode_keycode_table) / sizeof(vcode_keycode_table[0]); i++) {
+        if (keycode == vcode_keycode_table[i][1]) {
+            vcode = vcode_keycode_table[i][0];
             break;
         }
     }
 
-    return scancode;
+    return vcode;
 }
 
-UInt64 scancode_to_keycode(uint16_t scancode) {
+UInt64 vcode_to_keycode(uint16_t vcode) {
     UInt64 keycode = kVK_Undefined;
 
-    for (unsigned int i = 0; i < sizeof(scancode_keycode_table) / sizeof(scancode_keycode_table[0]); i++) {
-        if (scancode == scancode_keycode_table[i][0]) {
-            keycode = scancode_keycode_table[i][1];
+    for (unsigned int i = 0; i < sizeof(vcode_keycode_table) / sizeof(vcode_keycode_table[0]); i++) {
+        if (vcode == vcode_keycode_table[i][0]) {
+            keycode = vcode_keycode_table[i][1];
             break;
         }
     }
