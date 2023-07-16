@@ -215,6 +215,10 @@ uint16_t vkcode_to_uiocode(DWORD vk_code, DWORD flags) {
         }
     }
 
+    if (uiocode == VC_ENTER && flags & KEYEVENTF_EXTENDEDKEY) {
+        uiocode = VC_KP_ENTER;
+    }
+
     return uiocode;
 }
 
