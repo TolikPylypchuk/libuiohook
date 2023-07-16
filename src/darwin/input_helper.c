@@ -95,7 +95,7 @@ static const uint16_t vcode_keycode_table[][2] = {
     { VC_X,                    kVK_ANSI_X               },
     { VC_C,                    kVK_ANSI_C               },
     { VC_V,                    kVK_ANSI_V               },
-    { VC_SECTION,              kVK_ISO_Section          },
+    { VC_102,                  kVK_ISO_Section          },
     { VC_B,                    kVK_ANSI_B               },
     { VC_Q,                    kVK_ANSI_Q               },
     { VC_W,                    kVK_ANSI_W               },

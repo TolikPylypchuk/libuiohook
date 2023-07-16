@@ -542,7 +542,7 @@ static int refresh_locale_list() {
 }
 
 // Returns the number of chars written to the buffer.
-SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, LPWORD char_types, int size) {
+SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size) {
     // Get the thread id that currently has focus and ask for its current locale.
     DWORD focus_pid = GetWindowThreadProcessId(GetForegroundWindow(), NULL);
     HKL locale_id = GetKeyboardLayout(focus_pid);
@@ -604,14 +604,6 @@ SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, LPWORD c
         // Look up the Unicode code for the key without changing the keyboard state.
         int result = ToUnicodeEx(keycode, scancode, keyboard_state, buffer, size, 1 << 2, locale_current->id);
         charCount = result > 0 ? result : 0;
-
-        success = GetStringTypeW(CT_CTYPE1, buffer, size, char_types);
-
-        if (!success) {
-            logger(LOG_LEVEL_ERROR, "%s [%u]: GetStringTypeW() failed! (%#lX)\n",
-                __FUNCTION__, __LINE__, (unsigned long)GetLastError());
-            return 0;
-        }
     }
 
     return charCount;

@@ -126,7 +126,7 @@ typedef struct tagKbdLayer {
 } KBDTABLES, *PKBDTABLES;               // __ptr64
 
 
-extern SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, PWORD char_types, int size);
+extern SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size);
 
 //extern DWORD unicode_to_keycode(wchar_t unicode);
 
