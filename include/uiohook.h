@@ -368,7 +368,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_ACCEPT                                0x001E
 #define VC_CONVERT                               0x001C
 #define VC_NONCONVERT                            0x001D
-#define VC_COMPOSE                               0xFF20
 #define VC_IME_ON                                0x0109
 #define VC_IME_OFF                               0x0108
 #define VC_MODE_CHANGE                           0x0107
