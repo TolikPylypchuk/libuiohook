@@ -215,6 +215,10 @@ unsigned short keycode_to_vcode(DWORD vk_code, DWORD flags) {
         }
     }
 
+    if (vcode == VC_ENTER && flags & KEYEVENTF_EXTENDEDKEY) {
+        vcode = VC_KP_ENTER;
+    }
+
     return vcode;
 }
 

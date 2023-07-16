@@ -266,7 +266,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_NUM_LOCK                              0x0090
 
 #define VC_KP_CLEAR                              0x000C
-
 #define VC_KP_DIVIDE                             0x006F
 #define VC_KP_MULTIPLY                           0x006A
 #define VC_KP_SUBTRACT                           0x006D
