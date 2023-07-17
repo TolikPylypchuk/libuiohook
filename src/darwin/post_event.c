@@ -327,3 +327,23 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
 
     return status;
 }
+
+UIOHOOK_API int hook_post_text(const uint16_t * const text) {
+    CGEventRef downEvent = CGEventCreateKeyboardEvent(NULL, 0, true);
+    CGEventRef upEvent = CGEventCreateKeyboardEvent(NULL, 0, false);
+
+    UniCharCount count = 0;
+
+    for (int i = 0; text[i] != 0; i++) {
+        count++;
+    }
+
+    CGEventKeyboardSetUnicodeString(downEvent, count, (UniChar*)text);
+    CGEventKeyboardSetUnicodeString(upEvent, count, (UniChar*)text);
+
+    CGEventPost(kCGSessionEventTap, downEvent);
+    CGEventPost(kCGSessionEventTap, upEvent);
+
+    CFRelease(downEvent);
+    CFRelease(upEvent);
+}
