@@ -526,7 +526,7 @@ extern "C" {
     UIOHOOK_API int hook_post_event(uiohook_event * const event);
 
     // Send text back to the system.
-    UIOHOOK_API int hook_post_text(const wchar_t * const text);
+    UIOHOOK_API int hook_post_text(const uint16_t * const text);
 
     // Insert the event hook.
     UIOHOOK_API int hook_run();

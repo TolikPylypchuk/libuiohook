@@ -305,11 +305,16 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
     return status;
 }
 
-UIOHOOK_API int hook_post_text(const wchar_t* const text) {
+UIOHOOK_API int hook_post_text(const uint16_t * const text) {
     int status = UIOHOOK_SUCCESS;
-    size_t length = wcslen(text);
+    
+    size_t count = 0;
 
-    INPUT *input = (INPUT*)calloc(length * 2, sizeof(INPUT));
+    for (int i = 0; text[i] != 0; i++) {
+        count++;
+    }
+
+    INPUT *input = (INPUT*)calloc(count * 2, sizeof(INPUT));
 
     if (input == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: failed to allocate memory: calloc!\n",
@@ -317,21 +322,21 @@ UIOHOOK_API int hook_post_text(const wchar_t* const text) {
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
 
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < count; i++) {
         input[i].type = INPUT_KEYBOARD;
         input[i].ki.wVk = 0;
         input[i].ki.wScan = (WORD)text[i];
         input[i].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYDOWN;
     }
 
-    for (int i = 0; i < length; i++) {
-        input[length + i].type = INPUT_KEYBOARD;
-        input[length + i].ki.wVk = 0;
-        input[length + i].ki.wScan = (WORD)text[i];
-        input[length + i].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+    for (int i = 0; i < count; i++) {
+        input[count + i].type = INPUT_KEYBOARD;
+        input[count + i].ki.wVk = 0;
+        input[count + i].ki.wScan = (WORD)text[i];
+        input[count + i].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
     }
 
-    if (!SendInput(length * 2, input, sizeof(INPUT))) {
+    if (!SendInput((UINT)count * 2, input, sizeof(INPUT))) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: SendInput() failed! (%#lX)\n",
             __FUNCTION__, __LINE__, (unsigned long)GetLastError());
         status = UIOHOOK_FAILURE;
