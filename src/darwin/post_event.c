@@ -29,6 +29,14 @@ static CGEventFlags current_modifier_mask = 0x00;
 static CGEventType current_motion_event = kCGEventMouseMoved;
 static CGMouseButton current_motion_button = 0;
 
+UIOHOOK_API uint64_t hook_get_post_text_delay_x11() {
+    // Not applicable on maOS, so does nothing
+    return 0;
+}
+
+UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay) {
+    // Not applicable on maOS, so does nothing
+}
 
 static int post_key_event(uiohook_event * const event, CGEventSourceRef src) {
     bool is_pressed;

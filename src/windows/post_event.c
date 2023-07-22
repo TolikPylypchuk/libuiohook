@@ -77,6 +77,15 @@ typedef struct {
     LONG y;
 } normalized_coordinate;
 
+UIOHOOK_API uint64_t hook_get_post_text_delay_x11() {
+    // Not applicable on Windows, so does nothing
+    return 0;
+}
+
+UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay) {
+    // Not applicable on Windows, so does nothing
+}
+
 static LONG get_absolute_coordinate(LONG coordinate, int screen_size) {
     return MulDiv((int) coordinate, MAX_WINDOWS_COORD_VALUE, screen_size);
 }
@@ -307,7 +316,7 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
 
 UIOHOOK_API int hook_post_text(const uint16_t * const text) {
     int status = UIOHOOK_SUCCESS;
-    
+
     size_t count = 0;
 
     for (int i = 0; text[i] != 0; i++) {

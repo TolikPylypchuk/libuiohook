@@ -528,6 +528,12 @@ extern "C" {
     // Send text back to the system.
     UIOHOOK_API int hook_post_text(const uint16_t * const text);
 
+    // Get the delay between character sending when posting text on X11.
+    UIOHOOK_API uint64_t hook_get_post_text_delay_x11();
+
+    // Set the delay between character sending when posting text on X11.
+    UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay);
+
     // Insert the event hook.
     UIOHOOK_API int hook_run();
 
