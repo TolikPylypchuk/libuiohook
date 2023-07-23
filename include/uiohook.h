@@ -30,6 +30,7 @@
 
 // System level errors.
 #define UIOHOOK_ERROR_OUT_OF_MEMORY              0x02
+#define UIOHOOK_ERROR_POST_TEXT_NULL             0x03
 
 // Unix specific errors.
 #define UIOHOOK_ERROR_X_OPEN_DISPLAY             0x20
