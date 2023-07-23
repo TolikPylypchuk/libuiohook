@@ -370,6 +370,10 @@ int post_keysym(KeySym keysym, KeyCode keycode) {
 }
 
 UIOHOOK_API int hook_post_text(const uint16_t * const text) {
+    if (text == NULL) {
+        return UIOHOOK_ERROR_POST_TEXT_NULL;
+    }
+
     if (helper_disp == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: XDisplay helper_disp is unavailable!\n",
                 __FUNCTION__, __LINE__);

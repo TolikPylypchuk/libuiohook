@@ -315,6 +315,10 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
 }
 
 UIOHOOK_API int hook_post_text(const uint16_t * const text) {
+    if (text == NULL) {
+        return UIOHOOK_ERROR_POST_TEXT_NULL;
+    }
+
     int status = UIOHOOK_SUCCESS;
 
     size_t count = 0;
