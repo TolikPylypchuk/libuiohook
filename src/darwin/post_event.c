@@ -256,10 +256,6 @@ static int post_mouse_event(uiohook_event * const event, CGEventSourceRef src) {
 }
 
 static int post_mouse_wheel_event(uiohook_event * const event, CGEventSourceRef src) {
-    // FIXME Should I create a source event with the coords?
-    // It seems to automagically use the current location of the cursor.
-    // Two options: Query the mouse, move it to x/y, scroll, then move back
-    // OR disable x/y for scroll events on Windows & X11.
     CGScrollEventUnit scroll_unit;
     if (event->data.wheel.type == WHEEL_BLOCK_SCROLL) {
         // Scrolling data is line-based.
@@ -269,12 +265,21 @@ static int post_mouse_wheel_event(uiohook_event * const event, CGEventSourceRef 
         scroll_unit = kCGScrollEventUnitPixel;
     }
 
+    int32_t wheel1 = 0;
+    int32_t wheel2 = 0;
+
+    if (event->data.wheel.direction == WHEEL_HORIZONTAL_DIRECTION) {
+        wheel2 = event->data.wheel.rotation;
+    } else {
+        wheel1 = event->data.wheel.rotation;
+    }
+
     CGEventRef cg_event = CGEventCreateScrollWheelEvent(
         src,
-        kCGScrollEventUnitLine,
-        // TODO Currently only support 1 wheel axis.
-        (CGWheelCount) 1, // 1 for Y-only, 2 for Y-X, 3 for Y-X-Z
-        event->data.wheel.rotation // TODO Is this value correct? Do we need PPL?
+        scroll_unit,
+        (CGWheelCount) 2, // 1 for Y-only, 2 for Y-X, 3 for Y-X-Z
+        wheel1, // TODO Is this value correct? Do we need PPL?
+        wheel2
     );
 
     if (cg_event == NULL) {

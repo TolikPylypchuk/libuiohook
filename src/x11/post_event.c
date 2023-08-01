@@ -155,8 +155,16 @@ static int post_mouse_wheel_event(uiohook_event * const event) {
     };
 
     // Wheel events should be the same as click events on X11.
-    // type, amount and rotation
-    unsigned int button = button_map_lookup(event->data.wheel.rotation < 0 ? WheelUp : WheelDown);
+
+    uint8_t wheel_button = 0;
+
+    if (event->data.wheel.direction == WHEEL_HORIZONTAL_DIRECTION) {
+        wheel_button = event->data.wheel.rotation > 0 ? WheelRight : WheelLeft;
+    } else {
+        wheel_button = event->data.wheel.rotation > 0 ? WheelUp : WheelDown;
+    }
+
+    unsigned int button = button_map_lookup(wheel_button);
 
     if (XTestFakeButtonEvent(helper_disp, button, True, 0) != 0) {
         status = UIOHOOK_SUCCESS;
