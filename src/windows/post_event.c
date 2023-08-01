@@ -161,20 +161,23 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
     input->mi.dwExtraInfo = 0;
     input->mi.time = 0; // GetSystemTime();
 
-    LARGESTNEGATIVECOORDINATES lnc = get_largest_negative_coordinates();
+    if (event->type != EVENT_MOUSE_WHEEL) {
+        LARGESTNEGATIVECOORDINATES lnc = get_largest_negative_coordinates();
 
-    normalized_coordinate nc;
-    if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
-        POINT p;
-        if (GetCursorPos(&p)) {
-            nc = normalize_coordinates(p.x + event->data.mouse.x, p.y + event->data.mouse.y, screen_width, screen_height, lnc);
+        normalized_coordinate nc;
+
+        if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
+            POINT p;
+            if (GetCursorPos(&p)) {
+                nc = normalize_coordinates(p.x + event->data.mouse.x, p.y + event->data.mouse.y, screen_width, screen_height, lnc);
+            }
+        } else {
+            nc = normalize_coordinates(event->data.mouse.x, event->data.mouse.y, screen_width, screen_height, lnc);
         }
-    } else {
-        nc = normalize_coordinates(event->data.mouse.x, event->data.mouse.y, screen_width, screen_height, lnc);
-    }
 
-    input->mi.dy = nc.y;
-    input->mi.dx = nc.x;
+        input->mi.dy = nc.y;
+        input->mi.dx = nc.x;
+    }
 
     switch (event->type) {
         case EVENT_MOUSE_PRESSED:
@@ -238,16 +241,19 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
                 event->type = EVENT_MOUSE_MOVED;
                 // TODO Remember to check the status here.
                 hook_post_event(event);
-                event->type = EVENT_MOUSE_PRESSED;
+                event->type = EVENT_MOUSE_RELEASED;
             }
 
             break;
 
         case EVENT_MOUSE_WHEEL:
-            input->mi.dwFlags = MOUSEEVENTF_WHEEL;
-
-            // type, amount and rotation?
-            input->mi.mouseData = event->data.wheel.rotation;
+            if (event->data.wheel.direction == WHEEL_HORIZONTAL_DIRECTION) {
+                input->mi.dwFlags = (DWORD)MOUSEEVENTF_HWHEEL;
+                input->mi.mouseData = (DWORD)(event->data.wheel.rotation * -1);
+            } else {
+                input->mi.dwFlags = (DWORD)MOUSEEVENTF_WHEEL;
+                input->mi.mouseData = (DWORD)event->data.wheel.rotation;
+            }
             break;
 
         case EVENT_MOUSE_DRAGGED:
