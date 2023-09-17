@@ -210,43 +210,40 @@ static int post_mouse_event(uiohook_event * const event, CGEventSourceRef src) {
             return UIOHOOK_FAILURE;
     }
 
-    CGEventRef cg_event;
+    CGPoint point;
+
     if (event->type == EVENT_MOUSE_PRESSED_IGNORE_COORDS || event->type == EVENT_MOUSE_RELEASED_IGNORE_COORDS) {
         CGEventRef null_event = CGEventCreate(NULL);
-        cg_event = CGEventCreateMouseEvent(
-                src,
-                type,
-                CGEventGetLocation(null_event),
-                button
-        );
+        point = CGEventGetLocation(null_event);
         CFRelease(null_event);
+    } else if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
+        CGEventRef null_event = CGEventCreate(NULL);
+        point = CGEventGetLocation(null_event);
+        CFRelease(null_event);
+        point.x += (CGFloat) event->data.mouse.x;
+        point.y += (CGFloat) event->data.mouse.y;
     } else {
-        CGPoint point;
-        if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
-            CGEventRef null_event = CGEventCreate(NULL);
-            point = CGEventGetLocation(null_event);
-            CFRelease(null_event);
-            point.x += (CGFloat) event->data.mouse.x;
-            point.y += (CGFloat) event->data.mouse.y;
-        } else {
-            point = CGPointMake(
-                    (CGFloat) event->data.mouse.x,
-                    (CGFloat) event->data.mouse.y
-            );
-        }
-
-        cg_event = CGEventCreateMouseEvent(
-                src,
-                type,
-                point,
-                button
+        point = CGPointMake(
+                (CGFloat) event->data.mouse.x,
+                (CGFloat) event->data.mouse.y
         );
     }
+
+    CGEventRef cg_event = CGEventCreateMouseEvent(
+            src,
+            type,
+            point,
+            button
+    );
 
     if (cg_event == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: CGEventCreateMouseEvent failed!\n",
                 __FUNCTION__, __LINE__);
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
+    }
+
+    if (event->data.mouse.clicks != 0) {
+        CGEventSetIntegerValueField(cg_event, kCGMouseEventClickState, event->data.mouse.clicks);
     }
 
     CGEventPost(kCGHIDEventTap, cg_event); // kCGSessionEventTap also works.
