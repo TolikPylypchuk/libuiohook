@@ -1,5 +1,6 @@
 #include "monitor_helper.h"
 
+static BOOL monitors_enumerated = FALSE;
 static LONG left = 0;
 static LONG top = 0;
 
@@ -25,11 +26,17 @@ void enumerate_displays()
     top = 0;
 
     EnumDisplayMonitors(NULL, NULL, enum_monitor_proc, 0);
+
+    monitors_enumerated = TRUE;
 }
 
-LARGESTNEGATIVECOORDINATES get_largest_negative_coordinates()
+largest_negative_coordinates get_largest_negative_coordinates()
 {
-    LARGESTNEGATIVECOORDINATES lnc = {
+    if (!monitors_enumerated) {
+        enumerate_displays();
+    }
+
+    largest_negative_coordinates lnc = {
             .left = left,
             .top = top
     };

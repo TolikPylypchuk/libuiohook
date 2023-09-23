@@ -48,7 +48,7 @@
 #define KEYEVENTF_KEYDOWN       0x0000
 #endif
 
-#define MAX_WINDOWS_COORD_VALUE (1 << 16)
+#define MAX_WINDOWS_COORD_VALUE ((1 << 16) - 1)
 
 // http://letcoderock.blogspot.fr/2011/10/sendinput-with-shift-key-not-work.html
 // https://learn.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input?redirectedfrom=MSDN#extended-key-flag
@@ -75,7 +75,7 @@ static const uint16_t extend_key_table[] = {
 typedef struct {
     LONG x;
     LONG y;
-} normalized_coordinate;
+} normalized_coordinates;
 
 UIOHOOK_API uint64_t hook_get_post_text_delay_x11() {
     // Not applicable on Windows, so does nothing
@@ -90,21 +90,16 @@ static LONG get_absolute_coordinate(LONG coordinate, int screen_size) {
     return MulDiv((int) coordinate, MAX_WINDOWS_COORD_VALUE, screen_size);
 }
 
-static normalized_coordinate normalize_coordinates(LONG x, LONG y, int screen_width, int screen_height, LARGESTNEGATIVECOORDINATES lnc) {
+static normalized_coordinates normalize_coordinates(LONG x, LONG y) {
+    uint16_t screen_width  = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    uint16_t screen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+    largest_negative_coordinates lnc = get_largest_negative_coordinates();
+
     x += abs(lnc.left);
     y += abs(lnc.top);
 
-    // Prevent clicking 0 coordinates to prevent monitor flicker
-    if (x == 0)
-    {
-        x++;
-    }
-    if (y == 0)
-    {
-        y++;
-    }
-
-    normalized_coordinate nc = {
+    normalized_coordinates nc = {
             .x = get_absolute_coordinate(x, screen_width),
             .y = get_absolute_coordinate(y, screen_height)
     };
@@ -153,27 +148,24 @@ static int map_keyboard_event(uiohook_event * const event, INPUT * const input) 
 }
 
 static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
-    uint16_t screen_width  = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-    uint16_t screen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-
     input->type = INPUT_MOUSE;
     input->mi.mouseData = 0;
     input->mi.dwExtraInfo = 0;
     input->mi.time = 0; // GetSystemTime();
 
     if (event->type != EVENT_MOUSE_WHEEL) {
-        LARGESTNEGATIVECOORDINATES lnc = get_largest_negative_coordinates();
-
-        normalized_coordinate nc;
+        LONG x = event->data.mouse.x;
+        LONG y = event->data.mouse.y;
 
         if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
             POINT p;
             if (GetCursorPos(&p)) {
-                nc = normalize_coordinates(p.x + event->data.mouse.x, p.y + event->data.mouse.y, screen_width, screen_height, lnc);
+                x += p.x;
+                y += p.y;
             }
-        } else {
-            nc = normalize_coordinates(event->data.mouse.x, event->data.mouse.y, screen_width, screen_height, lnc);
         }
+
+        normalized_coordinates nc = normalize_coordinates(x, y);
 
         input->mi.dy = nc.y;
         input->mi.dx = nc.x;
@@ -259,7 +251,7 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
         case EVENT_MOUSE_DRAGGED:
         case EVENT_MOUSE_MOVED:
         case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
-            input->mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
+            input->mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK;
             break;
 
         default:

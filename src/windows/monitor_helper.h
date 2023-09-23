@@ -3,8 +3,8 @@
 typedef struct {
     LONG left;
     LONG top;
-} LARGESTNEGATIVECOORDINATES;
+} largest_negative_coordinates;
 
 extern void enumerate_displays();
 
-extern LARGESTNEGATIVECOORDINATES get_largest_negative_coordinates();
+extern largest_negative_coordinates get_largest_negative_coordinates();
