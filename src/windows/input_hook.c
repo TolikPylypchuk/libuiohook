@@ -28,7 +28,6 @@
 // Thread and hook handles.
 static DWORD hook_thread_id = 0;
 static HHOOK keyboard_event_hhook = NULL, mouse_event_hhook = NULL;
-static HWINEVENTHOOK win_event_hhook = NULL;
 static HWND invisible_win_hwnd = NULL;
 static BOOL invisible_win_class_initialized = FALSE;
 
@@ -69,12 +68,6 @@ static void initialize_modifiers() {
 }
 
 void unregister_running_hooks() {
-    // Stop the event hook and any timer still running.
-    if (win_event_hhook != NULL) {
-        UnhookWinEvent(win_event_hhook);
-        win_event_hhook = NULL;
-    }
-
     // Destroy the native hooks.
     if (keyboard_event_hhook != NULL) {
         UnhookWindowsHookEx(keyboard_event_hhook);
@@ -210,17 +203,13 @@ LRESULT CALLBACK mouse_hook_event_proc(int nCode, WPARAM wParam, LPARAM lParam) 
             consumed = dispatch_mouse_wheel(mshook, WHEEL_VERTICAL_DIRECTION);
             break;
 
-        /* For horizontal scroll wheel support.
-         * NOTE Windows >= Vista
-         * case 0x020E:
-         */
         case WM_MOUSEHWHEEL:
             consumed = dispatch_mouse_wheel(mshook, WHEEL_HORIZONTAL_DIRECTION);
             break;
 
         default:
             // In theory this *should* never execute.
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Unhandled Windows mouse event: %#X.\n",
+            logger(LOG_LEVEL_WARN, "%s [%u]: Unhandled Windows mouse event: %#X.\n",
                     __FUNCTION__, __LINE__, (unsigned int) wParam);
             break;
     }
@@ -234,45 +223,6 @@ LRESULT CALLBACK mouse_hook_event_proc(int nCode, WPARAM wParam, LPARAM lParam) 
     }
 
     return hook_result;
-}
-
-// Callback function that handles events.
-void CALLBACK win_hook_event_proc(HWINEVENTHOOK hook, DWORD event, HWND hWnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
-    switch (event) {
-        case EVENT_OBJECT_NAMECHANGE:
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Restarting Windows input hook on window event: %#X.\n",
-                    __FUNCTION__, __LINE__, event);
-
-            // Remove any keyboard or mouse hooks that are still running.
-            if (keyboard_event_hhook != NULL) {
-                UnhookWindowsHookEx(keyboard_event_hhook);
-            }
-
-            if (mouse_event_hhook != NULL) {
-                UnhookWindowsHookEx(mouse_event_hhook);
-            }
-
-            // Restart the event hooks.
-            keyboard_event_hhook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_event_proc, hInst, 0);
-            mouse_event_hhook = SetWindowsHookEx(WH_MOUSE_LL, mouse_hook_event_proc, hInst, 0);
-
-            // Re-initialize modifier masks.
-            initialize_modifiers();
-
-            // FIXME We should compare the modifier mask before and after the restart
-            // to determine if we should synthesize missing events.
-
-            // Check for event hook error.
-            if (keyboard_event_hhook == NULL || mouse_event_hhook == NULL) {
-                logger(LOG_LEVEL_ERROR, "%s [%u]: SetWindowsHookEx() failed! (%#lX)\n",
-                        __FUNCTION__, __LINE__, (unsigned long) GetLastError());
-            }
-            break;
-
-        default:
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Unhandled Windows window event: %#X.\n",
-                    __FUNCTION__, __LINE__, event);
-    }
 }
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -382,8 +332,7 @@ UIOHOOK_API int hook_run() {
     }
 
     // Create invisible window to receive monitor change events
-    if(!create_invisible_window() || invisible_win_hwnd == NULL)
-    {
+    if (!create_invisible_window() || invisible_win_hwnd == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Create invisible window failed! (%#lX)\n",
                __FUNCTION__, __LINE__, (unsigned long) GetLastError());
 
@@ -394,21 +343,8 @@ UIOHOOK_API int hook_run() {
     keyboard_event_hhook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_event_proc, hInst, 0);
     mouse_event_hhook = SetWindowsHookEx(WH_MOUSE_LL, mouse_hook_event_proc, hInst, 0);
 
-    // Create a window event hook to listen for capture change.
-    win_event_hhook = SetWinEventHook(
-            EVENT_OBJECT_NAMECHANGE, EVENT_OBJECT_NAMECHANGE,
-            NULL,
-            win_hook_event_proc,
-            0, 0,
-            WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
-
     // If we did not encounter a problem, start processing events.
     if (keyboard_event_hhook != NULL && mouse_event_hhook != NULL) {
-        if (win_event_hhook == NULL) {
-            logger(LOG_LEVEL_WARN, "%s [%u]: SetWinEventHook() failed!\n",
-                    __FUNCTION__, __LINE__);
-        }
-
         logger(LOG_LEVEL_DEBUG, "%s [%u]: SetWindowsHookEx() successful.\n",
                 __FUNCTION__, __LINE__);
 

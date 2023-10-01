@@ -31,7 +31,7 @@
 static uint16_t modifier_mask;
 
 static const uint16_t vcode_keycode_table[][2] = {
-/*  { vcode,               vk_code                }, */
+/*  { vcode,                  vk_code                }, */
     { VC_CANCEL,              VK_CANCEL              },
     { VC_BACKSPACE,           VK_BACK                },
     { VC_TAB,                 VK_TAB                 },
