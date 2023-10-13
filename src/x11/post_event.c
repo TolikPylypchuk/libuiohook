@@ -39,6 +39,7 @@ UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay) {
 }
 
 static int post_key_event(uiohook_event * const event) {
+    load_key_mappings();
     KeyCode keycode = vcode_to_keycode(event->data.keyboard.keycode);
     if (keycode == 0x0000) {
         logger(LOG_LEVEL_WARN, "%s [%u]: Unable to lookup scancode: %li\n",
