@@ -329,8 +329,7 @@ UIOHOOK_API int hook_run() {
     }
 
     // Create invisible window to receive monitor change events
-    if(!create_invisible_window() || invisible_win_hwnd == NULL)
-    {
+    if (!create_invisible_window() || invisible_win_hwnd == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Create invisible window failed! (%#lX)\n",
                __FUNCTION__, __LINE__, (unsigned long) GetLastError());
 

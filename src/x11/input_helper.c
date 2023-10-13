@@ -42,6 +42,7 @@ typedef struct _key_mapping {
 
 static unsigned char *mouse_button_table;
 Display *helper_disp;  // Where do we open this display?  FIXME Use the ctrl display via init param
+static bool key_mappings_loaded = false;
 
 static uint16_t modifier_mask;
 
@@ -650,7 +651,11 @@ size_t event_to_unicode(XKeyEvent *x_event, wchar_t *surrogate, size_t length, K
     return count;
 }
 
-void load_input_helper() {
+void load_key_mappings() {
+    if (key_mappings_loaded) {
+        return;
+    }
+
     int ev, err, major = XkbMajorVersion, minor = XkbMinorVersion, res;
     Display* dpy = XkbOpenDisplay(NULL, &ev, &err, &major, &minor, &res);
 
@@ -689,6 +694,12 @@ void load_input_helper() {
 
     XkbFreeKeyboard(xkb, XkbAllComponentsMask, True);
     XFree(dpy);
+
+    key_mappings_loaded = true;
+}
+
+void load_input_helper() {
+    load_key_mappings();
 
     // Setup memory for mouse button mapping.
     mouse_button_table = malloc(sizeof(unsigned char) * BUTTON_TABLE_MAX);

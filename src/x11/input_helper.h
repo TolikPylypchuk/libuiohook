@@ -76,6 +76,8 @@ extern uint8_t button_map_lookup(uint8_t button);
 /* Enable detectable auto-repeat for keys */
 extern bool enable_key_repeat();
 
+extern void load_key_mappings();
+
 /* Initialize items required for KeyCodeToKeySym() and KeySymToUnicode()
  * functionality.  This method is called by OnLibraryLoad() and may need to be
  * called in combination with UnloadInputHelper() if the native keyboard layout
