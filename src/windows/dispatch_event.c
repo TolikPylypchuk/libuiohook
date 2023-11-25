@@ -77,8 +77,6 @@ static void dispatch_event(uiohook_event *const event) {
 
 bool dispatch_hook_enable() {
     bool consumed = false;
-    // Initialize native input helper functions.
-    load_input_helper();
 
     // Get the local system time in UNIX epoch form.
     #ifdef USE_EPOCH_TIME
@@ -120,9 +118,6 @@ bool dispatch_hook_disable() {
     // Fire the hook stop event.
     dispatch_event(&uio_event);
     consumed = uio_event.reserved & 0x01;
-
-    // Deinitialize native input helper functions.
-    unload_input_helper();
 
     return consumed;
 }
