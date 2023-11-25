@@ -591,7 +591,7 @@ SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size
 
         BYTE keyboard_state[256] = { 0 };
         GetKeyState(0); // This apparently forces GetKeyboardState to get more up-to-date data.
-        
+
         // Get current keyboard state (to know which modifiers have been pressed, as well as Caps Lock).
         BOOL success = GetKeyboardState(keyboard_state);
 
@@ -601,8 +601,12 @@ SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size
             return 0;
         }
 
+        UINT flags =
+                (1 << 0) | // No Alt handling - prevents editors from inserting characters on Alt+Arrow
+                (1 << 2);  // No keyboard state change (only Windows 10 1607 or later)
+
         // Look up the Unicode code for the key without changing the keyboard state.
-        int result = ToUnicodeEx(keycode, scancode, keyboard_state, buffer, size, 1 << 2, locale_current->id);
+        int result = ToUnicodeEx(keycode, scancode, keyboard_state, buffer, size, flags, locale_current->id);
         charCount = result > 0 ? result : 0;
     }
 
