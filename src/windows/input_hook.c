@@ -355,13 +355,6 @@ UIOHOOK_API int hook_run() {
         uint64_t timestamp = GetMessageTime();
         #endif
 
-        // Initialize native input helper.
-        int input_helper_status = load_input_helper();
-        if (input_helper_status != UIOHOOK_SUCCESS) {
-            unload_input_helper();
-            return input_helper_status;
-        }
-
         // Windows does not have a hook start event or callback so we need to manually fake it.
         dispatch_hook_enable(timestamp);
 
@@ -382,9 +375,6 @@ UIOHOOK_API int hook_run() {
         // We must explicitly call the cleanup handler because Windows does not
         // provide a thread cleanup method like POSIX pthread_cleanup_push/pop.
         dispatch_hook_disable(timestamp);
-
-        // Uninitialize the native input helper.
-        unload_input_helper();
     } else {
         logger(LOG_LEVEL_ERROR, "%s [%u]: SetWindowsHookEx() failed! (%#lX)\n",
                 __FUNCTION__, __LINE__, (unsigned long) GetLastError());
