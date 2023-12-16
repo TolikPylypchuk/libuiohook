@@ -84,7 +84,6 @@ static pthread_mutex_t main_runloop_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static const uint16_t vcode_keycode_table[][2] = {
 /*  { vcode,                   keycode                  }, */
-    { VC_UNDEFINED,            kVK_Undefined            },
     { VC_A,                    kVK_ANSI_A               },
     { VC_S,                    kVK_ANSI_S               },
     { VC_D,                    kVK_ANSI_D               },
