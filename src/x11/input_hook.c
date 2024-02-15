@@ -60,6 +60,9 @@ typedef struct _hook_info {
 } hook_info;
 static hook_info *hook;
 
+static bool keyboard = true;
+static bool mouse = true;
+
 #ifdef USE_EPOCH_TIME
 /* Get the current timestamp in unix epoch time. */
 static uint64_t get_unix_timestamp() {
@@ -99,23 +102,33 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
         case XRecordFromServer:
             switch (data->type) {
                 case KeyPress:
-                    dispatch_key_press(timestamp, (XKeyPressedEvent *) &event);
+                    if (keyboard) {
+                        dispatch_key_press(timestamp, (XKeyPressedEvent *) &event);
+                    }
                     break;
 
                 case KeyRelease:
-                    dispatch_key_release(timestamp, (XKeyReleasedEvent *) &event);
+                    if (keyboard) {
+                        dispatch_key_release(timestamp, (XKeyReleasedEvent *) &event);
+                    }
                     break;
 
                 case ButtonPress:
-                    dispatch_mouse_press(timestamp, (XButtonPressedEvent *) &event);
+                    if (mouse) {
+                        dispatch_mouse_press(timestamp, (XButtonPressedEvent *) &event);
+                    }
                     break;
 
                 case ButtonRelease:
-                    dispatch_mouse_release(timestamp, (XButtonReleasedEvent *) &event);
+                    if (mouse) {
+                        dispatch_mouse_release(timestamp, (XButtonReleasedEvent *) &event);
+                    }
                     break;
 
                 case MotionNotify:
-                    dispatch_mouse_move(timestamp, (XMotionEvent *) &event);
+                    if (mouse) {
+                        dispatch_mouse_move(timestamp, (XMotionEvent *) &event);
+                    }
                     break;
 
                 case MappingNotify:
@@ -287,7 +300,7 @@ static int xrecord_start() {
     return status;
 }
 
-UIOHOOK_API int hook_run() {
+int run() {
     // Hook data for future cleanup.
     hook = malloc(sizeof(hook_info));
     if (hook == NULL) {
@@ -307,6 +320,24 @@ UIOHOOK_API int hook_run() {
             __FUNCTION__, __LINE__);
 
     return status;
+}
+
+UIOHOOK_API int hook_run() {
+    keyboard = true;
+    mouse = true;
+    return run();
+}
+
+UIOHOOK_API int hook_run_keyboard() {
+    keyboard = true;
+    mouse = false;
+    return run();
+}
+
+UIOHOOK_API int hook_run_mouse() {
+    keyboard = false;
+    mouse = true;
+    return run();
 }
 
 UIOHOOK_API int hook_stop() {

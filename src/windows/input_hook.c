@@ -307,7 +307,7 @@ static int create_invisible_window()
     return 1;
 }
 
-UIOHOOK_API int hook_run() {
+int run(bool run_keyboard_hook, bool run_mouse_hook) {
     int status = UIOHOOK_FAILURE;
 
     // Set the thread id we want to signal later.
@@ -337,13 +337,22 @@ UIOHOOK_API int hook_run() {
     }
 
     // Create the native hooks.
-    keyboard_event_hhook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_event_proc, hInst, 0);
-    mouse_event_hhook = SetWindowsHookEx(WH_MOUSE_LL, mouse_hook_event_proc, hInst, 0);
+
+    if (run_keyboard_hook) {
+        keyboard_event_hhook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_event_proc, hInst, 0);
+    }
+
+    if (run_mouse_hook) {
+        mouse_event_hhook = SetWindowsHookEx(WH_MOUSE_LL, mouse_hook_event_proc, hInst, 0);
+    }
 
     // If we did not encounter a problem, start processing events.
-    if (keyboard_event_hhook != NULL && mouse_event_hhook != NULL) {
+    if ((!run_keyboard_hook || keyboard_event_hhook != NULL) && (!run_mouse_hook || mouse_event_hhook != NULL)) {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: SetWindowsHookEx() successful.\n",
                 __FUNCTION__, __LINE__);
+
+        // Check and setup modifiers.
+        initialize_modifiers(run_keyboard_hook, run_mouse_hook);
 
         // Set the exit status.
         status = UIOHOOK_SUCCESS;
@@ -386,6 +395,18 @@ UIOHOOK_API int hook_run() {
     unregister_running_hooks();
 
     return status;
+}
+
+UIOHOOK_API int hook_run() {
+    return run(true, true);
+}
+
+UIOHOOK_API int hook_run_keyboard() {
+    return run(true, false);
+}
+
+UIOHOOK_API int hook_run_mouse() {
+    return run(false, true);
 }
 
 UIOHOOK_API int hook_stop() {
