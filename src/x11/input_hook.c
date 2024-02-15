@@ -72,7 +72,8 @@ static hook_info *hook;
 // Virtual event pointer.
 static uiohook_event event;
 
-
+static bool keyboard = true;
+static bool mouse = true;
 
 
 void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
@@ -93,23 +94,33 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
         case XRecordFromServer:
             switch (data->type) {
                 case KeyPress:
-                    dispatch_key_press((XKeyPressedEvent *) &event);
+                    if (keyboard) {
+                        dispatch_key_press((XKeyPressedEvent *) &event);
+                    }
                     break;
 
                 case KeyRelease:
-                    dispatch_key_release((XKeyReleasedEvent *) &event);
+                    if (keyboard) {
+                        dispatch_key_release((XKeyReleasedEvent *) &event);
+                    }
                     break;
 
                 case ButtonPress:
-                    dispatch_mouse_press((XButtonPressedEvent *) &event);
+                    if (mouse) {
+                        dispatch_mouse_press((XButtonPressedEvent *) &event);
+                    }
                     break;
 
                 case ButtonRelease:
-                    dispatch_mouse_release((XButtonReleasedEvent *) &event);
+                    if (mouse) {
+                        dispatch_mouse_release((XButtonReleasedEvent *) &event);
+                    }
                     break;
 
                 case MotionNotify:
-                    dispatch_mouse_move((XMotionEvent *) &event);
+                    if (mouse) {
+                        dispatch_mouse_move((XMotionEvent *) &event);
+                    }
                     break;
 
                 case MappingNotify:
@@ -322,7 +333,7 @@ static int xrecord_start() {
     return status;
 }
 
-UIOHOOK_API int hook_run() {
+int run() {
     // Hook data for future cleanup.
     hook = malloc(sizeof(hook_info));
     if (hook == NULL) {
@@ -350,6 +361,24 @@ UIOHOOK_API int hook_run() {
             __FUNCTION__, __LINE__);
 
     return status;
+}
+
+UIOHOOK_API int hook_run() {
+    keyboard = true;
+    mouse = true;
+    return run();
+}
+
+UIOHOOK_API int hook_run_keyboard() {
+    keyboard = true;
+    mouse = false;
+    return run();
+}
+
+UIOHOOK_API int hook_run_mouse() {
+    keyboard = false;
+    mouse = true;
+    return run();
 }
 
 UIOHOOK_API int hook_stop() {

@@ -43,28 +43,32 @@ static FILETIME system_time;
 #endif
 
 // Initialize the modifier mask to the current modifiers.
-static void initialize_modifiers() {
+static void initialize_modifiers(bool keyboard, bool mouse) {
     current_modifiers = 0x0000;
 
-    // NOTE We are checking the high order bit, so it will be < 0 for a singed short.
-    if (GetKeyState(VK_LSHIFT)   < 0) { set_modifier_mask(MASK_SHIFT_L);     }
-    if (GetKeyState(VK_RSHIFT)   < 0) { set_modifier_mask(MASK_SHIFT_R);     }
-    if (GetKeyState(VK_LCONTROL) < 0) { set_modifier_mask(MASK_CTRL_L);      }
-    if (GetKeyState(VK_RCONTROL) < 0) { set_modifier_mask(MASK_CTRL_R);      }
-    if (GetKeyState(VK_LMENU)    < 0) { set_modifier_mask(MASK_ALT_L);       }
-    if (GetKeyState(VK_RMENU)    < 0) { set_modifier_mask(MASK_ALT_R);       }
-    if (GetKeyState(VK_LWIN)     < 0) { set_modifier_mask(MASK_META_L);      }
-    if (GetKeyState(VK_RWIN)     < 0) { set_modifier_mask(MASK_META_R);      }
+    if (keyboard) {
+        // NOTE We are checking the high order bit, so it will be < 0 for a singed short.
+        if (GetKeyState(VK_LSHIFT)   < 0) { set_modifier_mask(MASK_SHIFT_L);     }
+        if (GetKeyState(VK_RSHIFT)   < 0) { set_modifier_mask(MASK_SHIFT_R);     }
+        if (GetKeyState(VK_LCONTROL) < 0) { set_modifier_mask(MASK_CTRL_L);      }
+        if (GetKeyState(VK_RCONTROL) < 0) { set_modifier_mask(MASK_CTRL_R);      }
+        if (GetKeyState(VK_LMENU)    < 0) { set_modifier_mask(MASK_ALT_L);       }
+        if (GetKeyState(VK_RMENU)    < 0) { set_modifier_mask(MASK_ALT_R);       }
+        if (GetKeyState(VK_LWIN)     < 0) { set_modifier_mask(MASK_META_L);      }
+        if (GetKeyState(VK_RWIN)     < 0) { set_modifier_mask(MASK_META_R);      }
 
-    if (GetKeyState(VK_LBUTTON)  < 0) { set_modifier_mask(MASK_BUTTON1);     }
-    if (GetKeyState(VK_RBUTTON)  < 0) { set_modifier_mask(MASK_BUTTON2);     }
-    if (GetKeyState(VK_MBUTTON)  < 0) { set_modifier_mask(MASK_BUTTON3);     }
-    if (GetKeyState(VK_XBUTTON1) < 0) { set_modifier_mask(MASK_BUTTON4);     }
-    if (GetKeyState(VK_XBUTTON2) < 0) { set_modifier_mask(MASK_BUTTON5);     }
+        if (GetKeyState(VK_NUMLOCK)  < 0) { set_modifier_mask(MASK_NUM_LOCK);    }
+        if (GetKeyState(VK_CAPITAL)  < 0) { set_modifier_mask(MASK_CAPS_LOCK);   }
+        if (GetKeyState(VK_SCROLL)   < 0) { set_modifier_mask(MASK_SCROLL_LOCK); }
+    }
 
-    if (GetKeyState(VK_NUMLOCK)  < 0) { set_modifier_mask(MASK_NUM_LOCK);    }
-    if (GetKeyState(VK_CAPITAL)  < 0) { set_modifier_mask(MASK_CAPS_LOCK);   }
-    if (GetKeyState(VK_SCROLL)   < 0) { set_modifier_mask(MASK_SCROLL_LOCK); }
+    if (mouse) {
+        if (GetKeyState(VK_LBUTTON)  < 0) { set_modifier_mask(MASK_BUTTON1);     }
+        if (GetKeyState(VK_RBUTTON)  < 0) { set_modifier_mask(MASK_BUTTON2);     }
+        if (GetKeyState(VK_MBUTTON)  < 0) { set_modifier_mask(MASK_BUTTON3);     }
+        if (GetKeyState(VK_XBUTTON1) < 0) { set_modifier_mask(MASK_BUTTON4);     }
+        if (GetKeyState(VK_XBUTTON2) < 0) { set_modifier_mask(MASK_BUTTON5);     }
+    }
 }
 
 void unregister_running_hooks() {
@@ -307,7 +311,7 @@ static int create_invisible_window()
     return 1;
 }
 
-UIOHOOK_API int hook_run() {
+int run(bool run_keyboard_hook, bool run_mouse_hook) {
     int status = UIOHOOK_FAILURE;
 
     // Set the thread id we want to signal later.
@@ -337,16 +341,22 @@ UIOHOOK_API int hook_run() {
     }
 
     // Create the native hooks.
-    keyboard_event_hhook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_event_proc, hInst, 0);
-    mouse_event_hhook = SetWindowsHookEx(WH_MOUSE_LL, mouse_hook_event_proc, hInst, 0);
+
+    if (run_keyboard_hook) {
+        keyboard_event_hhook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_event_proc, hInst, 0);
+    }
+
+    if (run_mouse_hook) {
+        mouse_event_hhook = SetWindowsHookEx(WH_MOUSE_LL, mouse_hook_event_proc, hInst, 0);
+    }
 
     // If we did not encounter a problem, start processing events.
-    if (keyboard_event_hhook != NULL && mouse_event_hhook != NULL) {
+    if ((!run_keyboard_hook || keyboard_event_hhook != NULL) && (!run_mouse_hook || mouse_event_hhook != NULL)) {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: SetWindowsHookEx() successful.\n",
                 __FUNCTION__, __LINE__);
 
         // Check and setup modifiers.
-        initialize_modifiers();
+        initialize_modifiers(run_keyboard_hook, run_mouse_hook);
 
         // Set the exit status.
         status = UIOHOOK_SUCCESS;
@@ -376,6 +386,18 @@ UIOHOOK_API int hook_run() {
     dispatch_hook_disable();
 
     return status;
+}
+
+UIOHOOK_API int hook_run() {
+    return run(true, true);
+}
+
+UIOHOOK_API int hook_run_keyboard() {
+    return run(true, false);
+}
+
+UIOHOOK_API int hook_run_mouse() {
+    return run(false, true);
 }
 
 UIOHOOK_API int hook_stop() {

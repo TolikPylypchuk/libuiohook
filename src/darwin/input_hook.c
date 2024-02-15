@@ -57,6 +57,9 @@ static struct timeval system_time;
 // re-enable the tap when it gets disabled by a timeout
 static event_runloop_info *hook = NULL;
 
+static bool keyboard = true;
+static bool mouse = true;
+
 #ifdef USE_EPOCH_TIME
 static uint64_t get_unix_timestamp() {
 	// Get the local system time in UTC.
@@ -81,34 +84,46 @@ static CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, C
     // Get the event class.
     switch (type) {
         case kCGEventKeyDown:
-            consumed = dispatch_key_press(timestamp, event_ref);
+            if (keyboard) {
+                consumed = dispatch_key_press(timestamp, event_ref);
+            }
             break;
 
         case kCGEventKeyUp:
-            consumed = dispatch_key_release(timestamp, event_ref);
+            if (keyboard) {
+                consumed = dispatch_key_release(timestamp, event_ref);
+            }
             break;
 
         case kCGEventFlagsChanged:
-            consumed = dispatch_modifier_change(timestamp, event_ref);
+            if (keyboard) {
+                consumed = dispatch_modifier_change(timestamp, event_ref);
+            }
             break;
 
         case NX_SYSDEFINED:
-            consumed = dispatch_system_key(timestamp, event_ref);
+            if (keyboard) {
+                consumed = dispatch_system_key(timestamp, event_ref);
+            }
             break;
 
         case kCGEventLeftMouseDown:
-            set_modifier_mask(MASK_BUTTON1);
-            consumed = dispatch_button_press(timestamp, event_ref, MOUSE_BUTTON1);
+            if (mouse) {
+                set_modifier_mask(MASK_BUTTON1);
+                consumed = dispatch_button_press(timestamp, event_ref, MOUSE_BUTTON1);
+            }
             break;
 
         case kCGEventRightMouseDown:
-            set_modifier_mask(MASK_BUTTON2);
-            consumed = dispatch_button_press(timestamp, event_ref, MOUSE_BUTTON2);
+            if (mouse) {
+                set_modifier_mask(MASK_BUTTON2);
+                consumed = dispatch_button_press(timestamp, event_ref, MOUSE_BUTTON2);
+            }
             break;
 
         case kCGEventOtherMouseDown:
             // Extra mouse buttons.
-            if (CGEventGetIntegerValueField(event_ref, kCGMouseEventButtonNumber) < UINT16_MAX) {
+            if (mouse && CGEventGetIntegerValueField(event_ref, kCGMouseEventButtonNumber) < UINT16_MAX) {
                 uint16_t button = (uint16_t) CGEventGetIntegerValueField(event_ref, kCGMouseEventButtonNumber) + 1;
 
                 // Add support for mouse 4 & 5.
@@ -123,18 +138,22 @@ static CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, C
             break;
 
         case kCGEventLeftMouseUp:
-            unset_modifier_mask(MASK_BUTTON1);
-            consumed = dispatch_button_release(timestamp, event_ref, MOUSE_BUTTON1);
+            if (mouse) {
+                unset_modifier_mask(MASK_BUTTON1);
+                consumed = dispatch_button_release(timestamp, event_ref, MOUSE_BUTTON1);
+            }
             break;
 
         case kCGEventRightMouseUp:
-            unset_modifier_mask(MASK_BUTTON2);
-            consumed = dispatch_button_release(timestamp, event_ref, MOUSE_BUTTON2);
+            if (mouse) {
+                unset_modifier_mask(MASK_BUTTON2);
+                consumed = dispatch_button_release(timestamp, event_ref, MOUSE_BUTTON2);
+            }
             break;
 
         case kCGEventOtherMouseUp:
             // Extra mouse buttons.
-            if (CGEventGetIntegerValueField(event_ref, kCGMouseEventButtonNumber) < UINT16_MAX) {
+            if (mouse && CGEventGetIntegerValueField(event_ref, kCGMouseEventButtonNumber) < UINT16_MAX) {
                 uint16_t button = (uint16_t) CGEventGetIntegerValueField(event_ref, kCGMouseEventButtonNumber) + 1;
 
                 // Add support for mouse 4 & 5.
@@ -153,20 +172,26 @@ static CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, C
         case kCGEventRightMouseDragged:
         case kCGEventOtherMouseDragged:
             // FIXME The drag flag is confusing.  Use prev x,y to determine click.
-            // Set the mouse dragged flag.
-            set_mouse_dragged(true);
-            consumed = dispatch_mouse_move(timestamp, event_ref);
+            if (mouse) {
+                // Set the mouse dragged flag.
+                set_mouse_dragged(true);
+                consumed = dispatch_mouse_move(timestamp, event_ref);
+            }
             break;
 
         case kCGEventMouseMoved:
-            // Set the mouse dragged flag.
-            set_mouse_dragged(false);
-            consumed = dispatch_mouse_move(timestamp, event_ref);
+            if (mouse) {
+                // Set the mouse dragged flag.
+                set_mouse_dragged(false);
+                consumed = dispatch_mouse_move(timestamp, event_ref);
+            }
             break;
 
 
         case kCGEventScrollWheel:
-            consumed = dispatch_mouse_wheel(timestamp, event_ref);
+            if (mouse) {
+                consumed = dispatch_mouse_wheel(timestamp, event_ref);
+            }
             break;
 
         default:
@@ -354,7 +379,7 @@ static void destroy_event_runloop_info(event_runloop_info **hook) {
     }
 }
 
-UIOHOOK_API int hook_run() {
+int run() {
     // Check for accessibility before we start the loop.
     if (!is_accessibility_enabled()) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Accessibility API is disabled!\n",
@@ -420,6 +445,24 @@ UIOHOOK_API int hook_run() {
             __FUNCTION__, __LINE__);
 
     return UIOHOOK_SUCCESS;
+}
+
+UIOHOOK_API int hook_run() {
+    keyboard = true;
+    mouse = true;
+    return run();
+}
+
+UIOHOOK_API int hook_run_keyboard() {
+    keyboard = true;
+    mouse = false;
+    return run();
+}
+
+UIOHOOK_API int hook_run_mouse() {
+    keyboard = false;
+    mouse = true;
+    return run();
 }
 
 UIOHOOK_API int hook_stop() {

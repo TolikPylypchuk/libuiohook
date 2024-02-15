@@ -535,8 +535,14 @@ extern "C" {
     // Set the delay between character sending when posting text on X11.
     UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay);
 
-    // Insert the event hook.
+    // Insert the event hook for all events.
     UIOHOOK_API int hook_run();
+
+    // Insert the event hook for keyboard events.
+    UIOHOOK_API int hook_run_keyboard();
+
+    // Insert the event hook for mouse events.
+    UIOHOOK_API int hook_run_mouse();
 
     // Withdraw the event hook.
     UIOHOOK_API int hook_stop();
