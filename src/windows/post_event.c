@@ -50,28 +50,6 @@
 
 #define MAX_WINDOWS_COORD_VALUE ((1 << 16) - 1)
 
-// http://letcoderock.blogspot.fr/2011/10/sendinput-with-shift-key-not-work.html
-// https://learn.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input?redirectedfrom=MSDN#extended-key-flag
-static const uint16_t extend_key_table[] = {
-    VC_ALT_R,
-    VC_CONTROL_R,
-    VC_INSERT,
-    VC_DELETE,
-    VC_HOME,
-    VC_END,
-    VC_PAGE_UP,
-    VC_PAGE_DOWN,
-    VC_UP,
-    VC_DOWN,
-    VC_LEFT,
-    VC_RIGHT,
-    VC_NUM_LOCK,
-    VC_PRINT_SCREEN,
-    VC_KP_ENTER,
-    VC_KP_DIVIDE,
-    VC_CANCEL
-};
-
 typedef struct {
     LONG x;
     LONG y;
@@ -133,14 +111,13 @@ static int map_keyboard_event(uiohook_event * const event, INPUT * const input) 
         return UIOHOOK_FAILURE;
     }
 
-    input->ki.wScan = MapVirtualKeyW(input->ki.wVk, MAPVK_VK_TO_VSC);
+    input->ki.wScan = MapVirtualKeyW(input->ki.wVk, MAPVK_VK_TO_VSC_EX);
 
     if (event->mask & MASK_ALT) {
         input->ki.dwFlags |= KF_ALTDOWN;
     }
 
-    for (int i = 0; i < sizeof(extend_key_table) / sizeof(uint16_t)
-            && event->data.keyboard.keycode == extend_key_table[i]; i++) {
+    if (HIBYTE(input->ki.wScan)) {
         input->ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
     }
 
