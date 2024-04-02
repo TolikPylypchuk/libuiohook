@@ -64,13 +64,16 @@ UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay) {
     // Not applicable on Windows, so does nothing
 }
 
-static LONG get_absolute_coordinate(LONG coordinate, int screen_size) {
-    return MulDiv((int) coordinate, MAX_WINDOWS_COORD_VALUE, screen_size);
+static LONG get_absolute_coordinate(LONG coordinate, int screen_size, int screen_offset) {
+    return MulDiv((int) (coordinate - screen_offset), MAX_WINDOWS_COORD_VALUE, screen_size) + MAX_WINDOWS_COORD_VALUE / (screen_size * 2);
 }
 
 static normalized_coordinates normalize_coordinates(LONG x, LONG y) {
     uint16_t screen_width  = GetSystemMetrics(SM_CXVIRTUALSCREEN);
     uint16_t screen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+    uint16_t screen_x  = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    uint16_t screen_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
 
     largest_negative_coordinates lnc = get_largest_negative_coordinates();
 
@@ -78,8 +81,8 @@ static normalized_coordinates normalize_coordinates(LONG x, LONG y) {
     y += abs(lnc.top);
 
     normalized_coordinates nc = {
-            .x = get_absolute_coordinate(x, screen_width),
-            .y = get_absolute_coordinate(y, screen_height)
+            .x = get_absolute_coordinate(x, screen_width, screen_x),
+            .y = get_absolute_coordinate(y, screen_height, screen_y)
     };
 
     return nc;
