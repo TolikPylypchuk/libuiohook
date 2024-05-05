@@ -50,6 +50,20 @@
 
 #define MAX_WINDOWS_COORD_VALUE ((1 << 16) - 1)
 
+static const uint16_t extended_key_table[11] = {
+    VC_UP,
+    VC_DOWN,
+    VC_LEFT,
+    VC_RIGHT,
+    VC_HOME,
+    VC_END,
+    VC_PAGE_UP,
+    VC_PAGE_DOWN,
+    VC_INSERT,
+    VC_DELETE,
+    VC_KP_ENTER
+};
+
 typedef struct {
     LONG x;
     LONG y;
@@ -86,8 +100,7 @@ static normalized_coordinates normalize_coordinates(LONG x, LONG y) {
 }
 
 static int map_keyboard_event(uiohook_event * const event, INPUT * const input) {
-    input->type = INPUT_KEYBOARD; // | KEYEVENTF_SCANCODE
-    //input->ki.time = GetSystemTime();
+    input->type = INPUT_KEYBOARD;
 
     switch (event->type) {
         case EVENT_KEY_PRESSED:
@@ -117,8 +130,18 @@ static int map_keyboard_event(uiohook_event * const event, INPUT * const input) 
         input->ki.dwFlags |= KF_ALTDOWN;
     }
 
+    logger(LOG_LEVEL_WARN, "%s [%u]: Scancode: %li\n",
+            __FUNCTION__, __LINE__, input->ki.wScan);
+
     if (HIBYTE(input->ki.wScan)) {
         input->ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+    } else {
+        for (int i = 0; i < sizeof(extended_key_table) / sizeof(uint16_t); i++) {
+            if (event->data.keyboard.keycode == extended_key_table[i]) {
+                input->ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+                break;
+            }
+        }
     }
 
     return UIOHOOK_SUCCESS;
