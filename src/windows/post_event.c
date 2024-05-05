@@ -130,9 +130,6 @@ static int map_keyboard_event(uiohook_event * const event, INPUT * const input) 
         input->ki.dwFlags |= KF_ALTDOWN;
     }
 
-    logger(LOG_LEVEL_WARN, "%s [%u]: Scancode: %li\n",
-            __FUNCTION__, __LINE__, input->ki.wScan);
-
     if (HIBYTE(input->ki.wScan)) {
         input->ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
     } else {
