@@ -50,20 +50,6 @@
 
 #define MAX_WINDOWS_COORD_VALUE ((1 << 16) - 1)
 
-static const uint16_t extended_key_table[11] = {
-    VC_UP,
-    VC_DOWN,
-    VC_LEFT,
-    VC_RIGHT,
-    VC_HOME,
-    VC_END,
-    VC_PAGE_UP,
-    VC_PAGE_DOWN,
-    VC_INSERT,
-    VC_DELETE,
-    VC_KP_ENTER
-};
-
 typedef struct {
     LONG x;
     LONG y;
@@ -133,11 +119,20 @@ static int map_keyboard_event(uiohook_event * const event, INPUT * const input) 
     if (HIBYTE(input->ki.wScan)) {
         input->ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
     } else {
-        for (int i = 0; i < sizeof(extended_key_table) / sizeof(uint16_t); i++) {
-            if (event->data.keyboard.keycode == extended_key_table[i]) {
+        switch (event->data.keyboard.keycode) {
+            case VC_UP:
+            case VC_DOWN:
+            case VC_LEFT:
+            case VC_RIGHT:
+            case VC_HOME:
+            case VC_END:
+            case VC_PAGE_UP:
+            case VC_PAGE_DOWN:
+            case VC_INSERT:
+            case VC_DELETE:
+            case VC_KP_ENTER:
                 input->ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
                 break;
-            }
         }
     }
 
