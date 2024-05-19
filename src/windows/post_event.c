@@ -86,8 +86,7 @@ static normalized_coordinates normalize_coordinates(LONG x, LONG y) {
 }
 
 static int map_keyboard_event(uiohook_event * const event, INPUT * const input) {
-    input->type = INPUT_KEYBOARD; // | KEYEVENTF_SCANCODE
-    //input->ki.time = GetSystemTime();
+    input->type = INPUT_KEYBOARD;
 
     switch (event->type) {
         case EVENT_KEY_PRESSED:
