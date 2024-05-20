@@ -308,6 +308,8 @@ static int create_invisible_window()
 
     ShowWindow(invisible_win_hwnd, SW_HIDE);
 
+    set_always_enumerate_displays(false);
+
     return 1;
 }
 
@@ -405,6 +407,8 @@ UIOHOOK_API int hook_stop() {
 
     // Destroy the invisible window
     if (PostMessage(invisible_win_hwnd, WM_CLOSE, 0, 0)) {
+        set_always_enumerate_displays(true);
+
         // Try to exit the thread naturally.
         if (PostThreadMessage(hook_thread_id, WM_QUIT, (WPARAM) NULL, (LPARAM) NULL)) {
             status = UIOHOOK_SUCCESS;
