@@ -314,10 +314,10 @@ UIOHOOK_API int hook_post_text(const uint16_t * const text) {
     size_t count = 0;
 
     for (int i = 0; text[i] != 0; i++) {
-        count++;
+        count += 2;
     }
 
-    INPUT *input = (INPUT*)calloc(count * 2, sizeof(INPUT));
+    INPUT *input = (INPUT*)calloc(count, sizeof(INPUT));
 
     if (input == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: failed to allocate memory: calloc!\n",
@@ -325,21 +325,42 @@ UIOHOOK_API int hook_post_text(const uint16_t * const text) {
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count - 1; i += 2) {
+        WORD character = (WORD)text[i / 2];
+
         input[i].type = INPUT_KEYBOARD;
         input[i].ki.wVk = 0;
-        input[i].ki.wScan = (WORD)text[i];
+        input[i].ki.wScan = character;
         input[i].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYDOWN;
+
+        if (character < 0xD800 || character > 0xDFFF) { // Normal character
+            input[i + 1].type = INPUT_KEYBOARD;
+            input[i + 1].ki.wVk = 0;
+            input[i + 1].ki.wScan = character;
+            input[i + 1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+        } else { // Surrogate pair, both characters must first be pressed, and then released
+            WORD nextCharacter = (WORD)text[i / 2 + 1]; // Assume that the character array is well-formed UTF-16
+
+            input[i + 1].type = INPUT_KEYBOARD;
+            input[i + 1].ki.wVk = 0;
+            input[i + 1].ki.wScan = nextCharacter;
+            input[i + 1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYDOWN;
+
+            input[i + 2].type = INPUT_KEYBOARD;
+            input[i + 2].ki.wVk = 0;
+            input[i + 2].ki.wScan = character;
+            input[i + 2].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+
+            input[i + 3].type = INPUT_KEYBOARD;
+            input[i + 3].ki.wVk = 0;
+            input[i + 3].ki.wScan = nextCharacter;
+            input[i + 3].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+
+            i += 2;
+        }
     }
 
-    for (int i = 0; i < count; i++) {
-        input[count + i].type = INPUT_KEYBOARD;
-        input[count + i].ki.wVk = 0;
-        input[count + i].ki.wScan = (WORD)text[i];
-        input[count + i].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
-    }
-
-    if (!SendInput((UINT)count * 2, input, sizeof(INPUT))) {
+    if (!SendInput(count, input, sizeof(INPUT))) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: SendInput() failed! (%#lX)\n",
             __FUNCTION__, __LINE__, (unsigned long)GetLastError());
         status = UIOHOOK_FAILURE;
