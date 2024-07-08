@@ -142,6 +142,10 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
                     __FUNCTION__, __LINE__, recorded_data->category);
     }
 
+    // https://www.x.org/releases/X11R7.7/doc/libXtst/recordlib.html
+    // Recording clients should use the XRecordFreeData function to free the XRecordInterceptData structure.
+    XRecordFreeData(recorded_data);
+
     // TODO There is no way to consume the XRecord event.
 }
 
