@@ -401,7 +401,7 @@ bool dispatch_mouse_press(uint64_t timestamp, XButtonEvent * const x_event) {
 static bool dispatch_mouse_button_released(XButtonReleasedEvent * const x_event) {
     bool consumed = false;
 
-    switch (button_map_lookup(x_event->button)) {
+    switch (x_event->button) {
         case Button1:
             x_event->button = MOUSE_BUTTON1;
             unset_modifier_mask(MASK_BUTTON1);
