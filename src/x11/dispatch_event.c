@@ -359,7 +359,7 @@ void dispatch_mouse_press(XButtonEvent * const x_event) {
 }
 
 static void dispatch_mouse_button_released(XButtonReleasedEvent * const x_event) {
-    switch (button_map_lookup(x_event->button)) {
+    switch (x_event->button) {
         case Button1:
             x_event->button = MOUSE_BUTTON1;
             unset_modifier_mask(MASK_BUTTON1);
