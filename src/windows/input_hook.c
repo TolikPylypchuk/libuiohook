@@ -52,6 +52,35 @@ static uint64_t get_unix_timestamp() {
 }
 #endif
 
+// Set the modifier mask to the current modifiers.
+static void set_modifiers() {
+    clear_modifier_mask();
+
+    if (keyboard_event_hhook != NULL) {
+        // NOTE We are checking the high order bit, so it will be < 0 for a singed short.
+        if (GetKeyState(VK_LSHIFT)   < 0) { set_modifier_mask(MASK_SHIFT_L);     }
+        if (GetKeyState(VK_RSHIFT)   < 0) { set_modifier_mask(MASK_SHIFT_R);     }
+        if (GetKeyState(VK_LCONTROL) < 0) { set_modifier_mask(MASK_CTRL_L);      }
+        if (GetKeyState(VK_RCONTROL) < 0) { set_modifier_mask(MASK_CTRL_R);      }
+        if (GetKeyState(VK_LMENU)    < 0) { set_modifier_mask(MASK_ALT_L);       }
+        if (GetKeyState(VK_RMENU)    < 0) { set_modifier_mask(MASK_ALT_R);       }
+        if (GetKeyState(VK_LWIN)     < 0) { set_modifier_mask(MASK_META_L);      }
+        if (GetKeyState(VK_RWIN)     < 0) { set_modifier_mask(MASK_META_R);      }
+ 
+        if (GetKeyState(VK_NUMLOCK)  < 0) { set_modifier_mask(MASK_NUM_LOCK);    }
+        if (GetKeyState(VK_CAPITAL)  < 0) { set_modifier_mask(MASK_CAPS_LOCK);   }
+        if (GetKeyState(VK_SCROLL)   < 0) { set_modifier_mask(MASK_SCROLL_LOCK); }
+    }
+
+    if (mouse_event_hhook != NULL) {
+        if (GetKeyState(VK_LBUTTON)  < 0) { set_modifier_mask(MASK_BUTTON1);     }
+        if (GetKeyState(VK_RBUTTON)  < 0) { set_modifier_mask(MASK_BUTTON2);     }
+        if (GetKeyState(VK_MBUTTON)  < 0) { set_modifier_mask(MASK_BUTTON3);     }
+        if (GetKeyState(VK_XBUTTON1) < 0) { set_modifier_mask(MASK_BUTTON4);     }
+        if (GetKeyState(VK_XBUTTON2) < 0) { set_modifier_mask(MASK_BUTTON5);     }
+    }
+}
+
 void unregister_running_hooks() {
     // Destroy the native hooks.
     if (keyboard_event_hhook != NULL) {
@@ -66,6 +95,8 @@ void unregister_running_hooks() {
 }
 
 LRESULT CALLBACK keyboard_hook_event_proc(int nCode, WPARAM wParam, LPARAM lParam) {
+    set_modifiers();
+
     bool consumed = false;
 
     KBDLLHOOKSTRUCT *kbhook = (KBDLLHOOKSTRUCT *) lParam;
@@ -106,6 +137,8 @@ LRESULT CALLBACK keyboard_hook_event_proc(int nCode, WPARAM wParam, LPARAM lPara
 }
 
 LRESULT CALLBACK mouse_hook_event_proc(int nCode, WPARAM wParam, LPARAM lParam) {
+    set_modifiers();
+
     bool consumed = false;
 
     MSLLHOOKSTRUCT *mshook = (MSLLHOOKSTRUCT *) lParam;
@@ -353,9 +386,6 @@ int run(bool run_keyboard_hook, bool run_mouse_hook) {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: SetWindowsHookEx() successful.\n",
                 __FUNCTION__, __LINE__);
 
-        // Check and setup modifiers.
-        initialize_modifiers(run_keyboard_hook, run_mouse_hook);
-
         // Set the exit status.
         status = UIOHOOK_SUCCESS;
 
@@ -386,6 +416,8 @@ int run(bool run_keyboard_hook, bool run_mouse_hook) {
         // We must explicitly call the cleanup handler because Windows does not
         // provide a thread cleanup method like POSIX pthread_cleanup_push/pop.
         dispatch_hook_disable(timestamp);
+
+        clear_modifier_mask();    
     } else {
         logger(LOG_LEVEL_ERROR, "%s [%u]: SetWindowsHookEx() failed! (%#lX)\n",
                 __FUNCTION__, __LINE__, (unsigned long) GetLastError());

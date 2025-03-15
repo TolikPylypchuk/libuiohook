@@ -43,6 +43,9 @@ extern void set_modifier_mask(uint16_t mask);
 /* Unset the native modifier mask for future events. */
 extern void unset_modifier_mask(uint16_t mask);
 
+/* Clear the native modifier mask for future events. */
+extern void clear_modifier_mask();
+
 /* Get the current native modifier mask state. */
 extern uint16_t get_modifiers();
 
