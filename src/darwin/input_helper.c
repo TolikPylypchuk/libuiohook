@@ -284,74 +284,24 @@ void set_mouse_dragged(bool dragged) {
 }
 
 
-// Set the native modifier mask for future events.
+// Set the native modifier mask for current event.
 void set_modifier_mask(uint16_t mask) {
     modifier_mask |= mask;
 }
 
-// Unset the native modifier mask for future events.
+// Unset the native modifier mask for current event.
 void unset_modifier_mask(uint16_t mask) {
     modifier_mask &= ~mask;
+}
+
+// Clear the native modifier mask for current event.
+void clear_modifier_mask() {
+    modifier_mask = 0;
 }
 
 // Get the current native modifier mask state.
 uint16_t get_modifiers() {
     return modifier_mask;
-}
-
-// Initialize the modifier mask to the current modifiers.
-static void initialize_modifiers() {
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Shift)) {
-        set_modifier_mask(MASK_SHIFT_L);
-    }
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightShift)) {
-        set_modifier_mask(MASK_SHIFT_R);
-    }
-
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Control)) {
-        set_modifier_mask(MASK_CTRL_L);
-    }
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightControl)) {
-        set_modifier_mask(MASK_CTRL_R);
-    }
-
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Option)) {
-        set_modifier_mask(MASK_ALT_L);
-    }
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightOption)) {
-        set_modifier_mask(MASK_ALT_R);
-    }
-
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Command)) {
-        set_modifier_mask(MASK_META_L);
-    }
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightCommand)) {
-        set_modifier_mask(MASK_META_R);
-    }
-
-    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_LBUTTON)) {
-        set_modifier_mask(MASK_BUTTON1);
-    }
-    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_RBUTTON)) {
-        set_modifier_mask(MASK_BUTTON2);
-    }
-
-    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_MBUTTON)) {
-        set_modifier_mask(MASK_BUTTON3);
-    }
-    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_XBUTTON1)) {
-        set_modifier_mask(MASK_BUTTON4);
-    }
-    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_XBUTTON2)) {
-        set_modifier_mask(MASK_BUTTON5);
-    }
-
-    if (CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) & kCGEventFlagMaskAlphaShift) {
-        set_modifier_mask(MASK_CAPS_LOCK);
-    }
-    // Best I can tell, OS X does not support Num or Scroll lock.
-    unset_modifier_mask(MASK_NUM_LOCK);
-    unset_modifier_mask(MASK_SCROLL_LOCK);
 }
 
 
@@ -843,9 +793,6 @@ int load_input_helper() {
     // Start with a fresh dead key state.
     deadkey_state = 0;
     #endif
-
-    // Initialize the current state of the modifiers.
-    initialize_modifiers();
 
     // If we are not running on the main runloop, we need to setup a runloop dispatcher.
     if (!CFEqual(CFRunLoopGetCurrent(), CFRunLoopGetMain())) {

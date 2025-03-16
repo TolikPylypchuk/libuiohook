@@ -70,8 +70,65 @@ static uint64_t get_unix_timestamp() {
 }
 #endif
 
+// Set the modifier mask to the current modifiers.
+static void set_modifiers() {
+    clear_modifier_mask();
+
+    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Shift)) {
+        set_modifier_mask(MASK_SHIFT_L);
+    }
+    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightShift)) {
+        set_modifier_mask(MASK_SHIFT_R);
+    }
+
+    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Control)) {
+        set_modifier_mask(MASK_CTRL_L);
+    }
+    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightControl)) {
+        set_modifier_mask(MASK_CTRL_R);
+    }
+
+    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Option)) {
+        set_modifier_mask(MASK_ALT_L);
+    }
+    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightOption)) {
+        set_modifier_mask(MASK_ALT_R);
+    }
+
+    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Command)) {
+        set_modifier_mask(MASK_META_L);
+    }
+    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightCommand)) {
+        set_modifier_mask(MASK_META_R);
+    }
+
+    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_LBUTTON)) {
+        set_modifier_mask(MASK_BUTTON1);
+    }
+    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_RBUTTON)) {
+        set_modifier_mask(MASK_BUTTON2);
+    }
+
+    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_MBUTTON)) {
+        set_modifier_mask(MASK_BUTTON3);
+    }
+    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_XBUTTON1)) {
+        set_modifier_mask(MASK_BUTTON4);
+    }
+    if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_XBUTTON2)) {
+        set_modifier_mask(MASK_BUTTON5);
+    }
+
+    if (CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) & kCGEventFlagMaskAlphaShift) {
+        set_modifier_mask(MASK_CAPS_LOCK);
+    }
+
+    // Best I can tell, macOS does not support Num or Scroll lock.
+}
 
 static CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, CGEventRef event_ref, void *refcon) {
+    set_modifiers();
+
     bool consumed = false;
     #ifdef USE_EPOCH_TIME
     uint64_t timestamp = get_unix_timestamp();

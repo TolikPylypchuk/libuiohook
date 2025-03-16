@@ -343,11 +343,14 @@ extern UniCharCount event_to_unicode(CGEventRef event_ref, UniChar *buffer, UniC
 /* Get objc subtype and data1 fields of a cg event. */
 extern void event_to_objc(CGEventRef event_ref, UInt32 *subtype, UInt32 *data1);
 
-/* Set the native modifier mask for future events. */
+/* Set the native modifier mask for current event. */
 extern void set_modifier_mask(uint16_t mask);
 
-/* Unset the native modifier mask for future events. */
+/* Unset the native modifier mask for current event. */
 extern void unset_modifier_mask(uint16_t mask);
+
+/* Clear the native modifier mask for current event. */
+extern void clear_modifier_mask();
 
 /* Get the current native modifier mask state. */
 extern uint16_t get_modifiers();
