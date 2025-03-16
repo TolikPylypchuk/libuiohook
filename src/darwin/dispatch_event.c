@@ -188,9 +188,8 @@ bool dispatch_key_release(uint64_t timestamp, CGEventRef event_ref) {
     else if (keycode == kVK_RightOption)  { unset_modifier_mask(MASK_ALT_R);        }
     else if (keycode == kVK_Command)      { unset_modifier_mask(MASK_META_L);       }
     else if (keycode == kVK_RightCommand) { unset_modifier_mask(MASK_META_R);       }
-    else if (keycode == kVK_CapsLock && (get_modifiers() & MASK_CAPS_LOCK) != 0) {
-        unset_modifier_mask(MASK_CAPS_LOCK);
-    }
+    // Caps Lock should not be unset as it is already handled when setting
+    // the modifier mask based on the macOS event.
 
     // Populate key released event.
     uio_event.time = timestamp;

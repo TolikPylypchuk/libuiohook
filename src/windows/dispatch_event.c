@@ -188,9 +188,8 @@ bool dispatch_key_release(uint64_t timestamp, KBDLLHOOKSTRUCT *kbhook) {
     else if (kbhook->vkCode == VK_RMENU)    { unset_modifier_mask(MASK_ALT_R);       }
     else if (kbhook->vkCode == VK_LWIN)     { unset_modifier_mask(MASK_META_L);      }
     else if (kbhook->vkCode == VK_RWIN)     { unset_modifier_mask(MASK_META_R);      }
-    else if (kbhook->vkCode == VK_NUMLOCK)  { unset_modifier_mask(MASK_NUM_LOCK);    }
-    else if (kbhook->vkCode == VK_CAPITAL)  { unset_modifier_mask(MASK_CAPS_LOCK);   }
-    else if (kbhook->vkCode == VK_SCROLL)   { unset_modifier_mask(MASK_SCROLL_LOCK); }
+    // Caps Lock, Num Lock, and Scroll Lock should not be unset as they are already
+    // handled when setting the modifier mask based on the Windows event.
 
     // Populate key pressed event.
     uio_event.time = timestamp;

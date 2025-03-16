@@ -66,10 +66,10 @@ static void set_modifiers() {
         if (GetKeyState(VK_RMENU)    < 0) { set_modifier_mask(MASK_ALT_R);       }
         if (GetKeyState(VK_LWIN)     < 0) { set_modifier_mask(MASK_META_L);      }
         if (GetKeyState(VK_RWIN)     < 0) { set_modifier_mask(MASK_META_R);      }
- 
-        if (GetKeyState(VK_NUMLOCK)  < 0) { set_modifier_mask(MASK_NUM_LOCK);    }
-        if (GetKeyState(VK_CAPITAL)  < 0) { set_modifier_mask(MASK_CAPS_LOCK);   }
-        if (GetKeyState(VK_SCROLL)   < 0) { set_modifier_mask(MASK_SCROLL_LOCK); }
+
+        if ((GetKeyState(VK_NUMLOCK) & 1) != 0) { set_modifier_mask(MASK_NUM_LOCK);    }
+        if ((GetKeyState(VK_CAPITAL) & 1) != 0) { set_modifier_mask(MASK_CAPS_LOCK);   }
+        if ((GetKeyState(VK_SCROLL)  & 1) != 0) { set_modifier_mask(MASK_SCROLL_LOCK); }
     }
 
     if (mouse_event_hhook != NULL) {
