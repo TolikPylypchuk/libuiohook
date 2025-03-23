@@ -78,6 +78,74 @@ static uint64_t get_unix_timestamp() {
 }
 #endif
 
+// Initialize the modifier lock masks.
+static void set_locks() {
+    unsigned int led_mask = 0x00;
+    if (XkbGetIndicatorState(helper_disp, XkbUseCoreKbd, &led_mask) == Success) {
+        if (led_mask & 0x01) {
+            set_modifier_mask(MASK_CAPS_LOCK);
+        } else {
+            unset_modifier_mask(MASK_CAPS_LOCK);
+        }
+
+        if (led_mask & 0x02) {
+            set_modifier_mask(MASK_NUM_LOCK);
+        } else {
+            unset_modifier_mask(MASK_NUM_LOCK);
+        }
+
+        if (led_mask & 0x04) {
+            set_modifier_mask(MASK_SCROLL_LOCK);
+        } else {
+            unset_modifier_mask(MASK_SCROLL_LOCK);
+        }
+    } else {
+        logger(LOG_LEVEL_WARN, "%s [%u]: XkbGetIndicatorState failed to get current led mask!\n",
+                __FUNCTION__, __LINE__);
+    }
+}
+
+// Set the modifier mask to the current modifiers.
+static void set_modifiers() {
+    clear_modifier_mask();
+    set_locks();
+
+    KeyCode keycode;
+    char keymap[32];
+    XQueryKeymap(helper_disp, keymap);
+
+    keycode = XKeysymToKeycode(helper_disp, XK_Shift_L);
+    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_SHIFT_L); }
+    keycode = XKeysymToKeycode(helper_disp, XK_Shift_R);
+    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_SHIFT_R); }
+    keycode = XKeysymToKeycode(helper_disp, XK_Control_L);
+    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_CTRL_L);  }
+    keycode = XKeysymToKeycode(helper_disp, XK_Control_R);
+    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_CTRL_R);  }
+    keycode = XKeysymToKeycode(helper_disp, XK_Alt_L);
+    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_ALT_L);   }
+    keycode = XKeysymToKeycode(helper_disp, XK_Alt_R);
+    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_ALT_R);   }
+    keycode = XKeysymToKeycode(helper_disp, XK_Super_L);
+    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_META_L);  }
+    keycode = XKeysymToKeycode(helper_disp, XK_Super_R);
+    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_META_R);  }
+
+    Window unused_win;
+    int unused_int;
+    unsigned int mask;
+    if (XQueryPointer(helper_disp, DefaultRootWindow(helper_disp), &unused_win, &unused_win, &unused_int, &unused_int, &unused_int, &unused_int, &mask)) {
+        if (mask & Button1Mask) { set_modifier_mask(MASK_BUTTON1); }
+        if (mask & Button2Mask) { set_modifier_mask(MASK_BUTTON2); }
+        if (mask & Button3Mask) { set_modifier_mask(MASK_BUTTON3); }
+        if (mask & Button4Mask) { set_modifier_mask(MASK_BUTTON4); }
+        if (mask & Button5Mask) { set_modifier_mask(MASK_BUTTON5); }
+    } else {
+        logger(LOG_LEVEL_WARN, "%s [%u]: XQueryPointer failed to get current modifiers!\n",
+                __FUNCTION__, __LINE__);
+    }
+}
+
 void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
     #ifdef USE_EPOCH_TIME
     uint64_t timestamp = get_unix_timestamp();
@@ -87,6 +155,8 @@ void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
 
     XEvent event;
     wire_data_to_event(recorded_data, &event);
+
+    set_modifiers();
 
     XRecordDatum *data = (XRecordDatum *) recorded_data->data;
     switch (recorded_data->category) {

@@ -58,11 +58,14 @@ extern uint16_t keycode_to_uiocode(KeyCode keycode);
 /* Converts a X11 key event to a key symbol and retrieves it's appropriate unicode representation. */
 extern size_t event_to_unicode(XKeyEvent *x_event, wchar_t *surrogate, size_t length, KeySym *keysym);
 
-/* Set the native modifier mask for future events. */
+/* Set the native modifier mask for current event. */
 extern void set_modifier_mask(uint16_t mask);
 
-/* Unset the native modifier mask for future events. */
+/* Unset the native modifier mask for current event. */
 extern void unset_modifier_mask(uint16_t mask);
+
+/* Clear the native modifier mask for current event. */
+extern void clear_modifier_mask();
 
 /* Get the current native modifier mask state. */
 extern uint16_t get_modifiers();

@@ -19,10 +19,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef USE_EPOCH_TIME
-#include <sys/time.h>
-#endif
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -358,111 +354,24 @@ KeyCode uiocode_to_keycode(uint16_t uiocode) {
     return keycode;
 }
 
-// Set the native modifier mask for future events.
+// Set the native modifier mask for current event.
 void set_modifier_mask(uint16_t mask) {
     modifier_mask |= mask;
 }
 
-// Unset the native modifier mask for future events.
+// Unset the native modifier mask for current event.
 void unset_modifier_mask(uint16_t mask) {
     modifier_mask &= ~mask;
+}
+
+// Clear the native modifier mask for current eventevents.
+void clear_modifier_mask() {
+    modifier_mask = 0;
 }
 
 // Get the current native modifier mask state.
 uint16_t get_modifiers() {
     return modifier_mask;
-}
-
-// Initialize the modifier lock masks.
-static void initialize_locks() {
-    unsigned int led_mask = 0x00;
-    if (XkbGetIndicatorState(helper_disp, XkbUseCoreKbd, &led_mask) == Success) {
-        if (led_mask & 0x01) {
-            set_modifier_mask(MASK_CAPS_LOCK);
-        } else {
-            unset_modifier_mask(MASK_CAPS_LOCK);
-        }
-
-        if (led_mask & 0x02) {
-            set_modifier_mask(MASK_NUM_LOCK);
-        } else {
-            unset_modifier_mask(MASK_NUM_LOCK);
-        }
-
-        if (led_mask & 0x04) {
-            set_modifier_mask(MASK_SCROLL_LOCK);
-        } else {
-            unset_modifier_mask(MASK_SCROLL_LOCK);
-        }
-    } else {
-        logger(LOG_LEVEL_WARN, "%s [%u]: XkbGetIndicatorState failed to get current led mask!\n",
-                __FUNCTION__, __LINE__);
-    }
-}
-
-// Initialize the modifier mask to the current modifiers.
-static void initialize_modifiers() {
-    modifier_mask = 0x0000;
-
-    KeyCode keycode;
-    char keymap[32];
-    XQueryKeymap(helper_disp, keymap);
-
-    Window unused_win;
-    int unused_int;
-    unsigned int mask;
-    if (XQueryPointer(helper_disp, DefaultRootWindow(helper_disp), &unused_win, &unused_win, &unused_int, &unused_int, &unused_int, &unused_int, &mask)) {
-        if (mask & ShiftMask) {
-            keycode = XKeysymToKeycode(helper_disp, XK_Shift_L);
-            if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_SHIFT_L); }
-            keycode = XKeysymToKeycode(helper_disp, XK_Shift_R);
-            if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_SHIFT_R); }
-        }
-        if (mask & ControlMask) {
-            keycode = XKeysymToKeycode(helper_disp, XK_Control_L);
-            if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_CTRL_L);  }
-            keycode = XKeysymToKeycode(helper_disp, XK_Control_R);
-            if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_CTRL_R);  }
-        }
-        if (mask & Mod1Mask) {
-            keycode = XKeysymToKeycode(helper_disp, XK_Alt_L);
-            if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_ALT_L);   }
-            keycode = XKeysymToKeycode(helper_disp, XK_Alt_R);
-            if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_ALT_R);   }
-        }
-        if (mask & Mod4Mask) {
-            keycode = XKeysymToKeycode(helper_disp, XK_Super_L);
-            if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_META_L);  }
-            keycode = XKeysymToKeycode(helper_disp, XK_Super_R);
-            if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_META_R);  }
-        }
-
-        if (mask & Button1Mask) { set_modifier_mask(MASK_BUTTON1); }
-        if (mask & Button2Mask) { set_modifier_mask(MASK_BUTTON2); }
-        if (mask & Button3Mask) { set_modifier_mask(MASK_BUTTON3); }
-        if (mask & Button4Mask) { set_modifier_mask(MASK_BUTTON4); }
-        if (mask & Button5Mask) { set_modifier_mask(MASK_BUTTON5); }
-    } else {
-        logger(LOG_LEVEL_WARN, "%s [%u]: XQueryPointer failed to get current modifiers!\n",
-                __FUNCTION__, __LINE__);
-
-        keycode = XKeysymToKeycode(helper_disp, XK_Shift_L);
-        if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_SHIFT_L); }
-        keycode = XKeysymToKeycode(helper_disp, XK_Shift_R);
-        if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_SHIFT_R); }
-        keycode = XKeysymToKeycode(helper_disp, XK_Control_L);
-        if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_CTRL_L);  }
-        keycode = XKeysymToKeycode(helper_disp, XK_Control_R);
-        if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_CTRL_R);  }
-        keycode = XKeysymToKeycode(helper_disp, XK_Alt_L);
-        if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_ALT_L);   }
-        keycode = XKeysymToKeycode(helper_disp, XK_Alt_R);
-        if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_ALT_R);   }
-        keycode = XKeysymToKeycode(helper_disp, XK_Super_L);
-        if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_META_L);  }
-        keycode = XKeysymToKeycode(helper_disp, XK_Super_R);
-        if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_META_R);  }
-    }
 }
 
 /* Based on mappings from _XWireToEvent in Xlibinit.c */
