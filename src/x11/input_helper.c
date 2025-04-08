@@ -332,7 +332,7 @@ uint16_t keycode_to_uiocode(KeyCode keycode) {
     uint16_t uiocode = VC_UNDEFINED;
 
     for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
-        if (keycode == uiocode_keycode_table[i].x11_key_name) {
+        if (keycode == uiocode_keycode_table[i].x11_key_code) {
             uiocode = uiocode_keycode_table[i].uiocode;
             break;
         }
@@ -346,7 +346,7 @@ KeyCode uiocode_to_keycode(uint16_t uiocode) {
 
     for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
         if (uiocode == uiocode_keycode_table[i].uiocode) {
-            keycode = uiocode_keycode_table[i].x11_key_name;
+            keycode = uiocode_keycode_table[i].x11_key_code;
             break;
         }
     }
@@ -595,7 +595,7 @@ void load_key_mappings() {
 
     for (int key_code = xkb->min_key_code; key_code < xkb->max_key_code; key_code++) {
         for (int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(*uiocode_keycode_table); i++) {
-            if (strncmp(uiocode_keycode_table[i].x11_key, xkb->names->keys[key_code].name, XkbKeyNameLength) == 0) {
+            if (strncmp(uiocode_keycode_table[i].x11_key_name, xkb->names->keys[key_code].name, XkbKeyNameLength) == 0) {
                 uiocode_keycode_table[i].x11_key_code = key_code;
             }
         }
@@ -607,7 +607,7 @@ void load_key_mappings() {
     key_mappings_loaded = true;
 }
 
-void load_input_helper() {
+int load_input_helper() {
     load_key_mappings();
 
     // Setup memory for mouse button mapping.
@@ -618,8 +618,6 @@ void load_input_helper() {
 
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
-
-    initialize_modifiers();
 
     return UIOHOOK_SUCCESS;
 }

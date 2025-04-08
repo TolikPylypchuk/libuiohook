@@ -86,7 +86,7 @@ static pthread_mutex_t main_runloop_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 static const uint16_t uiocode_keycode_table[][2] = {
-/*  { vcode,                   keycode                  }, */
+/*  { uiocode,                 keycode                  }, */
     { VC_A,                    kVK_ANSI_A               },
     { VC_S,                    kVK_ANSI_S               },
     { VC_D,                    kVK_ANSI_D               },
@@ -322,7 +322,7 @@ CGKeyCode uiocode_to_keycode(uint16_t uiocode) {
     CGKeyCode keycode = kVK_Undefined;
 
     for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
-        if (vcode == uiocode_keycode_table[i][0]) {
+        if (uiocode == uiocode_keycode_table[i][0]) {
             keycode = uiocode_keycode_table[i][1];
             break;
         }
