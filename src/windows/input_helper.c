@@ -72,9 +72,6 @@ static const uint16_t uiocode_keycode_table[][2] = {
     { VC_UP,                  VK_UP                  },
     { VC_RIGHT,               VK_RIGHT               },
     { VC_DOWN,                VK_DOWN                },
-    { VC_SELECT,              VK_SELECT              },
-    { VC_PRINT,               VK_PRINT               },
-    { VC_EXECUTE,             VK_EXECUTE             },
     { VC_PRINT_SCREEN,        VK_SNAPSHOT            },
     { VC_INSERT,              VK_INSERT              },
     { VC_DELETE,              VK_DELETE              },
@@ -195,14 +192,6 @@ static const uint16_t uiocode_keycode_table[][2] = {
     { VC_MISC,                VK_OEM_8               },
     { VC_102,                 VK_OEM_102             },
     { VC_PROCESS,             VK_PROCESSKEY          },
-    { VC_ATTN,                VK_ATTN                },
-    { VC_CR_SEL,              VK_CRSEL               },
-    { VC_EX_SEL,              VK_EXSEL               },
-    { VC_ERASE_EOF,           VK_EREOF               },
-    { VC_PLAY,                VK_PLAY                },
-    { VC_ZOOM,                VK_ZOOM                },
-    { VC_NO_NAME,             VK_NONAME              },
-    { VC_PA1,                 VK_PA1                 },
 };
 
 uint16_t vkcode_to_uiocode(DWORD vk_code, DWORD flags) {

@@ -236,9 +236,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 
 // Begin Edit Key Zone
 #define VC_PRINT_SCREEN                          0x009A // SYSRQ
-#define VC_PRINT                                 0x009C
-#define VC_SELECT                                0x009D
-#define VC_EXECUTE                               0x009E
 #define VC_SCROLL_LOCK                           0x0091
 #define VC_PAUSE                                 0x0013
 #define VC_CANCEL                                0x00D3 // BREAK
@@ -273,7 +270,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_KP_ENTER                              0x007D
 #define VC_KP_DECIMAL                            0x006E
 #define VC_KP_SEPARATOR                          0x006C
-#define VC_KP_PLUS_MINUS                         0x007E
 
 #define VC_KP_0                                  0x0060
 #define VC_KP_1                                  0x0061
@@ -285,9 +281,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_KP_7                                  0x0067
 #define VC_KP_8                                  0x0068
 #define VC_KP_9                                  0x0069
-
-#define VC_KP_OPEN_PARENTHESIS                   0xEE01
-#define VC_KP_CLOSE_PARENTHESIS                  0xEE02
 // End Numeric Zone
 
 
@@ -309,32 +302,17 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 // Begin Shortcut Keys
 #define VC_POWER                                 0xE05E
 #define VC_SLEEP                                 0xE05F
-#define VC_WAKE                                  0xE063
 
-#define VC_MEDIA                                 0xE023
 #define VC_MEDIA_PLAY                            0xE022
 #define VC_MEDIA_STOP                            0xE024
 #define VC_MEDIA_PREVIOUS                        0xE010
 #define VC_MEDIA_NEXT                            0xE019
 #define VC_MEDIA_SELECT                          0xE06D
 #define VC_MEDIA_EJECT                           0xE02C
-#define VC_MEDIA_CLOSE                           0xE02D
-#define VC_MEDIA_EJECT_CLOSE                     0xE02F
-#define VC_MEDIA_RECORD                          0xE031
-#define VC_MEDIA_REWIND                          0xE033
 
 #define VC_VOLUME_MUTE                           0xE020
 #define VC_VOLUME_DOWN                           0xE030
 #define VC_VOLUME_UP                             0xE02E
-
-#define VC_ATTN                                  0xE090
-#define VC_CR_SEL                                0xE091
-#define VC_EX_SEL                                0xE092
-#define VC_ERASE_EOF                             0xE093
-#define VC_PLAY                                  0xE094
-#define VC_ZOOM                                  0xE095
-#define VC_NO_NAME                               0xE096
-#define VC_PA1                                   0xE097
 
 #define VC_APP_1                                 0xE026
 #define VC_APP_2                                 0xE027
@@ -377,84 +355,6 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define VC_YEN                                   0x020C
 #define VC_JP_COMMA                              0x0210
 // End Asian Language Keys
-
-
-// Begin Other Linux Keys
-#define VC_STOP                                  0xFF78
-#define VC_PROPS                                 0xFF76
-#define VC_FRONT                                 0xFF77
-#define VC_OPEN                                  0xFF74
-#define VC_FIND                                  0xFF70
-#define VC_AGAIN                                 0xFF79
-#define VC_UNDO                                  0xFF7A
-#define VC_REDO                                  0xFF7F
-#define VC_COPY                                  0xFF7C
-#define VC_PASTE                                 0xFF7D
-#define VC_CUT                                   0xFF7B
-
-#define VC_LINE_FEED                             0xC001
-#define VC_MACRO                                 0xC002
-#define VC_SCALE                                 0xC003
-#define VC_SETUP                                 0xC004
-#define VC_FILE                                  0xC005
-#define VC_SEND_FILE                             0xC006
-#define VC_DELETE_FILE                           0xC007
-#define VC_MS_DOS                                0xC008
-#define VC_LOCK                                  0xC009
-#define VC_ROTATE_DISPLAY                        0xC00A
-#define VC_CYCLE_WINDOWS                         0xC00B
-#define VC_COMPUTER                              0xC00C
-#define VC_PHONE                                 0xC00D
-#define VC_ISO                                   0xC00E
-#define VC_CONFIG                                0xC00F
-#define VC_EXIT                                  0xC010
-#define VC_MOVE                                  0xC011
-#define VC_EDIT                                  0xC012
-#define VC_SCROLL_UP                             0xC013
-#define VC_SCROLL_DOWN                           0xC014
-#define VC_NEW                                   0xC015
-#define VC_PLAY_CD                               0xC016
-#define VC_PAUSE_CD                              0xC017
-#define VC_DASHBOARD                             0xC018
-#define VC_SUSPEND                               0xC019
-#define VC_CLOSE                                 0xC01A
-#define VC_FAST_FORWARD                          0xC01C
-#define VC_BASS_BOOST                            0xC01D
-#define VC_HP                                    0xC01E
-#define VC_CAMERA                                0xC01F
-#define VC_SOUND                                 0xC020
-#define VC_QUESTION                              0xC021
-#define VC_EMAIL                                 0xC022
-#define VC_CHAT                                  0xC023
-#define VC_CONNECT                               0xC024
-#define VC_FINANCE                               0xC025
-#define VC_SPORT                                 0xC026
-#define VC_SHOP                                  0xC027
-#define VC_ALT_ERASE                             0xC028
-#define VC_BRIGTNESS_DOWN                        0xC029
-#define VC_BRIGTNESS_UP                          0xC02A
-#define VC_BRIGTNESS_CYCLE                       0xC02B
-#define VC_BRIGTNESS_AUTO                        0xC02C
-#define VC_SWITCH_VIDEO_MODE                     0xC02D
-#define VC_KEYBOARD_LIGHT_TOGGLE                 0xC02E
-#define VC_KEYBOARD_LIGHT_DOWN                   0xC02F
-#define VC_KEYBOARD_LIGHT_UP                     0xC030
-#define VC_SEND                                  0xC031
-#define VC_REPLY                                 0xC032
-#define VC_FORWARD_MAIL                          0xC033
-#define VC_SAVE                                  0xC034
-#define VC_DOCUMENTS                             0xC035
-#define VC_BATTERY                               0xC036
-#define VC_BLUETOOTH                             0xC037
-#define VC_WLAN                                  0xC038
-#define VC_UWB                                   0xC039
-#define VC_X11_UNKNOWN                           0xC03A
-#define VC_VIDEO_NEXT                            0xC03B
-#define VC_VIDEO_PREVIOUS                        0xC03C
-#define VC_DISPLAY_OFF                           0xC03D
-#define VC_WWAN                                  0xC03E
-#define VC_RFKILL                                0xC03F
-// End Other Linux Keys
 
 #define VC_UNDEFINED                             0x0000    // KeyCode Unknown
 
