@@ -328,9 +328,6 @@ enum {
 #define kCGEventFlagMaskXButton2     1 << 4
 
 
-/* Check for access to Apples accessibility API. */
-extern bool is_accessibility_enabled();
-
 /* Converts an OSX keycode to the appropriate UIOHook scancode constant. */
 extern uint16_t keycode_to_uiocode(CGKeyCode keycode);
 

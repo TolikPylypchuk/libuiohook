@@ -292,6 +292,17 @@ static int post_mouse_wheel_event(uiohook_event * const event, CGEventSourceRef 
 }
 
 UIOHOOK_API int hook_post_event(uiohook_event * const event) {
+    // Check for accessibility before we post the event.
+    if (!hook_is_ax_api_enabled(hook_get_prompt_user_if_ax_api_disabled())) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Accessibility API is disabled!\n",
+                __FUNCTION__, __LINE__);
+
+        return UIOHOOK_ERROR_AXAPI_DISABLED;
+    } else {
+        logger(LOG_LEVEL_DEBUG, "%s [%u]: Accessibility API is enabled.\n",
+                __FUNCTION__, __LINE__);
+    }
+
     CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
     if (src == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: CGEventSourceCreate failed!\n",
@@ -343,6 +354,17 @@ UIOHOOK_API int hook_post_text(const uint16_t * const text) {
         return UIOHOOK_ERROR_POST_TEXT_NULL;
     }
 
+    // Check for accessibility before we post the event.
+    if (!hook_is_ax_api_enabled(hook_get_prompt_user_if_ax_api_disabled())) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Accessibility API is disabled!\n",
+                __FUNCTION__, __LINE__);
+
+        return UIOHOOK_ERROR_AXAPI_DISABLED;
+    } else {
+        logger(LOG_LEVEL_DEBUG, "%s [%u]: Accessibility API is enabled.\n",
+                __FUNCTION__, __LINE__);
+    }
+
     CGEventRef downEvent = CGEventCreateKeyboardEvent(NULL, 0, true);
     CGEventRef upEvent = CGEventCreateKeyboardEvent(NULL, 0, false);
 
@@ -360,4 +382,6 @@ UIOHOOK_API int hook_post_text(const uint16_t * const text) {
 
     CFRelease(downEvent);
     CFRelease(upEvent);
+
+    return UIOHOOK_SUCCESS;
 }

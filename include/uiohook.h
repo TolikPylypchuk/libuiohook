@@ -449,6 +449,15 @@ extern "C" {
     // Withdraw the event hook.
     UIOHOOK_API int hook_stop();
 
+    // Check whether access to macOS Accessibility API is enabled, optionally prompting the user if it is not.
+    UIOHOOK_API bool hook_is_ax_api_enabled(bool promptUserIfDisabled);
+
+    // Gets whether to prompt the user if access to macOS Accessibility API is disabled.
+    UIOHOOK_API bool hook_get_prompt_user_if_ax_api_disabled();
+
+    // Sets whether to prompt the user if access to macOS Accessibility API is disabled.
+    UIOHOOK_API void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled);
+
     // Retrieves an array of screen data for each available monitor.
     UIOHOOK_API screen_data* hook_create_screen_info(unsigned char *count);
 

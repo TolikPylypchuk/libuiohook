@@ -20,6 +20,8 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#include <CoreGraphics/CoreGraphics.h>
+
 #include <dlfcn.h>
 #include <stdbool.h>
 #include <uiohook.h>
@@ -34,10 +36,6 @@
 #endif
 
 // Dynamic library loading for dispatch_sync_f to offload tasks that must run on the main runloop.
-#if (defined(__MAC_OS_X_VERSION_MAX_ALLOWED) && __MAC_OS_X_VERSION_MAX_ALLOWED < __MAC_10_6) \
-    || (defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED < __IPHONE_4_0)
-typedef struct dispatch_queue_s *dispatch_queue_t;
-#endif
 static struct dispatch_queue_s *dispatch_main_queue_s;
 static void (*dispatch_sync_f_f)(dispatch_queue_t, void *, void (*function)(void *));
 
@@ -215,63 +213,18 @@ static const uint16_t uiocode_keycode_table[][2] = {
     { VC_CHANGE_INPUT_SOURCE,  kVK_ChangeInputSource    },
 };
 
-bool is_accessibility_enabled() {
-    bool is_enabled = false;
+static bool promptUserIfAxApiDisabled = true;
 
-    // Dynamically load the application services framework for examination.
-    Boolean (*AXIsProcessTrustedWithOptions_t)(CFDictionaryRef);
-    *(void **) (&AXIsProcessTrustedWithOptions_t) = dlsym(RTLD_DEFAULT, "AXIsProcessTrustedWithOptions");
-    const char *dlError = dlerror();
-    if (AXIsProcessTrustedWithOptions_t != NULL) {
-        // Check for property CFStringRef kAXTrustedCheckOptionPrompt
-        void ** kAXTrustedCheckOptionPrompt_t = dlsym(RTLD_DEFAULT, "kAXTrustedCheckOptionPrompt");
+bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
+    return promptUserIfDisabled ? CGRequestPostEventAccess() : CGPreflightPostEventAccess();
+}
 
-        dlError = dlerror();
-        if (dlError != NULL) {
-            // Could not load the AXIsProcessTrustedWithOptions function!
-            logger(LOG_LEVEL_WARN, "%s [%u]: %s.\n",
-                    __FUNCTION__, __LINE__, dlError);
-        } else if (kAXTrustedCheckOptionPrompt_t != NULL) {
-            // New accessibility API 10.9 and later.
-            const void * keys[] = { *kAXTrustedCheckOptionPrompt_t };
-            const void * values[] = { kCFBooleanTrue };
+bool hook_get_prompt_user_if_ax_api_disabled() {
+    return promptUserIfAxApiDisabled;
+}
 
-            CFDictionaryRef options = CFDictionaryCreate(
-                    kCFAllocatorDefault,
-                    keys,
-                    values,
-                    sizeof(keys) / sizeof(*keys),
-                    &kCFCopyStringDictionaryKeyCallBacks,
-                    &kCFTypeDictionaryValueCallBacks);
-
-            is_enabled = (*AXIsProcessTrustedWithOptions_t)(options);
-        }
-    } else {
-        if (dlError != NULL) {
-            logger(LOG_LEVEL_WARN, "%s [%u]: %s.\n",
-                    __FUNCTION__, __LINE__, dlError);
-        }
-
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: AXIsProcessTrustedWithOptions not found.\n",
-                __FUNCTION__, __LINE__);
-
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: Falling back to AXAPIEnabled().\n",
-                __FUNCTION__, __LINE__);
-        
-        // Old accessibility check 10.8 and older.
-        Boolean (*AXAPIEnabled_f)();
-        *(void **) (&AXAPIEnabled_f) = dlsym(RTLD_DEFAULT, "AXAPIEnabled");
-        dlError = dlerror();
-        if (dlError != NULL) {
-            // Could not load the AXIsProcessTrustedWithOptions function!
-            logger(LOG_LEVEL_WARN, "%s [%u]: %s.\n",
-                    __FUNCTION__, __LINE__, dlError);
-        } else if (AXAPIEnabled_f != NULL) {
-            is_enabled = (*AXAPIEnabled_f)();
-        }
-    }
-
-    return is_enabled;
+void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
+    promptUserIfAxApiDisabled = promptUserIfDisabled;
 }
 
 

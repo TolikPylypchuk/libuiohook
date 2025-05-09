@@ -449,7 +449,7 @@ static void destroy_event_runloop_info(event_runloop_info **hook) {
 
 int run() {
     // Check for accessibility before we start the loop.
-    if (!is_accessibility_enabled()) {
+    if (!hook_is_ax_api_enabled(hook_get_prompt_user_if_ax_api_disabled())) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Accessibility API is disabled!\n",
                 __FUNCTION__, __LINE__);
 
