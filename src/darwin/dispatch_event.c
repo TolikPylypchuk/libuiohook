@@ -214,6 +214,30 @@ bool dispatch_key_release(uint64_t timestamp, CGEventRef event_ref) {
     return consumed;
 }
 
+bool dispatch_system_key_copy_event(uint64_t timestamp, CGEventRef event_ref, CGKeyCode key_code, bool key_down) {
+    bool consumed = false;
+
+    // It doesn't appear like we can modify the event coming in, so we will fabricate a new event.
+    CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+    CGEventRef ns_event = CGEventCreateKeyboardEvent(src, kVK_CapsLock, key_down);
+    CGEventSetFlags(ns_event, CGEventGetFlags(event_ref));
+    CGEventSetIntegerValueField(
+            ns_event,
+            kCGEventSourceUnixProcessID,
+            CGEventGetIntegerValueField(event_ref, kCGEventSourceUnixProcessID));
+
+    if (key_down) {
+        consumed = dispatch_key_press(timestamp, ns_event);
+    } else {
+        consumed = dispatch_key_release(timestamp, ns_event);
+    }
+
+    CFRelease(ns_event);
+    CFRelease(src);
+
+    return consumed;
+}
+
 bool dispatch_system_key(uint64_t timestamp, CGEventRef event_ref) {
     bool consumed = false;
 
@@ -231,118 +255,37 @@ bool dispatch_system_key(uint64_t timestamp, CGEventRef event_ref) {
             int key_state = (key_flags & 0xFF00) >> 8;
             bool key_down = (key_state & 0x1) == 0;
 
-            if (key_code == NX_KEYTYPE_CAPS_LOCK) {
-                // It doesn't appear like we can modify the event coming in, so we will fabricate a new event.
-                CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-                CGEventRef ns_event = CGEventCreateKeyboardEvent(src, kVK_CapsLock, key_down);
-                CGEventSetFlags(ns_event, CGEventGetFlags(event_ref));
+            CGKeyCode adapted_key_code = 0;
 
-                if (key_down) {
-                    consumed = dispatch_key_press(timestamp, ns_event);
-                } else {
-                    consumed = dispatch_key_release(timestamp, ns_event);
-                }
+            switch (key_code) {
+                case NX_KEYTYPE_CAPS_LOCK:
+                    adapted_key_code = kVK_CapsLock;
+                    break;
+                case NX_KEYTYPE_SOUND_UP:
+                    adapted_key_code = kVK_VolumeUp;
+                    break;
+                case NX_KEYTYPE_SOUND_DOWN:
+                    adapted_key_code = kVK_VolumeDown;
+                    break;
+                case NX_KEYTYPE_MUTE:
+                    adapted_key_code = kVK_Mute;
+                    break;
+                case NX_KEYTYPE_EJECT:
+                    adapted_key_code = kVK_NX_Eject;
+                    break;
+                case NX_KEYTYPE_PLAY:
+                    adapted_key_code = kVK_MEDIA_Play;
+                    break;
+                case NX_KEYTYPE_FAST:
+                    adapted_key_code = kVK_MEDIA_Next;
+                    break;
+                case NX_KEYTYPE_REWIND:
+                    adapted_key_code = kVK_MEDIA_Previous;
+                    break;
+            }
 
-                CFRelease(ns_event);
-                CFRelease(src);
-            } else if (key_code == NX_KEYTYPE_SOUND_UP) {
-                // It doesn't appear like we can modify the event coming in, so we will fabricate a new event.
-                CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-                CGEventRef ns_event = CGEventCreateKeyboardEvent(src, kVK_VolumeUp, key_down);
-                CGEventSetFlags(ns_event, CGEventGetFlags(event_ref));
-
-                if (key_down) {
-                    consumed = dispatch_key_press(timestamp, ns_event);
-                } else {
-                    consumed = dispatch_key_release(timestamp, ns_event);
-                }
-
-                CFRelease(ns_event);
-                CFRelease(src);
-            } else if (key_code == NX_KEYTYPE_SOUND_DOWN) {
-                // It doesn't appear like we can modify the event coming in, so we will fabricate a new event.
-                CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-                CGEventRef ns_event = CGEventCreateKeyboardEvent(src, kVK_VolumeDown, key_down);
-                CGEventSetFlags(ns_event, CGEventGetFlags(event_ref));
-
-                if (key_down) {
-                    consumed = dispatch_key_press(timestamp, ns_event);
-                } else {
-                    consumed = dispatch_key_release(timestamp, ns_event);
-                }
-
-                CFRelease(ns_event);
-                CFRelease(src);
-            } else if (key_code == NX_KEYTYPE_MUTE) {
-                // It doesn't appear like we can modify the event coming in, so we will fabricate a new event.
-                CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-                CGEventRef ns_event = CGEventCreateKeyboardEvent(src, kVK_Mute, key_down);
-                CGEventSetFlags(ns_event, CGEventGetFlags(event_ref));
-
-                if (key_down) {
-                    consumed = dispatch_key_press(timestamp, ns_event);
-                } else {
-                    consumed = dispatch_key_release(timestamp, ns_event);
-                }
-
-                CFRelease(ns_event);
-                CFRelease(src);
-            } else if (key_code == NX_KEYTYPE_EJECT) {
-                // It doesn't appear like we can modify the event coming in, so we will fabricate a new event.
-                CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-                CGEventRef ns_event = CGEventCreateKeyboardEvent(src, kVK_NX_Eject, key_down);
-                CGEventSetFlags(ns_event, CGEventGetFlags(event_ref));
-
-                if (key_down) {
-                    consumed = dispatch_key_press(timestamp, ns_event);
-                } else {
-                    consumed = dispatch_key_release(timestamp, ns_event);
-                }
-
-                CFRelease(ns_event);
-                CFRelease(src);
-            } else if (key_code == NX_KEYTYPE_PLAY) {
-                // It doesn't appear like we can modify the event coming in, so we will fabricate a new event.
-                CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-                CGEventRef ns_event = CGEventCreateKeyboardEvent(src, kVK_MEDIA_Play, key_down);
-                CGEventSetFlags(ns_event, CGEventGetFlags(event_ref));
-
-                if (key_down) {
-                    consumed = dispatch_key_press(timestamp, ns_event);
-                } else {
-                    consumed = dispatch_key_release(timestamp, ns_event);
-                }
-
-                CFRelease(ns_event);
-                CFRelease(src);
-            } else if (key_code == NX_KEYTYPE_FAST) {
-                // It doesn't appear like we can modify the event coming in, so we will fabricate a new event.
-                CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-                CGEventRef ns_event = CGEventCreateKeyboardEvent(src, kVK_MEDIA_Next, key_down);
-                CGEventSetFlags(ns_event, CGEventGetFlags(event_ref));
-
-                if (key_down) {
-                    consumed = dispatch_key_press(timestamp, ns_event);
-                } else {
-                    consumed = dispatch_key_release(timestamp, ns_event);
-                }
-
-                CFRelease(ns_event);
-                CFRelease(src);
-            } else if (key_code == NX_KEYTYPE_REWIND) {
-                // It doesn't appear like we can modify the event coming in, so we will fabricate a new event.
-                CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-                CGEventRef ns_event = CGEventCreateKeyboardEvent(src, kVK_MEDIA_Previous, key_down);
-                CGEventSetFlags(ns_event, CGEventGetFlags(event_ref));
-
-                if (key_down) {
-                    consumed = dispatch_key_press(timestamp, ns_event);
-                } else {
-                    consumed = dispatch_key_release(timestamp, ns_event);
-                }
-
-                CFRelease(ns_event);
-                CFRelease(src);
+            if (adapted_key_code) {
+                consumed = dispatch_system_key_copy_event(timestamp, event_ref, adapted_key_code, key_down);
             }
         }
     }

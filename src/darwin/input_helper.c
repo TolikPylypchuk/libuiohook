@@ -414,7 +414,7 @@ void event_to_objc(CGEventRef event_ref, UInt32 *subtype, UInt32 *data1) {
         }
         #endif
     } else {
-        // We are already on the main runloop, so no fancy context switching is required required.
+        // We are already on the main runloop, so no fancy context switching is required.
         tis_message_to_nsevent(&tis_objc_message);
 
         logger(LOG_LEVEL_DEBUG, "%s [%u]: Using no runloop for objc message events.\n",
