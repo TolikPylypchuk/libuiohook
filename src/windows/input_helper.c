@@ -270,9 +270,7 @@ SIZE_T vkcode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size)
             return 0;
         }
 
-        UINT flags =
-                (1 << 0) | // No Alt handling - prevents editors from inserting characters on Alt+Arrow
-                (1 << 2);  // No keyboard state change (only Windows 10 1607 or later)
+        UINT flags = 1 << 2;  // No keyboard state change (only Windows 10 1607 or later)
 
         // Look up the Unicode code for the key without changing the keyboard state.
         int result = ToUnicodeEx(keycode, scancode, keyboard_state, buffer, size, flags, locale_id);
