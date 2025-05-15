@@ -24,6 +24,7 @@
 #endif
 
 #include <stdbool.h>
+#include <pthread.h>
 #include <uiohook.h>
 
 #include "dispatch_event.h"
@@ -57,6 +58,34 @@ static event_runloop_info *hook = NULL;
 
 static bool keyboard = true;
 static bool mouse = true;
+
+static unsigned int ax_poll_frequency = 1;
+static bool ax_access_revoked = false;
+
+// The event mask to listen for.
+static CGEventMask event_mask =
+        CGEventMaskBit(kCGEventKeyDown) |
+        CGEventMaskBit(kCGEventKeyUp) |
+        CGEventMaskBit(kCGEventFlagsChanged) |
+
+        CGEventMaskBit(kCGEventLeftMouseDown) |
+        CGEventMaskBit(kCGEventLeftMouseUp) |
+        CGEventMaskBit(kCGEventLeftMouseDragged) |
+
+        CGEventMaskBit(kCGEventRightMouseDown) |
+        CGEventMaskBit(kCGEventRightMouseUp) |
+        CGEventMaskBit(kCGEventRightMouseDragged) |
+
+        CGEventMaskBit(kCGEventOtherMouseDown) |
+        CGEventMaskBit(kCGEventOtherMouseUp) |
+        CGEventMaskBit(kCGEventOtherMouseDragged) |
+
+        CGEventMaskBit(kCGEventMouseMoved) |
+        CGEventMaskBit(kCGEventScrollWheel) |
+
+        // NOTE This event is undocumented and used for caps-lock release and multi-media keys.
+        CGEventMaskBit(NX_SYSDEFINED);
+
 
 #ifdef USE_EPOCH_TIME
 static uint64_t get_unix_timestamp() {
@@ -249,22 +278,22 @@ static CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, C
             }
             break;
 
-        default:
+        case kCGEventTapDisabledByTimeout:
             // Check for an old OS X bug where the tap seems to timeout for no reason.
             // See: http://stackoverflow.com/questions/2969110/cgeventtapcreate-breaks-down-mysteriously-with-key-down-events#2971217
-            if (type == (CGEventType) kCGEventTapDisabledByTimeout) {
-                logger(LOG_LEVEL_WARN, "%s [%u]: CGEventTap timeout!\n",
-                        __FUNCTION__, __LINE__);
+            logger(LOG_LEVEL_WARN, "%s [%u]: CGEventTap timeout!\n",
+                    __FUNCTION__, __LINE__);
 
-                // We need to re-enable the tap
-                if (hook->port) {
-                    CGEventTapEnable(hook->port, true);
-                }
-            } else {
-                // In theory this *should* never execute.
-                logger(LOG_LEVEL_DEBUG, "%s [%u]: Unhandled Darwin event: %#X.\n",
-                        __FUNCTION__, __LINE__, (unsigned int) type);
+            // We need to re-enable the tap
+            if (hook->port) {
+                CGEventTapEnable(hook->port, true);
             }
+            break;
+
+        default:
+            // In theory this *should* never execute.
+            logger(LOG_LEVEL_DEBUG, "%s [%u]: Unhandled macOS event: %#X.\n",
+                    __FUNCTION__, __LINE__, (unsigned int) type);
             break;
     }
 
@@ -301,6 +330,40 @@ static void hook_status_proc(CFRunLoopObserverRef observer, CFRunLoopActivity ac
     }
 }
 
+static CGEventRef dummy_hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, CGEventRef event_ref, void *param) {
+    return event_ref;
+}
+
+static void *ax_status_proc(void *param) {
+    logger(LOG_LEVEL_DEBUG, "%s [%u]: Starting polling for Accessibility API access\n",
+            __FUNCTION__, __LINE__);
+
+    while (hook != NULL) {
+        sleep(ax_poll_frequency);
+
+        CFMachPortRef port = CGEventTapCreate(
+                kCGSessionEventTap,
+                kCGHeadInsertEventTap,
+                kCGEventTapOptionDefault,
+                event_mask,
+                dummy_hook_event_proc,
+                NULL);
+
+        if (port == NULL) {
+            ax_access_revoked = true;
+            hook_stop();
+        } else {
+            CFMachPortInvalidate(port);
+            CFRelease(port);
+        }
+    }
+
+    logger(LOG_LEVEL_DEBUG, "%s [%u]: Finished polling for Accessibility API access\n",
+            __FUNCTION__, __LINE__);
+
+    return NULL;
+}
+
 static int create_event_runloop_info(event_runloop_info **hook) {
     if (*hook != NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Expected unallocated event_runloop_info pointer!\n",
@@ -317,29 +380,6 @@ static int create_event_runloop_info(event_runloop_info **hook) {
 
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
-
-    // Setup the event mask to listen for.
-    CGEventMask event_mask = CGEventMaskBit(kCGEventKeyDown) |
-            CGEventMaskBit(kCGEventKeyUp) |
-            CGEventMaskBit(kCGEventFlagsChanged) |
-
-            CGEventMaskBit(kCGEventLeftMouseDown) |
-            CGEventMaskBit(kCGEventLeftMouseUp) |
-            CGEventMaskBit(kCGEventLeftMouseDragged) |
-
-            CGEventMaskBit(kCGEventRightMouseDown) |
-            CGEventMaskBit(kCGEventRightMouseUp) |
-            CGEventMaskBit(kCGEventRightMouseDragged) |
-
-            CGEventMaskBit(kCGEventOtherMouseDown) |
-            CGEventMaskBit(kCGEventOtherMouseUp) |
-            CGEventMaskBit(kCGEventOtherMouseDragged) |
-
-            CGEventMaskBit(kCGEventMouseMoved) |
-            CGEventMaskBit(kCGEventScrollWheel) |
-
-            // NOTE This event is undocumented and used for caps-lock release and multi-media keys.
-            CGEventMaskBit(NX_SYSDEFINED);
 
     // Create the event tap.
     (*hook)->port = CGEventTapCreate(
@@ -404,6 +444,10 @@ static int create_event_runloop_info(event_runloop_info **hook) {
     CFRunLoopAddSource((*hook)->event, (*hook)->source, kCFRunLoopDefaultMode);
     CFRunLoopAddObserver((*hook)->event, (*hook)->observer, kCFRunLoopDefaultMode);
 
+    ax_access_revoked = false;
+    pthread_t ax_access_thread;
+    pthread_create(&ax_access_thread, NULL, &ax_status_proc, NULL);
+
     return UIOHOOK_SUCCESS;
 }
 
@@ -447,7 +491,7 @@ static void destroy_event_runloop_info(event_runloop_info **hook) {
     }
 }
 
-int run() {
+static int run() {
     // Check for accessibility before we start the loop.
     if (!hook_is_ax_api_enabled(hook_get_prompt_user_if_ax_api_disabled())) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Accessibility API is disabled!\n",
@@ -501,7 +545,15 @@ int run() {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Something, something, something, complete.\n",
             __FUNCTION__, __LINE__);
 
-    return UIOHOOK_SUCCESS;
+    return ax_access_revoked ? UIOHOOK_ERROR_AXAPI_REVOKED : UIOHOOK_SUCCESS;
+}
+
+UIOHOOK_API unsigned int hook_get_ax_poll_frequency() {
+    return ax_poll_frequency;
+}
+
+UIOHOOK_API void hook_set_ax_poll_frequency(unsigned int frequency) {
+    ax_poll_frequency = frequency;
 }
 
 UIOHOOK_API int hook_run() {

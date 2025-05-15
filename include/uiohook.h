@@ -51,6 +51,7 @@
 #define UIOHOOK_ERROR_CREATE_RUN_LOOP_SOURCE     0x42
 #define UIOHOOK_ERROR_GET_RUNLOOP                0x43
 #define UIOHOOK_ERROR_CREATE_OBSERVER            0x44
+#define UIOHOOK_ERROR_AXAPI_REVOKED              0x45
 /* End Error Codes */
 
 /* Begin Log Levels and Function Prototype */
@@ -457,6 +458,12 @@ extern "C" {
 
     // Sets whether to prompt the user if access to macOS Accessibility API is disabled.
     UIOHOOK_API void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled);
+
+    // Gets the frequency for polling access to macOS Accessibility API.
+    UIOHOOK_API unsigned int hook_get_ax_poll_frequency();
+
+    // Sets the frequency for polling access to macOS Accessibility API.
+    UIOHOOK_API void hook_set_ax_poll_frequency(unsigned int frequency);
 
     // Retrieves an array of screen data for each available monitor.
     UIOHOOK_API screen_data* hook_create_screen_info(unsigned char *count);

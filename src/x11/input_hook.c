@@ -452,3 +452,10 @@ UIOHOOK_API int hook_stop() {
 
     return status;
 }
+
+UIOHOOK_API unsigned int hook_get_ax_poll_frequency() {
+    return 0;
+}
+
+UIOHOOK_API void hook_set_ax_poll_frequency(unsigned int frequency) {
+}

@@ -215,15 +215,15 @@ static const uint16_t uiocode_keycode_table[][2] = {
 
 static bool promptUserIfAxApiDisabled = true;
 
-bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
+UIOHOOK_API bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
     return promptUserIfDisabled ? CGRequestPostEventAccess() : CGPreflightPostEventAccess();
 }
 
-bool hook_get_prompt_user_if_ax_api_disabled() {
+UIOHOOK_API bool hook_get_prompt_user_if_ax_api_disabled() {
     return promptUserIfAxApiDisabled;
 }
 
-void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
+UIOHOOK_API void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
     promptUserIfAxApiDisabled = promptUserIfDisabled;
 }
 

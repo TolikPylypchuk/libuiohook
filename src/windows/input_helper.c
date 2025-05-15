@@ -280,13 +280,13 @@ SIZE_T vkcode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size)
     return charCount;
 }
 
-bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
+UIOHOOK_API bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
     return true;
 }
 
-bool hook_get_prompt_user_if_ax_api_disabled() {
+UIOHOOK_API bool hook_get_prompt_user_if_ax_api_disabled() {
     return false;
 }
 
-void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
+UIOHOOK_API void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
 }
