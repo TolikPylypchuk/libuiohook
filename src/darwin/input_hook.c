@@ -59,7 +59,7 @@ static event_runloop_info *hook = NULL;
 static bool keyboard = true;
 static bool mouse = true;
 
-static unsigned int ax_poll_frequency = 1;
+static uint32_t ax_poll_frequency = 1;
 static bool ax_access_revoked = false;
 
 // The event mask to listen for.
@@ -548,11 +548,11 @@ static int run() {
     return ax_access_revoked ? UIOHOOK_ERROR_AXAPI_REVOKED : UIOHOOK_SUCCESS;
 }
 
-UIOHOOK_API unsigned int hook_get_ax_poll_frequency() {
+UIOHOOK_API uint32_t hook_get_ax_poll_frequency() {
     return ax_poll_frequency;
 }
 
-UIOHOOK_API void hook_set_ax_poll_frequency(unsigned int frequency) {
+UIOHOOK_API void hook_set_ax_poll_frequency(uint32_t frequency) {
     ax_poll_frequency = frequency;
 }
 

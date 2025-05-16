@@ -460,10 +460,10 @@ extern "C" {
     UIOHOOK_API void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled);
 
     // Gets the frequency for polling access to macOS Accessibility API.
-    UIOHOOK_API unsigned int hook_get_ax_poll_frequency();
+    UIOHOOK_API uint32_t hook_get_ax_poll_frequency();
 
     // Sets the frequency for polling access to macOS Accessibility API.
-    UIOHOOK_API void hook_set_ax_poll_frequency(unsigned int frequency);
+    UIOHOOK_API void hook_set_ax_poll_frequency(uint32_t frequency);
 
     // Retrieves an array of screen data for each available monitor.
     UIOHOOK_API screen_data* hook_create_screen_info(unsigned char *count);
