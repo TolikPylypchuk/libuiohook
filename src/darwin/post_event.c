@@ -138,7 +138,7 @@ static int post_key_event(uiohook_event * const event, CGEventSourceRef src) {
 
     CGEventSetFlags(cg_event, event_mask);
 
-    CGEventPost(kCGHIDEventTap, cg_event); // kCGSessionEventTap also works.
+    CGEventPost(kCGSessionEventTap, cg_event);
     CFRelease(cg_event);
 
     return UIOHOOK_SUCCESS;
@@ -246,7 +246,7 @@ static int post_mouse_event(uiohook_event * const event, CGEventSourceRef src) {
         CGEventSetIntegerValueField(cg_event, kCGMouseEventClickState, event->data.mouse.clicks);
     }
 
-    CGEventPost(kCGHIDEventTap, cg_event); // kCGSessionEventTap also works.
+    CGEventPost(kCGSessionEventTap, cg_event);
     CFRelease(cg_event);
 
     return UIOHOOK_SUCCESS;
@@ -285,7 +285,7 @@ static int post_mouse_wheel_event(uiohook_event * const event, CGEventSourceRef 
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
 
-    CGEventPost(kCGHIDEventTap, cg_event); // kCGSessionEventTap also works.
+    CGEventPost(kCGSessionEventTap, cg_event);
     CFRelease(cg_event);
 
     return UIOHOOK_SUCCESS;
