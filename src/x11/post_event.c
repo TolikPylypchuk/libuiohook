@@ -67,6 +67,23 @@ static int post_key_event(uiohook_event * const event) {
     return UIOHOOK_SUCCESS;
 }
 
+static unsigned int map_to_x11_mouse_button(uint16_t button) {
+    switch (button) {
+        case MOUSE_BUTTON1:
+            return Button1;
+        case MOUSE_BUTTON2:
+            return Button3; // Apparently, when simulating mouse events, the right button is actually button 3,
+        case MOUSE_BUTTON3:
+            return Button2; // and the middle button is actually button 2
+        case MOUSE_BUTTON4:
+            return XButton1;
+        case MOUSE_BUTTON5:
+            return XButton2;
+    }
+
+    return 0;
+}
+
 static int post_mouse_button_event(uiohook_event * const event) {
     XButtonEvent btn_event = {
         .serial = 0,
@@ -104,7 +121,7 @@ static int post_mouse_button_event(uiohook_event * const event) {
                 return UIOHOOK_FAILURE;
             }
 
-            if (XTestFakeButtonEvent(helper_disp, event->data.mouse.button, True, 0) != 0) {
+            if (XTestFakeButtonEvent(helper_disp, map_to_x11_mouse_button(event->data.mouse.button), True, 0) != 0) {
                 status = UIOHOOK_SUCCESS;
             }
             break;
@@ -117,7 +134,7 @@ static int post_mouse_button_event(uiohook_event * const event) {
                 return UIOHOOK_FAILURE;
             }
 
-            if (XTestFakeButtonEvent(helper_disp, event->data.mouse.button, False, 0) != 0) {
+            if (XTestFakeButtonEvent(helper_disp, map_to_x11_mouse_button(event->data.mouse.button), False, 0) != 0) {
                 status = UIOHOOK_SUCCESS;
             }
             break;
