@@ -111,6 +111,7 @@ static int map_keyboard_event(uiohook_event * const event, INPUT * const input) 
     }
 
     input->ki.wScan = MapVirtualKeyW(input->ki.wVk, MAPVK_VK_TO_VSC_EX);
+    input->ki.dwFlags |= KEYEVENTF_SCANCODE;
 
     if (HIBYTE(input->ki.wScan)) {
         input->ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
