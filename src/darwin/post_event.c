@@ -138,7 +138,7 @@ static int post_key_event(uiohook_event * const event, CGEventSourceRef src) {
 
     CGEventSetFlags(cg_event, event_mask);
 
-    CGEventPost(kCGSessionEventTap, cg_event);
+    CGEventPost(kCGHIDEventTap, cg_event);
     CFRelease(cg_event);
 
     return UIOHOOK_SUCCESS;
