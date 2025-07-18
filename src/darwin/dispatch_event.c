@@ -47,6 +47,15 @@ static unsigned short click_count = 0;
 static CGEventTimestamp click_time = 0;
 static unsigned short int click_button = MOUSE_NOBUTTON;
 
+static bool key_typed_enabled = true;
+
+bool hook_is_key_typed_enabled() {
+    return key_typed_enabled;
+}
+
+void hook_set_key_typed_enabled(bool enabled) {
+    key_typed_enabled = enabled;
+}
 
 UIOHOOK_API void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting new dispatch callback to %#p.\n",
@@ -142,8 +151,8 @@ bool dispatch_key_press(uint64_t timestamp, CGEventRef event_ref) {
     dispatch_event(&uio_event);
     consumed = uio_event.mask & MASK_CONSUMED;
 
-    // If the pressed event was not consumed...
-    if (!consumed) {
+    // If the pressed event was not consumed and key typed events are enabled.
+    if (key_typed_enabled && !consumed) {
         UniChar buffer[KEY_BUFFER_SIZE];
         UniCharCount length = event_to_unicode(event_ref, buffer, KEY_BUFFER_SIZE);
 

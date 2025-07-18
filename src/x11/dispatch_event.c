@@ -43,6 +43,16 @@ static dispatcher_t dispatch = NULL;
 static void *dispatch_data = NULL;
 
 
+static bool key_typed_enabled = true;
+
+bool hook_is_key_typed_enabled() {
+    return key_typed_enabled;
+}
+
+void hook_set_key_typed_enabled(bool enabled) {
+    key_typed_enabled = enabled;
+}
+
 UIOHOOK_API void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting new dispatch callback to %#p.\n",
             __FUNCTION__, __LINE__, dispatch_proc);
@@ -132,8 +142,8 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
     dispatch_event(&uio_event);
     consumed = uio_event.mask & MASK_CONSUMED;
 
-    // If the pressed event was not consumed and we got a char in the buffer.
-    if (!consumed) {
+    // If the pressed event was not consumed and key typed events are enabled.
+    if (key_typed_enabled && !consumed) {
         KeySym keysym = 0x00;
 
         wchar_t surrogate[2] = {};

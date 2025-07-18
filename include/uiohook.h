@@ -450,6 +450,12 @@ extern "C" {
     // Withdraw the event hook.
     UIOHOOK_API int hook_stop();
 
+    // Check whether key typed events are enabled.
+    UIOHOOK_API bool hook_is_key_typed_enabled();
+
+    // Enable or disable key typed events.
+    UIOHOOK_API void hook_set_key_typed_enabled(bool enabled);
+
     // Check whether access to macOS Accessibility API is enabled, optionally prompting the user if it is not.
     UIOHOOK_API bool hook_is_ax_api_enabled(bool promptUserIfDisabled);
 
