@@ -194,6 +194,15 @@ static const uint16_t uiocode_keycode_table[][2] = {
     { VC_PROCESS,             VK_PROCESSKEY          },
 };
 
+DWORD get_vk_code(KBDLLHOOKSTRUCT *kbhook) {
+    if (kbhook->vkCode >= '0' && kbhook->vkCode <= '9' || kbhook->vkCode >= 'A' && kbhook->vkCode <= 'Z') {
+        DWORD vk_code = MapVirtualKeyW(kbhook->scanCode, MAPVK_VSC_TO_VK_EX);
+        return vk_code == 0 ? kbhook->vkCode : vk_code;
+    }
+
+    return kbhook->vkCode;
+}
+
 uint16_t vkcode_to_uiocode(DWORD vk_code, DWORD flags) {
     uint16_t uiocode = VC_UNDEFINED;
 

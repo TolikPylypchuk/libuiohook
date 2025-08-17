@@ -28,6 +28,9 @@
 #define WM_MOUSEHWHEEL  0x020E
 #endif
 
+/* Get the virtual key-code of the event, taking layouts like AZERTY into account. */
+extern DWORD get_vk_code(KBDLLHOOKSTRUCT *kbhook);
+
 /* Converts a uiohook virtual key code to the appropriate Windows VK key code. */
 extern DWORD uiocode_to_vkcode(uint16_t uiocode);
 
