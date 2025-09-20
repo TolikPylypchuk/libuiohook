@@ -345,43 +345,42 @@ bool dispatch_mouse_move(uint64_t timestamp, MSLLHOOKSTRUCT *mshook) {
 
     // We received a mouse move event with the mouse actually moving.
     // This verifies that the mouse was moved after being depressed.
-    if (last_click.x != mshook->pt.x || last_click.y != mshook->pt.y) {
+    if ((last_click.x != mshook->pt.x || last_click.y != mshook->pt.y) &&
+        click_count != 0 && (long) (timestamp - click_time) > hook_get_multi_click_time()) {
         // Reset the click count.
-        if (click_count != 0 && (long) (timestamp - click_time) > hook_get_multi_click_time()) {
-            click_count = 0;
-        }
-
-        // Populate mouse move event.
-        uio_event.time = timestamp;
-        uio_event.mask = get_modifiers();
-        if (mshook->flags & (LLMHF_INJECTED | LLMHF_LOWER_IL_INJECTED)) {
-            uio_event.mask |= MASK_EMULATED;
-        }
-
-        // Check the modifier mask range for MASK_BUTTON1 - 5.
-        bool mouse_dragged = uio_event.mask & (MASK_BUTTON1 | MASK_BUTTON2 | MASK_BUTTON3 | MASK_BUTTON4 | MASK_BUTTON5);
-        if (mouse_dragged) {
-            // Create Mouse Dragged event.
-            uio_event.type = EVENT_MOUSE_DRAGGED;
-        } else {
-            // Create a Mouse Moved event.
-            uio_event.type = EVENT_MOUSE_MOVED;
-        }
-
-        uio_event.data.mouse.button = MOUSE_NOBUTTON;
-        uio_event.data.mouse.clicks = click_count;
-        uio_event.data.mouse.x = (int16_t) mshook->pt.x;
-        uio_event.data.mouse.y = (int16_t) mshook->pt.y;
-
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: Mouse %s to %u, %u.\n",
-                __FUNCTION__, __LINE__,
-                mouse_dragged ? "dragged" : "moved",
-                uio_event.data.mouse.x, uio_event.data.mouse.y);
-
-        // Fire mouse move event.
-        dispatch_event(&uio_event);
-        consumed = uio_event.mask & MASK_CONSUMED;
+        click_count = 0;
     }
+
+    // Populate mouse move event.
+    uio_event.time = timestamp;
+    uio_event.mask = get_modifiers();
+    if (mshook->flags & (LLMHF_INJECTED | LLMHF_LOWER_IL_INJECTED)) {
+        uio_event.mask |= MASK_EMULATED;
+    }
+
+    // Check the modifier mask range for MASK_BUTTON1 - 5.
+    bool mouse_dragged = uio_event.mask & (MASK_BUTTON1 | MASK_BUTTON2 | MASK_BUTTON3 | MASK_BUTTON4 | MASK_BUTTON5);
+    if (mouse_dragged) {
+        // Create Mouse Dragged event.
+        uio_event.type = EVENT_MOUSE_DRAGGED;
+    } else {
+        // Create a Mouse Moved event.
+        uio_event.type = EVENT_MOUSE_MOVED;
+    }
+
+    uio_event.data.mouse.button = MOUSE_NOBUTTON;
+    uio_event.data.mouse.clicks = click_count;
+    uio_event.data.mouse.x = (int16_t) mshook->pt.x;
+    uio_event.data.mouse.y = (int16_t) mshook->pt.y;
+
+    logger(LOG_LEVEL_DEBUG, "%s [%u]: Mouse %s to %u, %u.\n",
+            __FUNCTION__, __LINE__,
+            mouse_dragged ? "dragged" : "moved",
+            uio_event.data.mouse.x, uio_event.data.mouse.y);
+
+    // Fire mouse move event.
+    dispatch_event(&uio_event);
+    consumed = uio_event.mask & MASK_CONSUMED;
 
     return consumed;
 }

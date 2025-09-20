@@ -278,10 +278,8 @@ LRESULT CALLBACK mouse_hook_event_proc(int nCode, WPARAM wParam, LPARAM lParam) 
     return hook_result;
 }
 
-static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
         case WM_CLOSE:
             DestroyWindow(hwnd);
             break;
@@ -294,11 +292,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
     }
+
     return 0;
 }
 
-static int create_invisible_window()
-{
+static int create_invisible_window() {
     WNDCLASSEX wcex = { 0 };
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = WS_EX_NOACTIVATE;

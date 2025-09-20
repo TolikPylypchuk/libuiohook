@@ -259,6 +259,9 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
                 __FUNCTION__, __LINE__);
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
+    
+    logger(LOG_LEVEL_DEBUG, "%s [%u]: Posting an event of type: %#X.\n",
+            __FUNCTION__, __LINE__, event->type);
 
     int status = UIOHOOK_FAILURE;
     switch (event->type) {
@@ -285,7 +288,7 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
         case EVENT_HOOK_DISABLED:
 
         default:
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Ignoring post event: %#X.\n",
+            logger(LOG_LEVEL_DEBUG, "%s [%u]: Ignoring post event of type: %#X.\n",
                     __FUNCTION__, __LINE__, event->type);
             status = UIOHOOK_FAILURE;
     }
