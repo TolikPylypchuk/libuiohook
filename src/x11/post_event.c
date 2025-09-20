@@ -24,6 +24,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/XTest.h>
+#include <xkbcommon/xkbcommon.h>
 
 #include "input_helper.h"
 #include "logger.h"
@@ -309,9 +310,12 @@ KeySym *map_to_keysyms(const uint16_t * const text, size_t count, size_t *keysym
 
     size_t i = 0;
     for (; utf32_text[i] != 0; i++) {
-        char str[9] = { 0 };
-        sprintf(str, "U%04X", utf32_text[i]);
-        keysyms[i] = XStringToKeysym(str);
+        keysyms[i] = xkb_utf32_to_keysym(utf32_text[i]);
+
+        if (keysyms[i] == NoSymbol) {
+            logger(LOG_LEVEL_WARN, "%s [%u]: Could not map character %04X to a key sym!\n",
+                __FUNCTION__, __LINE__, utf32_text[i]);
+        }
     }
 
     *keysym_count = i;
@@ -357,6 +361,10 @@ KeyCode find_unused_keycode() {
 }
 
 int post_keysym(KeySym keysym, KeyCode keycode) {
+    if (keysym == NoSymbol) {
+        return UIOHOOK_SUCCESS;
+    }
+
     KeySym keysyms[4] = { keysym, keysym, keysym, keysym }; // Use the same KeySym for 4 shift levels
     int result = XChangeKeyboardMapping(helper_disp, keycode, 4, keysyms, 1);
     if (result != Success) {

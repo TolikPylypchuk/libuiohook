@@ -165,6 +165,14 @@ if(UNIX AND NOT APPLE)
     include(CheckIncludeFile)
     check_include_file(X11/extensions/record.h HAVE_RECORD_H "-include X11/Xlib.h")
 
+    pkg_check_modules(XKB_COMMON REQUIRED xkbcommon-x11)
+    target_include_directories(uiohook PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
+    target_link_libraries(uiohook "${XKB_COMMON_LDFLAGS}")
+
+    pkg_check_modules(X11_XCB REQUIRED x11-xcb)
+    target_include_directories(uiohook PRIVATE "${X11_XCB_INCLUDE_DIRS}")
+    target_link_libraries(uiohook "${X11_XCB_LDFLAGS}")
+
     option(USE_XT "X Toolkit Extension (default: ON)" ON)
     if(USE_XT)
         pkg_check_modules(XT REQUIRED xt)
