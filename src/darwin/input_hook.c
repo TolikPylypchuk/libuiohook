@@ -247,7 +247,7 @@ static CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, C
                     unset_modifier_mask(MOUSE_BUTTON5);
                 }
 
-                consumed = dispatch_button_press(timestamp, event_ref, button);
+                consumed = dispatch_button_release(timestamp, event_ref, button);
             }
             break;
 
