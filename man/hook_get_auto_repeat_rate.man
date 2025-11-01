@@ -27,17 +27,17 @@ hook_get_multi_click_time \- Button multi-click timeout
 .SH SYNTAX
 #include <uiohook.h>
 .HP
-UIOHOOK_API long int hook_get_auto_repeat_rate\^(\fIvoid\fP\^);
+long int hook_get_auto_repeat_rate\^(\fIvoid\fP\^);
 .HP
-UIOHOOK_API long int hook_get_auto_repeat_delay\^(\fIvoid\fP\^);
+long int hook_get_auto_repeat_delay\^(\fIvoid\fP\^);
 .HP
-UIOHOOK_API long int hook_get_pointer_acceleration_multiplier\^(\fIvoid\fP\^);
+long int hook_get_pointer_acceleration_multiplier\^(\fIvoid\fP\^);
 .HP
-UIOHOOK_API long int hook_get_pointer_acceleration_threshold\^(\fIvoid\fP\^);
+long int hook_get_pointer_acceleration_threshold\^(\fIvoid\fP\^);
 .HP
-UIOHOOK_API long int hook_get_pointer_sensitivity\^(\fIvoid\fP\^);
+long int hook_get_pointer_sensitivity\^(\fIvoid\fP\^);
 .HP
-UIOHOOK_API long int hook_get_multi_click_time\^(\fIvoid\fP\^);
+long int hook_get_multi_click_time\^(\fIvoid\fP\^);
 .SH ARGUMENTS
 .IP \fIvoid\fP 1i
 .SH RETURN VALUE

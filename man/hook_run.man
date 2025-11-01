@@ -21,9 +21,9 @@ hook_run, hook_disable \- Insert / Withdraw the native event hook
 .SH SYNTAX
 #include <uiohook.h>
 .HP
-UIOHOOK_API int hook_run\^(\fIvoid\fP\^);
+int hook_run\^(\fIvoid\fP\^);
 .HP
-UIOHOOK_API int hook_stop\^(\fIvoid\fP\^);
+int hook_stop\^(\fIvoid\fP\^);
 .SH ARGUMENTS
 .IP \fIvoid\fP 1i
 

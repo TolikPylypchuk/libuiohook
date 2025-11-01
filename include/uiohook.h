@@ -409,88 +409,81 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #define WHEEL_HORIZONTAL_DIRECTION               4
 /* End Virtual Mouse Buttons */
 
-
-#ifdef _WIN32
-#define UIOHOOK_API __declspec(dllexport)
-#else
-#define UIOHOOK_API
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
     // Set the logger callback function.
-    UIOHOOK_API void hook_set_logger_proc(logger_t logger_proc, void *user_data);
+    void hook_set_logger_proc(logger_t logger_proc, void *user_data);
 
     // Set the event callback function.
-    UIOHOOK_API void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data);
+    void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data);
 
     // Send a virtual event back to the system.
-    UIOHOOK_API int hook_post_event(uiohook_event * const event);
+    int hook_post_event(uiohook_event * const event);
 
     // Send text back to the system.
-    UIOHOOK_API int hook_post_text(const uint16_t * const text);
+    int hook_post_text(const uint16_t * const text);
 
     // Get the delay between character sending when posting text on X11.
-    UIOHOOK_API uint64_t hook_get_post_text_delay_x11();
+    uint64_t hook_get_post_text_delay_x11();
 
     // Set the delay between character sending when posting text on X11.
-    UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay);
+    void hook_set_post_text_delay_x11(uint64_t delay);
 
     // Insert the event hook for all events.
-    UIOHOOK_API int hook_run();
+    int hook_run();
 
     // Insert the event hook for keyboard events.
-    UIOHOOK_API int hook_run_keyboard();
+    int hook_run_keyboard();
 
     // Insert the event hook for mouse events.
-    UIOHOOK_API int hook_run_mouse();
+    int hook_run_mouse();
 
     // Withdraw the event hook.
-    UIOHOOK_API int hook_stop();
+    int hook_stop();
 
     // Check whether key typed events are enabled.
-    UIOHOOK_API bool hook_is_key_typed_enabled();
+    bool hook_is_key_typed_enabled();
 
     // Enable or disable key typed events.
-    UIOHOOK_API void hook_set_key_typed_enabled(bool enabled);
+    void hook_set_key_typed_enabled(bool enabled);
 
     // Check whether access to macOS Accessibility API is enabled, optionally prompting the user if it is not.
-    UIOHOOK_API bool hook_is_ax_api_enabled(bool promptUserIfDisabled);
+    bool hook_is_ax_api_enabled(bool promptUserIfDisabled);
 
     // Gets whether to prompt the user if access to macOS Accessibility API is disabled.
-    UIOHOOK_API bool hook_get_prompt_user_if_ax_api_disabled();
+    bool hook_get_prompt_user_if_ax_api_disabled();
 
     // Sets whether to prompt the user if access to macOS Accessibility API is disabled.
-    UIOHOOK_API void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled);
+    void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled);
 
     // Gets the frequency for polling access to macOS Accessibility API.
-    UIOHOOK_API uint32_t hook_get_ax_poll_frequency();
+    uint32_t hook_get_ax_poll_frequency();
 
     // Sets the frequency for polling access to macOS Accessibility API.
-    UIOHOOK_API void hook_set_ax_poll_frequency(uint32_t frequency);
+    void hook_set_ax_poll_frequency(uint32_t frequency);
 
     // Retrieves an array of screen data for each available monitor.
-    UIOHOOK_API screen_data* hook_create_screen_info(unsigned char *count);
+    screen_data* hook_create_screen_info(unsigned char *count);
 
     // Retrieves the keyboard auto repeat rate.
-    UIOHOOK_API long int hook_get_auto_repeat_rate();
+    long int hook_get_auto_repeat_rate();
 
     // Retrieves the keyboard auto repeat delay.
-    UIOHOOK_API long int hook_get_auto_repeat_delay();
+    long int hook_get_auto_repeat_delay();
 
     // Retrieves the mouse acceleration multiplier.
-    UIOHOOK_API long int hook_get_pointer_acceleration_multiplier();
+    long int hook_get_pointer_acceleration_multiplier();
 
     // Retrieves the mouse acceleration threshold.
-    UIOHOOK_API long int hook_get_pointer_acceleration_threshold();
+    long int hook_get_pointer_acceleration_threshold();
 
     // Retrieves the mouse sensitivity.
-    UIOHOOK_API long int hook_get_pointer_sensitivity();
+    long int hook_get_pointer_sensitivity();
 
     // Retrieves the double/triple click interval.
-    UIOHOOK_API long int hook_get_multi_click_time();
+    long int hook_get_multi_click_time();
 
 #ifdef __cplusplus
 }

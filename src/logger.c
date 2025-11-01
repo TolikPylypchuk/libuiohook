@@ -37,7 +37,7 @@ void logger(unsigned int level, const char *format, ...) {
     }
 }
 
-UIOHOOK_API void hook_set_logger_proc(logger_t logger_proc, void *user_data) {
+void hook_set_logger_proc(logger_t logger_proc, void *user_data) {
     callback = logger_proc;
     callback_data = user_data;
 }

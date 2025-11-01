@@ -548,33 +548,33 @@ static int run() {
     return ax_access_revoked ? UIOHOOK_ERROR_AXAPI_REVOKED : UIOHOOK_SUCCESS;
 }
 
-UIOHOOK_API uint32_t hook_get_ax_poll_frequency() {
+uint32_t hook_get_ax_poll_frequency() {
     return ax_poll_frequency;
 }
 
-UIOHOOK_API void hook_set_ax_poll_frequency(uint32_t frequency) {
+void hook_set_ax_poll_frequency(uint32_t frequency) {
     ax_poll_frequency = frequency;
 }
 
-UIOHOOK_API int hook_run() {
+int hook_run() {
     keyboard = true;
     mouse = true;
     return run();
 }
 
-UIOHOOK_API int hook_run_keyboard() {
+int hook_run_keyboard() {
     keyboard = true;
     mouse = false;
     return run();
 }
 
-UIOHOOK_API int hook_run_mouse() {
+int hook_run_mouse() {
     keyboard = false;
     mouse = true;
     return run();
 }
 
-UIOHOOK_API int hook_stop() {
+int hook_stop() {
     if (hook != NULL) {
         CFStringRef mode = CFRunLoopCopyCurrentMode(hook->event);
         if (mode == NULL) {

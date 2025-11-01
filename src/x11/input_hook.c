@@ -396,25 +396,25 @@ int run() {
     return status;
 }
 
-UIOHOOK_API int hook_run() {
+int hook_run() {
     keyboard = true;
     mouse = true;
     return run();
 }
 
-UIOHOOK_API int hook_run_keyboard() {
+int hook_run_keyboard() {
     keyboard = true;
     mouse = false;
     return run();
 }
 
-UIOHOOK_API int hook_run_mouse() {
+int hook_run_mouse() {
     keyboard = false;
     mouse = true;
     return run();
 }
 
-UIOHOOK_API int hook_stop() {
+int hook_stop() {
     int status = UIOHOOK_FAILURE;
 
     if (hook != NULL && hook->ctrl.display != NULL && hook->ctrl.context != 0) {
@@ -453,9 +453,9 @@ UIOHOOK_API int hook_stop() {
     return status;
 }
 
-UIOHOOK_API uint32_t hook_get_ax_poll_frequency() {
+uint32_t hook_get_ax_poll_frequency() {
     return 0;
 }
 
-UIOHOOK_API void hook_set_ax_poll_frequency(uint32_t frequency) {
+void hook_set_ax_poll_frequency(uint32_t frequency) {
 }

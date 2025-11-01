@@ -55,12 +55,12 @@ typedef struct {
     LONG y;
 } normalized_coordinates;
 
-UIOHOOK_API uint64_t hook_get_post_text_delay_x11() {
+uint64_t hook_get_post_text_delay_x11() {
     // Not applicable on Windows, so does nothing
     return 0;
 }
 
-UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay) {
+void hook_set_post_text_delay_x11(uint64_t delay) {
     // Not applicable on Windows, so does nothing
 }
 
@@ -103,7 +103,7 @@ static int map_keyboard_event(uiohook_event * const event, INPUT * const input) 
             return UIOHOOK_FAILURE;
     }
 
-    input->ki.wVk = (WORD) uiocode_to_vkcode(event->data.keyboard.keycode);
+    input->ki.wVk = (WORD) uiocode_to_keycode(event->data.keyboard.keycode);
     if (input->ki.wVk == 0x0000) {
         logger(LOG_LEVEL_WARN, "%s [%u]: Unable to lookup scancode: %li\n",
                 __FUNCTION__, __LINE__, event->data.keyboard.keycode);
@@ -252,7 +252,7 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
     return UIOHOOK_SUCCESS;
 }
 
-UIOHOOK_API int hook_post_event(uiohook_event * const event) {
+int hook_post_event(uiohook_event * const event) {
     INPUT *input = (INPUT *) calloc(1, sizeof(INPUT));
     if (input == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: failed to allocate memory: calloc!\n",
@@ -304,7 +304,7 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
     return status;
 }
 
-UIOHOOK_API int hook_post_text(const uint16_t * const text) {
+int hook_post_text(const uint16_t * const text) {
     if (text == NULL) {
         return UIOHOOK_ERROR_POST_TEXT_NULL;
     }

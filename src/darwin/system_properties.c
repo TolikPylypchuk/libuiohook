@@ -41,7 +41,7 @@ static io_connect_t connection;
 /* The following function was contributed by Anthony Liguori Jan 18 2015.
  * https://github.com/kwhat/libuiohook/pull/18
  */
-UIOHOOK_API screen_data* hook_create_screen_info(unsigned char *count) {
+screen_data* hook_create_screen_info(unsigned char *count) {
     CGError status = kCGErrorFailure;
     screen_data* screens = NULL;
 
@@ -142,7 +142,7 @@ UIOHOOK_API screen_data* hook_create_screen_info(unsigned char *count) {
  * CharSec = 66 / V
  * CharSec = 66 / (MS / 15)
  */
-UIOHOOK_API long int hook_get_auto_repeat_rate() {
+long int hook_get_auto_repeat_rate() {
     #if defined(USE_APPLICATION_SERVICES) || defined(USE_IOKIT)
     bool successful = false;
     SInt64 rate;
@@ -206,7 +206,7 @@ UIOHOOK_API long int hook_get_auto_repeat_rate() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_auto_repeat_delay() {
+long int hook_get_auto_repeat_delay() {
     #if defined(USE_APPLICATION_SERVICES) || defined(USE_IOKIT)
     bool successful = false;
     SInt64 delay;
@@ -269,7 +269,7 @@ UIOHOOK_API long int hook_get_auto_repeat_delay() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_pointer_acceleration_multiplier() {
+long int hook_get_pointer_acceleration_multiplier() {
     // OS X doesn't currently have an acceleration multiplier so we are using the constant from IOHIDGetMouseAcceleration.
     long int value = MOUSE_ACCELERATION_MULTIPLIER;
     if (hook_get_pointer_sensitivity() < 0) {
@@ -279,7 +279,7 @@ UIOHOOK_API long int hook_get_pointer_acceleration_multiplier() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_pointer_acceleration_threshold() {
+long int hook_get_pointer_acceleration_threshold() {
     // OS X doesn't currently have an acceleration threshold so we are using 1 as a placeholder.
     long int value = 1;
     if (hook_get_pointer_sensitivity() < 0) {
@@ -289,7 +289,7 @@ UIOHOOK_API long int hook_get_pointer_acceleration_threshold() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_pointer_sensitivity() {
+long int hook_get_pointer_sensitivity() {
     #if defined(USE_APPLICATION_SERVICES) || defined(USE_IOKIT)
     bool successful = false;
     Float32 sensitivity;
@@ -338,7 +338,7 @@ UIOHOOK_API long int hook_get_pointer_sensitivity() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_multi_click_time() {
+long int hook_get_multi_click_time() {
     #if defined(USE_APPLICATION_SERVICES) || defined(USE_IOKIT)
     bool successful = false;
     Float64 time;

@@ -18,46 +18,48 @@
 
 #include <stdio.h>
 
-#if !defined(__APPLE__) && !defined(__MACH__) && !defined(_WIN32)
-#include <X11/Xlib.h>
-#endif
-
+#include "uiohook.h"
 #include "input_helper.h"
 #include "minunit.h"
 
 extern char * system_properties_tests();
 extern char * input_helper_tests();
 
-#if !defined(__APPLE__) && !defined(__MACH__) && !defined(_WIN32)
-static Display *disp;
-#endif
-
 int tests_run = 0;
 
-static char * init_tests() {
-    #if !defined(__APPLE__) && !defined(__MACH__) && !defined(_WIN32)
-    // TODO Create our own AC_DEFINE for this value.  Currently defaults to X11 platforms.
-    Display *disp = XOpenDisplay(XDisplayName(NULL));
-    mu_assert("error, could not open X display", disp != NULL);
+static char *map_log_level_name(unsigned int level) {
+    switch (level) {
+        case LOG_LEVEL_DEBUG:
+            return "DBG";
+        case LOG_LEVEL_INFO:
+            return "INF";
+        case LOG_LEVEL_WARN:
+            return "WRN";
+        case LOG_LEVEL_ERROR:
+            return "ERR";
+        default:
+            return "   ";
+    };
+}
 
-    load_input_helper(disp);
-    #else
+static void logger_proc(unsigned int level, void *user_data, const char *format, va_list args) {
+    printf("[%s] ", map_log_level_name(level));
+    vfprintf(stdout, format, args);
+}
+
+static char * init_tests() {
+    hook_set_logger_proc(logger_proc, NULL);
+
+    #ifndef _WIN32
     load_input_helper();
     #endif
-
     return NULL;
 }
 
 static char * cleanup_tests() {
-    #if !defined(__APPLE__) && !defined(__MACH__) && !defined(_WIN32)
-    if (disp != NULL) {
-        XCloseDisplay(disp);
-        disp = NULL;
-    }
-    #else
+    #ifndef _WIN32
     unload_input_helper();
     #endif
-
     return NULL;
 }
 
@@ -76,12 +78,14 @@ int main() {
     int status = 1;
 
     char *result = all_tests();
+
     if (result != NULL) {
         status = 0;
         printf("%s\n", result);
     } else {
         printf("ALL TESTS PASSED\n");
     }
+
     printf("Tests run: %d\n", tests_run);
 
     return status;

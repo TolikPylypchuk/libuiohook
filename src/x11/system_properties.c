@@ -119,7 +119,7 @@ static void *settings_thread_proc(void *arg) {
 }
 #endif
 
-UIOHOOK_API screen_data* hook_create_screen_info(unsigned char *count) {
+screen_data* hook_create_screen_info(unsigned char *count) {
     *count = 0;
     screen_data *screens = NULL;
 
@@ -220,7 +220,7 @@ UIOHOOK_API screen_data* hook_create_screen_info(unsigned char *count) {
     return screens;
 }
 
-UIOHOOK_API long int hook_get_auto_repeat_rate() {
+long int hook_get_auto_repeat_rate() {
     bool successful = false;
     long int value = -1;
     unsigned int delay = 0, rate = 0;
@@ -263,7 +263,7 @@ UIOHOOK_API long int hook_get_auto_repeat_rate() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_auto_repeat_delay() {
+long int hook_get_auto_repeat_delay() {
     bool successful = false;
     long int value = -1;
     unsigned int delay = 0, rate = 0;
@@ -306,7 +306,7 @@ UIOHOOK_API long int hook_get_auto_repeat_delay() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_pointer_acceleration_multiplier() {
+long int hook_get_pointer_acceleration_multiplier() {
     long int value = -1;
     int accel_numerator, accel_denominator, threshold;
 
@@ -327,7 +327,7 @@ UIOHOOK_API long int hook_get_pointer_acceleration_multiplier() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_pointer_acceleration_threshold() {
+long int hook_get_pointer_acceleration_threshold() {
     long int value = -1;
     int accel_numerator, accel_denominator, threshold;
 
@@ -348,7 +348,7 @@ UIOHOOK_API long int hook_get_pointer_acceleration_threshold() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_pointer_sensitivity() {
+long int hook_get_pointer_sensitivity() {
     long int value = -1;
     int accel_numerator, accel_denominator, threshold;
 
@@ -369,7 +369,7 @@ UIOHOOK_API long int hook_get_pointer_sensitivity() {
     return value;
 }
 
-UIOHOOK_API long int hook_get_multi_click_time() {
+long int hook_get_multi_click_time() {
     long int value = 200;
     int click_time;
     bool successful = false;

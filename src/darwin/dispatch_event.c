@@ -57,7 +57,7 @@ void hook_set_key_typed_enabled(bool enabled) {
     key_typed_enabled = enabled;
 }
 
-UIOHOOK_API void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
+void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting new dispatch callback to %#p.\n",
             __FUNCTION__, __LINE__, dispatch_proc);
 

@@ -45,7 +45,7 @@ void hook_set_key_typed_enabled(bool enabled) {
     key_typed_enabled = enabled;
 }
 
-UIOHOOK_API void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
+void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting new dispatch callback to %#p.\n",
             __FUNCTION__, __LINE__, dispatch_proc);
 
@@ -140,7 +140,7 @@ bool dispatch_key_press(uint64_t timestamp, KBDLLHOOKSTRUCT *kbhook) {
 
     DWORD vk_code = get_vk_code(kbhook);
 
-    uint16_t uiocode = vkcode_to_uiocode(vk_code, kbhook->flags);
+    uint16_t uiocode = keycode_to_uiocode(vk_code, kbhook->flags);
 
     uio_event.data.keyboard.keycode = uiocode;
     uio_event.data.keyboard.rawcode = (uint16_t) kbhook->vkCode;
@@ -160,7 +160,7 @@ bool dispatch_key_press(uint64_t timestamp, KBDLLHOOKSTRUCT *kbhook) {
         WCHAR buffer[2] = { WCH_NONE };
 
         // If the pressed event was not consumed and a unicode char exists.
-        SIZE_T count = vkcode_to_unicode(kbhook->vkCode, kbhook->scanCode, buffer, 2);
+        SIZE_T count = keycode_to_unicode(kbhook->vkCode, kbhook->scanCode, buffer, 2);
         for (unsigned int i = 0; i < count; i++) {
             // Populate key typed event.
             uio_event.time = timestamp;
@@ -212,7 +212,7 @@ bool dispatch_key_release(uint64_t timestamp, KBDLLHOOKSTRUCT *kbhook) {
 
     DWORD vk_code = get_vk_code(kbhook);
 
-    uio_event.data.keyboard.keycode = vkcode_to_uiocode(vk_code, kbhook->flags);
+    uio_event.data.keyboard.keycode = keycode_to_uiocode(vk_code, kbhook->flags);
     uio_event.data.keyboard.rawcode = (uint16_t) kbhook->vkCode;
     uio_event.data.keyboard.keychar = CHAR_UNDEFINED;
 

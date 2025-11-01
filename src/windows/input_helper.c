@@ -51,12 +51,10 @@ static const uint16_t uiocode_keycode_table[][2] = {
     { VC_PAUSE,               VK_PAUSE               },
     { VC_CAPS_LOCK,           VK_CAPITAL             },
     { VC_KANA,                VK_KANA                },
-    { VC_HANGUL,              VK_HANGUL              },
     { VC_IME_ON,              VK_IME_ON              },
     { VC_JUNJA,               VK_JUNJA               },
     { VC_FINAL,               VK_FINAL	             },
     { VC_HANJA,               VK_HANJA	             },
-    { VC_KANJI,               VK_KANJI	             },
     { VC_IME_OFF,             VK_IME_OFF             },
     { VC_ESCAPE,              VK_ESCAPE              },
     { VC_CONVERT,             VK_CONVERT             },
@@ -203,7 +201,7 @@ DWORD get_vk_code(KBDLLHOOKSTRUCT *kbhook) {
     return kbhook->vkCode;
 }
 
-uint16_t vkcode_to_uiocode(DWORD vk_code, DWORD flags) {
+uint16_t keycode_to_uiocode(DWORD vk_code, DWORD flags) {
     uint16_t uiocode = VC_UNDEFINED;
 
     for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
@@ -220,7 +218,7 @@ uint16_t vkcode_to_uiocode(DWORD vk_code, DWORD flags) {
     return uiocode;
 }
 
-DWORD uiocode_to_vkcode(uint16_t uiocode) {
+DWORD uiocode_to_keycode(uint16_t uiocode) {
     DWORD vkcode = 0x0000;
 
     for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
@@ -250,7 +248,7 @@ uint16_t get_modifiers() {
 }
 
 // Returns the number of chars written to the buffer.
-SIZE_T vkcode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size) {
+SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size) {
     // Get the thread id that currently has focus and ask for its current locale.
     DWORD focus_pid = GetWindowThreadProcessId(GetForegroundWindow(), NULL);
     HKL locale_id = GetKeyboardLayout(focus_pid);
@@ -289,13 +287,13 @@ SIZE_T vkcode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size)
     return charCount;
 }
 
-UIOHOOK_API bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
+bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
     return true;
 }
 
-UIOHOOK_API bool hook_get_prompt_user_if_ax_api_disabled() {
+bool hook_get_prompt_user_if_ax_api_disabled() {
     return false;
 }
 
-UIOHOOK_API void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
+void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
 }

@@ -15,10 +15,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.31)
 
 project(uiohook VERSION 1.3.0 LANGUAGES C)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 
 if (WIN32 OR WIN64)
     set(UIOHOOK_SOURCE_DIR "windows")
@@ -47,7 +48,7 @@ else()
         "src/${UIOHOOK_SOURCE_DIR}/post_event.c"
         "src/${UIOHOOK_SOURCE_DIR}/system_properties.c"
     )
-endif ()
+endif()
 
 set_target_properties(uiohook PROPERTIES
     C_STANDARD 99
@@ -122,10 +123,6 @@ if (BUILD_DEMO)
     if(MSVC)
         add_compile_definitions(all_demos PRIVATE inline=__inline)
         add_compile_definitions(all_demos PRIVATE _CRT_SECURE_NO_WARNINGS)
-
-        if (MSVC_VERSION LESS "1900")
-            add_compile_definitions(all_demos PRIVATE snprintf=_snprintf)
-        endif()
     endif()
 
     install(TARGETS demo_hook demo_hook_async demo_post demo_properties RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -139,7 +136,13 @@ if(ENABLE_TEST)
         "./test/uiohook_test.c"
     )
 
+    set_target_properties(uiohook_tests PROPERTIES
+        C_STANDARD 99
+        C_STANDARD_REQUIRED ON
+    )
+
     target_include_directories(uiohook_tests PRIVATE "./src/${UIOHOOK_SOURCE_DIR}")
+    add_dependencies(uiohook_tests uiohook)
     target_link_libraries(uiohook_tests uiohook "${CMAKE_THREAD_LIBS_INIT}")
 endif()
 

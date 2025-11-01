@@ -173,28 +173,14 @@ static key_mapping uiocode_keycode_table[] = {
     { .uiocode = VC_KATAKANA,              .x11_key_name = "KATA" },
     { .uiocode = VC_HIRAGANA,              .x11_key_name = "HIRA" },
     { .uiocode = VC_JP_COMMA,              .x11_key_name = "JPCM" },
-    { .uiocode = VC_HANGUL,                .x11_key_name = "HNGL" },
+    { .uiocode = VC_KANA,                  .x11_key_name = "HNGL" },
     { .uiocode = VC_HANJA,                 .x11_key_name = "HJCV" },
     { .uiocode = VC_VOLUME_MUTE,           .x11_key_name = "MUTE" },
     { .uiocode = VC_VOLUME_DOWN,           .x11_key_name = "VOL-" },
     { .uiocode = VC_VOLUME_UP,             .x11_key_name = "VOL+" },
     { .uiocode = VC_POWER,                 .x11_key_name = "POWR" },
     { .uiocode = VC_HELP,                  .x11_key_name = "HELP" },
-    { .uiocode = VC_VOLUME_MUTE,           .x11_key_name = "I121" },
-    { .uiocode = VC_VOLUME_DOWN,           .x11_key_name = "I122" },
-    { .uiocode = VC_VOLUME_UP,             .x11_key_name = "I123" },
-    { .uiocode = VC_POWER,                 .x11_key_name = "I124" },
-    { .uiocode = VC_KP_EQUALS,             .x11_key_name = "I125" },
-    { .uiocode = VC_PAUSE,                 .x11_key_name = "I127" },
     { .uiocode = VC_KP_SEPARATOR,          .x11_key_name = "I129" },
-    { .uiocode = VC_HANGUL,                .x11_key_name = "I130" },
-    { .uiocode = VC_HANJA,                 .x11_key_name = "I131" },
-    { .uiocode = VC_YEN,                   .x11_key_name = "I132" },
-    { .uiocode = VC_META_L,                .x11_key_name = "I133" },
-    { .uiocode = VC_META_R,                .x11_key_name = "I134" },
-    { .uiocode = VC_CONTEXT_MENU,          .x11_key_name = "I135" },
-    { .uiocode = VC_HELP,                  .x11_key_name = "I146" },
-    { .uiocode = VC_CONTEXT_MENU,          .x11_key_name = "I147" },
     { .uiocode = VC_APP_CALCULATOR,        .x11_key_name = "I148" },
     { .uiocode = VC_SLEEP,                 .x11_key_name = "I150" },
     { .uiocode = VC_MODE_CHANGE,           .x11_key_name = "I155" },
@@ -212,18 +198,6 @@ static key_mapping uiocode_keycode_table[] = {
     { .uiocode = VC_MEDIA_STOP,            .x11_key_name = "I174" },
     { .uiocode = VC_BROWSER_HOME,          .x11_key_name = "I180" },
     { .uiocode = VC_BROWSER_REFRESH,       .x11_key_name = "I181" },
-    { .uiocode = VC_F13,                   .x11_key_name = "I191" },
-    { .uiocode = VC_F14,                   .x11_key_name = "I192" },
-    { .uiocode = VC_F15,                   .x11_key_name = "I193" },
-    { .uiocode = VC_F16,                   .x11_key_name = "I194" },
-    { .uiocode = VC_F17,                   .x11_key_name = "I195" },
-    { .uiocode = VC_F18,                   .x11_key_name = "I196" },
-    { .uiocode = VC_F19,                   .x11_key_name = "I197" },
-    { .uiocode = VC_F20,                   .x11_key_name = "I198" },
-    { .uiocode = VC_F21,                   .x11_key_name = "I199" },
-    { .uiocode = VC_F22,                   .x11_key_name = "I200" },
-    { .uiocode = VC_F23,                   .x11_key_name = "I201" },
-    { .uiocode = VC_F24,                   .x11_key_name = "I202" },
     { .uiocode = VC_APP_3,                 .x11_key_name = "I210" },
     { .uiocode = VC_APP_4,                 .x11_key_name = "I211" },
     { .uiocode = VC_BROWSER_SEARCH,        .x11_key_name = "I225" },
@@ -248,6 +222,19 @@ KeyCode uiocode_to_keycode(uint16_t uiocode) {
 
     for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
         if (uiocode == uiocode_keycode_table[i].uiocode) {
+            keycode = uiocode_keycode_table[i].x11_key_code;
+            break;
+        }
+    }
+
+    return keycode;
+}
+
+unsigned int get_x11_keycode(const char * keycode_name) {
+    unsigned int keycode = 0;
+
+    for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
+        if (strncmp(uiocode_keycode_table[i].x11_key_name, keycode_name, XkbKeyNameLength) == 0) {
             keycode = uiocode_keycode_table[i].x11_key_code;
             break;
         }
@@ -489,7 +476,7 @@ void load_key_mappings() {
     int get_names_result = XkbGetNames(dpy, XkbAllNamesMask, xkb);
 
     if (get_names_result != Success) {
-        logger(LOG_LEVEL_INFO, "%s [%u]: XkbGetNames() failed! (%#X)\n",
+        logger(LOG_LEVEL_ERROR, "%s [%u]: XkbGetNames() failed! (%#X)\n",
                 __FUNCTION__, __LINE__, get_names_result);
 
         return;
@@ -498,6 +485,9 @@ void load_key_mappings() {
     for (int key_code = xkb->min_key_code; key_code < xkb->max_key_code; key_code++) {
         for (int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(*uiocode_keycode_table); i++) {
             if (strncmp(uiocode_keycode_table[i].x11_key_name, xkb->names->keys[key_code].name, XkbKeyNameLength) == 0) {
+                logger(LOG_LEVEL_DEBUG, "%s [%u]: X11 keycode loaded: %s - %i\n",
+                        __FUNCTION__, __LINE__, uiocode_keycode_table[i].x11_key_name, key_code);
+
                 uiocode_keycode_table[i].x11_key_code = key_code;
             }
         }
@@ -531,13 +521,13 @@ void unload_input_helper() {
     }
 }
 
-UIOHOOK_API bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
+bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
     return true;
 }
 
-UIOHOOK_API bool hook_get_prompt_user_if_ax_api_disabled() {
+bool hook_get_prompt_user_if_ax_api_disabled() {
     return false;
 }
 
-UIOHOOK_API void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
+void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
 }

@@ -19,6 +19,7 @@
 #ifndef _included_input_helper
 #define _included_input_helper
 
+#include <stdint.h>
 #include <limits.h>
 #include <windows.h>
 
@@ -32,13 +33,13 @@
 extern DWORD get_vk_code(KBDLLHOOKSTRUCT *kbhook);
 
 /* Converts a uiohook virtual key code to the appropriate Windows VK key code. */
-extern DWORD uiocode_to_vkcode(uint16_t uiocode);
+extern DWORD uiocode_to_keycode(uint16_t uiocode);
 
 /* Converts a Windows VK key code to the appropriate uiohook virtual key code. */
-extern uint16_t vkcode_to_uiocode(DWORD vk_code, DWORD flags);
+extern uint16_t keycode_to_uiocode(DWORD vk_code, DWORD flags);
 
 /* Converts a Windows vk code to it's unicode representation */
-extern SIZE_T vkcode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size);
+extern SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size);
 
 /* Set the native modifier mask for future events. */
 extern void set_modifier_mask(uint16_t mask);

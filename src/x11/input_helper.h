@@ -19,6 +19,7 @@
 #ifndef _included_input_helper
 #define _included_input_helper
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
@@ -47,7 +48,6 @@ typedef union {
 
 // Helper display used by input helper, properties and post event.
 extern Display *helper_disp;
-
 
 /* Converts a uiohook virtual key code to the appropriate X11 key code. */
 extern KeyCode uiocode_to_keycode(uint16_t uiocode);
@@ -80,6 +80,8 @@ extern uint8_t button_map_lookup(uint8_t button);
 extern bool enable_key_repeat();
 
 extern void load_key_mappings();
+
+extern unsigned int get_x11_keycode(const char * keycode_name);
 
 /* Initialize items required for KeyCodeToKeySym() and KeySymToUnicode()
  * functionality.  This method is called by OnLibraryLoad() and may need to be

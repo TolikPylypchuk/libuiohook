@@ -31,11 +31,11 @@
 
 static uint64_t post_text_delay = 50 * 1000000;
 
-UIOHOOK_API uint64_t hook_get_post_text_delay_x11() {
+uint64_t hook_get_post_text_delay_x11() {
     return post_text_delay;
 }
 
-UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay) {
+void hook_set_post_text_delay_x11(uint64_t delay) {
     post_text_delay = delay;
 }
 
@@ -217,7 +217,7 @@ static int post_mouse_motion_event(uiohook_event * const event) {
     return status;
 }
 
-UIOHOOK_API int hook_post_event(uiohook_event * const event) {
+int hook_post_event(uiohook_event * const event) {
     if (helper_disp == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: XDisplay helper_disp is unavailable!\n",
                 __FUNCTION__, __LINE__);
@@ -403,7 +403,7 @@ int post_keysym(KeySym keysym, KeyCode keycode) {
     return UIOHOOK_SUCCESS;
 }
 
-UIOHOOK_API int hook_post_text(const uint16_t * const text) {
+int hook_post_text(const uint16_t * const text) {
     if (text == NULL) {
         return UIOHOOK_ERROR_POST_TEXT_NULL;
     }

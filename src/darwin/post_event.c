@@ -29,12 +29,12 @@ static CGEventFlags current_modifier_mask = 0x00;
 static CGEventType current_motion_event = kCGEventMouseMoved;
 static CGMouseButton current_motion_button = 0;
 
-UIOHOOK_API uint64_t hook_get_post_text_delay_x11() {
+uint64_t hook_get_post_text_delay_x11() {
     // Not applicable on maOS, so does nothing
     return 0;
 }
 
-UIOHOOK_API void hook_set_post_text_delay_x11(uint64_t delay) {
+void hook_set_post_text_delay_x11(uint64_t delay) {
     // Not applicable on maOS, so does nothing
 }
 
@@ -291,7 +291,7 @@ static int post_mouse_wheel_event(uiohook_event * const event, CGEventSourceRef 
     return UIOHOOK_SUCCESS;
 }
 
-UIOHOOK_API int hook_post_event(uiohook_event * const event) {
+int hook_post_event(uiohook_event * const event) {
     // Check for accessibility before we post the event.
     if (!hook_is_ax_api_enabled(hook_get_prompt_user_if_ax_api_disabled())) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Accessibility API is disabled!\n",
@@ -349,7 +349,7 @@ UIOHOOK_API int hook_post_event(uiohook_event * const event) {
     return status;
 }
 
-UIOHOOK_API int hook_post_text(const uint16_t * const text) {
+int hook_post_text(const uint16_t * const text) {
     if (text == NULL) {
         return UIOHOOK_ERROR_POST_TEXT_NULL;
     }

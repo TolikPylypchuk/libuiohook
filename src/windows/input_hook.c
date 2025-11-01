@@ -449,19 +449,19 @@ int run(bool run_keyboard_hook, bool run_mouse_hook) {
     return status;
 }
 
-UIOHOOK_API int hook_run() {
+int hook_run() {
     return run(true, true);
 }
 
-UIOHOOK_API int hook_run_keyboard() {
+int hook_run_keyboard() {
     return run(true, false);
 }
 
-UIOHOOK_API int hook_run_mouse() {
+int hook_run_mouse() {
     return run(false, true);
 }
 
-UIOHOOK_API int hook_stop() {
+int hook_stop() {
     int status = UIOHOOK_FAILURE;
 
     // Destroy the invisible window
@@ -480,9 +480,9 @@ UIOHOOK_API int hook_stop() {
     return status;
 }
 
-UIOHOOK_API uint32_t hook_get_ax_poll_frequency() {
+uint32_t hook_get_ax_poll_frequency() {
     return 0;
 }
 
-UIOHOOK_API void hook_set_ax_poll_frequency(uint32_t frequency) {
+void hook_set_ax_poll_frequency(uint32_t frequency) {
 }
