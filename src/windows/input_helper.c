@@ -287,6 +287,25 @@ SIZE_T keycode_to_unicode(DWORD keycode, DWORD scancode, PWCHAR buffer, int size
     return charCount;
 }
 
+bool is_scroll_direction_reversed() {
+    static const LPCSTR subkey = "Control Panel\\Mouse";
+    static const LPCSTR value_name = "ReverseMouseWheelDirection";
+
+    DWORD data = 0;
+    DWORD data_size = sizeof(data);
+
+    bool result = false;
+
+    if (RegGetValue(HKEY_CURRENT_USER, subkey, value_name, RRF_RT_DWORD, NULL, &data, &data_size) == ERROR_SUCCESS) {
+        result = data != 0;
+    } else {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: RegGetValue() failed! (%#lX)\n",
+            __FUNCTION__, __LINE__, (unsigned long)GetLastError());
+    }
+
+    return result;
+}
+
 bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
     return true;
 }

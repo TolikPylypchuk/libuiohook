@@ -19,6 +19,7 @@
 #ifndef _included_input_helper
 #define _included_input_helper
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>
 #include <windows.h>
@@ -52,5 +53,7 @@ extern void clear_modifier_mask();
 
 /* Get the current native modifier mask state. */
 extern uint16_t get_modifiers();
+
+extern bool is_scroll_direction_reversed();
 
 #endif

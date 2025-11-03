@@ -228,12 +228,14 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
             break;
 
         case EVENT_MOUSE_WHEEL:
+            bool is_reversed = is_scroll_direction_reversed();
+
             if (event->data.wheel.direction == WHEEL_HORIZONTAL_DIRECTION) {
                 input->mi.dwFlags = (DWORD)MOUSEEVENTF_HWHEEL;
-                input->mi.mouseData = (DWORD)(event->data.wheel.rotation * -1);
+                input->mi.mouseData = (DWORD)(event->data.wheel.rotation * (is_reversed ? 1 : -1)); // The direction should be reversed by default
             } else {
                 input->mi.dwFlags = (DWORD)MOUSEEVENTF_WHEEL;
-                input->mi.mouseData = (DWORD)event->data.wheel.rotation;
+                input->mi.mouseData = (DWORD)(event->data.wheel.rotation * (is_reversed ? -1 : 1));
             }
             break;
 
