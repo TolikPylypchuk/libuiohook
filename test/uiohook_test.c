@@ -75,12 +75,12 @@ static char * all_tests() {
 }
 
 int main() {
-    int status = 1;
+    int status = EXIT_SUCCESS;
 
     char *result = all_tests();
 
     if (result != NULL) {
-        status = 0;
+        status = EXIT_FAILURE;
         printf("%s\n", result);
     } else {
         printf("ALL TESTS PASSED\n");
