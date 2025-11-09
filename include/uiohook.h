@@ -30,7 +30,7 @@
 
 // System level errors.
 #define UIOHOOK_ERROR_OUT_OF_MEMORY              0x02
-#define UIOHOOK_ERROR_POST_TEXT_NULL             0x03
+#define UIOHOOK_ERROR_NULL                       0x03
 
 // Unix specific errors.
 #define UIOHOOK_ERROR_X_OPEN_DISPLAY             0x20
@@ -421,6 +421,9 @@ extern "C" {
 
     // Send a virtual event back to the system.
     int hook_post_event(uiohook_event * const event);
+
+    // Send virtual events back to the system.
+    int hook_post_events(uiohook_event * const events, uint32_t size);
 
     // Send text back to the system.
     int hook_post_text(const uint16_t * const text);

@@ -255,60 +255,83 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
 }
 
 int hook_post_event(uiohook_event * const event) {
-    INPUT *input = (INPUT *) calloc(1, sizeof(INPUT));
-    if (input == NULL) {
+    return hook_post_events(event, 1);
+}
+
+int hook_post_events(uiohook_event * const events, uint32_t size) {
+    if (events == NULL) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: not simulating any events as the events are null.\n",
+                __FUNCTION__, __LINE__);
+        return UIOHOOK_ERROR_NULL;
+    }
+
+    if (size == 0) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: not simulating any events as the size is 0.\n",
+                __FUNCTION__, __LINE__);
+        return UIOHOOK_SUCCESS;
+    }
+
+    INPUT *inputs = (INPUT *) calloc(size, sizeof(INPUT));
+    if (inputs == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: failed to allocate memory: calloc!\n",
                 __FUNCTION__, __LINE__);
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
-    
-    logger(LOG_LEVEL_DEBUG, "%s [%u]: Posting an event of type: %#X.\n",
-            __FUNCTION__, __LINE__, event->type);
 
-    int status = UIOHOOK_FAILURE;
-    switch (event->type) {
-        case EVENT_KEY_PRESSED:
-        case EVENT_KEY_RELEASED:
-            status = map_keyboard_event(event, input);
-            break;
+    int status = UIOHOOK_SUCCESS;
 
-        case EVENT_MOUSE_PRESSED:
-        case EVENT_MOUSE_RELEASED:
-        case EVENT_MOUSE_WHEEL:
-        case EVENT_MOUSE_MOVED:
-        case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
-        case EVENT_MOUSE_DRAGGED:
-        case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
-        case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
-            status = map_mouse_event(event, input);
-            break;
+    for (SIZE_T i = 0; i < size && status == UIOHOOK_SUCCESS; i++) {
+        uiohook_event *event = events + i;
+        INPUT *input = inputs + i;
 
-        case EVENT_KEY_TYPED:
-        case EVENT_MOUSE_CLICKED:
+        logger(LOG_LEVEL_DEBUG, "%s [%u]: Posting an event of type: %#X.\n",
+                __FUNCTION__, __LINE__, event->type);
 
-        case EVENT_HOOK_ENABLED:
-        case EVENT_HOOK_DISABLED:
+        switch (event->type) {
+            case EVENT_KEY_PRESSED:
+            case EVENT_KEY_RELEASED:
+                status = map_keyboard_event(event, input);
+                break;
 
-        default:
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Ignoring post event of type: %#X.\n",
-                    __FUNCTION__, __LINE__, event->type);
-            status = UIOHOOK_FAILURE;
+            case EVENT_MOUSE_PRESSED:
+            case EVENT_MOUSE_RELEASED:
+            case EVENT_MOUSE_WHEEL:
+            case EVENT_MOUSE_MOVED:
+            case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
+            case EVENT_MOUSE_DRAGGED:
+            case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
+            case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
+                status = map_mouse_event(event, input);
+                break;
+
+            case EVENT_KEY_TYPED:
+            case EVENT_MOUSE_CLICKED:
+
+            case EVENT_HOOK_ENABLED:
+            case EVENT_HOOK_DISABLED:
+
+            default:
+                logger(LOG_LEVEL_DEBUG, "%s [%u]: Ignoring post event of type: %#X.\n",
+                        __FUNCTION__, __LINE__, event->type);
+                status = UIOHOOK_FAILURE;
+                break;
+        }
     }
 
-    if (status == UIOHOOK_SUCCESS && !SendInput(1, input, sizeof(INPUT))) {
+    if (status == UIOHOOK_SUCCESS && !SendInput(size, inputs, sizeof(INPUT))) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: SendInput() failed! (%#lX)\n",
                 __FUNCTION__, __LINE__, (unsigned long) GetLastError());
         status = UIOHOOK_FAILURE;
     }
 
-    free(input);
+    free(inputs);
 
     return status;
 }
 
 int hook_post_text(const uint16_t * const text) {
     if (text == NULL) {
-        return UIOHOOK_ERROR_POST_TEXT_NULL;
+        return UIOHOOK_ERROR_NULL;
     }
 
     int status = UIOHOOK_SUCCESS;

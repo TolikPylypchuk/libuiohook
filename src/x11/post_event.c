@@ -405,7 +405,7 @@ int post_keysym(KeySym keysym, KeyCode keycode) {
 
 int hook_post_text(const uint16_t * const text) {
     if (text == NULL) {
-        return UIOHOOK_ERROR_POST_TEXT_NULL;
+        return UIOHOOK_ERROR_NULL;
     }
 
     if (helper_disp == NULL) {
