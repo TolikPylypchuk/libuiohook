@@ -292,7 +292,11 @@ static int post_mouse_wheel_event(uiohook_event * const event, CGEventSourceRef 
 }
 
 int hook_post_event(uiohook_event * const event) {
-    // Check for accessibility before we post the event.
+    return hook_post_events(event, 1);
+}
+
+int hook_post_events(uiohook_event * const events, uint32_t size) {
+    // Check for accessibility before we post the events.
     if (!hook_is_ax_api_enabled(hook_get_prompt_user_if_ax_api_disabled())) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Accessibility API is disabled!\n",
                 __FUNCTION__, __LINE__);
@@ -303,6 +307,18 @@ int hook_post_event(uiohook_event * const event) {
                 __FUNCTION__, __LINE__);
     }
 
+    if (events == NULL) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Not simulating any events as the events are null.\n",
+                __FUNCTION__, __LINE__);
+        return UIOHOOK_ERROR_NULL;
+    }
+
+    if (size == 0) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: Not simulating any events as the size is 0.\n",
+                __FUNCTION__, __LINE__);
+        return UIOHOOK_SUCCESS;
+    }
+
     CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
     if (src == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: CGEventSourceCreate failed!\n",
@@ -310,38 +326,44 @@ int hook_post_event(uiohook_event * const event) {
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
 
-    int status = UIOHOOK_FAILURE;
-    switch (event->type) {
-        case EVENT_KEY_PRESSED:
-        case EVENT_KEY_RELEASED:
-            status = post_key_event(event, src);
-            break;
+    int status = UIOHOOK_SUCCESS;
 
-        case EVENT_MOUSE_PRESSED:
-        case EVENT_MOUSE_RELEASED:
-        case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
-        case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
+    for (int i = 0; i < size && status == UIOHOOK_SUCCESS; i++) {
+        uiohook_event *event = events + i;
 
-        case EVENT_MOUSE_MOVED:
-        case EVENT_MOUSE_DRAGGED:
-        case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
-            status = post_mouse_event(event, src);
-            break;
+        switch (event->type) {
+            case EVENT_KEY_PRESSED:
+            case EVENT_KEY_RELEASED:
+                status = post_key_event(event, src);
+                break;
 
-        case EVENT_MOUSE_WHEEL:
-            status = post_mouse_wheel_event(event, src);
-            break;
+            case EVENT_MOUSE_PRESSED:
+            case EVENT_MOUSE_RELEASED:
+            case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
+            case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
 
-        case EVENT_KEY_TYPED:
-        case EVENT_MOUSE_CLICKED:
+            case EVENT_MOUSE_MOVED:
+            case EVENT_MOUSE_DRAGGED:
+            case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
+                status = post_mouse_event(event, src);
+                break;
 
-        case EVENT_HOOK_ENABLED:
-        case EVENT_HOOK_DISABLED:
+            case EVENT_MOUSE_WHEEL:
+                status = post_mouse_wheel_event(event, src);
+                break;
 
-        default:
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Ignoring post event: %#X.\n",
-                    __FUNCTION__, __LINE__, event->type);
-            status = UIOHOOK_FAILURE;
+            case EVENT_KEY_TYPED:
+            case EVENT_MOUSE_CLICKED:
+
+            case EVENT_HOOK_ENABLED:
+            case EVENT_HOOK_DISABLED:
+
+            default:
+                logger(LOG_LEVEL_DEBUG, "%s [%u]: Ignoring post event: %#X.\n",
+                        __FUNCTION__, __LINE__, event->type);
+                status = UIOHOOK_FAILURE;
+                break;
+        }
     }
 
     CFRelease(src);
