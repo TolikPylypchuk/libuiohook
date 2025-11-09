@@ -485,9 +485,6 @@ void load_key_mappings() {
     for (int key_code = xkb->min_key_code; key_code < xkb->max_key_code; key_code++) {
         for (int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(*uiocode_keycode_table); i++) {
             if (strncmp(uiocode_keycode_table[i].x11_key_name, xkb->names->keys[key_code].name, XkbKeyNameLength) == 0) {
-                logger(LOG_LEVEL_DEBUG, "%s [%u]: X11 keycode loaded: %s - %i\n",
-                        __FUNCTION__, __LINE__, uiocode_keycode_table[i].x11_key_name, key_code);
-
                 uiocode_keycode_table[i].x11_key_code = key_code;
             }
         }

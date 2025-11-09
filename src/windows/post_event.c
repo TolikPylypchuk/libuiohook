@@ -260,20 +260,20 @@ int hook_post_event(uiohook_event * const event) {
 
 int hook_post_events(uiohook_event * const events, uint32_t size) {
     if (events == NULL) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: not simulating any events as the events are null.\n",
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Not simulating any events as the events are null.\n",
                 __FUNCTION__, __LINE__);
         return UIOHOOK_ERROR_NULL;
     }
 
     if (size == 0) {
-        logger(LOG_LEVEL_WARN, "%s [%u]: not simulating any events as the size is 0.\n",
+        logger(LOG_LEVEL_WARN, "%s [%u]: Not simulating any events as the size is 0.\n",
                 __FUNCTION__, __LINE__);
         return UIOHOOK_SUCCESS;
     }
 
     INPUT *inputs = (INPUT *) calloc(size, sizeof(INPUT));
     if (inputs == NULL) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: failed to allocate memory: calloc!\n",
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to allocate memory: calloc!\n",
                 __FUNCTION__, __LINE__);
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }

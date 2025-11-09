@@ -218,48 +218,70 @@ static int post_mouse_motion_event(uiohook_event * const event) {
 }
 
 int hook_post_event(uiohook_event * const event) {
+    return hook_post_events(event, 1);
+}
+
+int hook_post_events(uiohook_event * const events, uint32_t size) {
     if (helper_disp == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: XDisplay helper_disp is unavailable!\n",
                 __FUNCTION__, __LINE__);
         return UIOHOOK_ERROR_X_OPEN_DISPLAY;
     }
 
+    if (events == NULL) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Not simulating any events as the events are null.\n",
+                __FUNCTION__, __LINE__);
+        return UIOHOOK_ERROR_NULL;
+    }
+
+    if (size == 0) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: Not simulating any events as the size is 0.\n",
+                __FUNCTION__, __LINE__);
+        return UIOHOOK_SUCCESS;
+    }
+
     XLockDisplay(helper_disp);
 
-    int status = UIOHOOK_FAILURE;
-    switch (event->type) {
-        case EVENT_KEY_PRESSED:
-        case EVENT_KEY_RELEASED:
-            status = post_key_event(event);
-            break;
+    int status = UIOHOOK_SUCCESS;
 
-        case EVENT_MOUSE_PRESSED:
-        case EVENT_MOUSE_RELEASED:
-        case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
-        case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
-            status = post_mouse_button_event(event);
-            break;
+    for (int i = 0; i < size && status == UIOHOOK_SUCCESS; i++) {
+        uiohook_event *event = events + i;
 
-        case EVENT_MOUSE_WHEEL:
-            status = post_mouse_wheel_event(event);
-            break;
+        switch (event->type) {
+            case EVENT_KEY_PRESSED:
+            case EVENT_KEY_RELEASED:
+                status = post_key_event(event);
+                break;
 
-        case EVENT_MOUSE_MOVED:
-        case EVENT_MOUSE_DRAGGED:
-        case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
-            status = post_mouse_motion_event(event);
-            break;
+            case EVENT_MOUSE_PRESSED:
+            case EVENT_MOUSE_RELEASED:
+            case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
+            case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
+                status = post_mouse_button_event(event);
+                break;
 
-        case EVENT_KEY_TYPED:
-        case EVENT_MOUSE_CLICKED:
+            case EVENT_MOUSE_WHEEL:
+                status = post_mouse_wheel_event(event);
+                break;
 
-        case EVENT_HOOK_ENABLED:
-        case EVENT_HOOK_DISABLED:
+            case EVENT_MOUSE_MOVED:
+            case EVENT_MOUSE_DRAGGED:
+            case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
+                status = post_mouse_motion_event(event);
+                break;
 
-        default:
-            logger(LOG_LEVEL_WARN, "%s [%u]: Ignoring post event type %#X\n",
-                    __FUNCTION__, __LINE__, event->type);
-            status = UIOHOOK_FAILURE;
+            case EVENT_KEY_TYPED:
+            case EVENT_MOUSE_CLICKED:
+
+            case EVENT_HOOK_ENABLED:
+            case EVENT_HOOK_DISABLED:
+
+            default:
+                logger(LOG_LEVEL_WARN, "%s [%u]: Ignoring post event type %#X\n",
+                        __FUNCTION__, __LINE__, event->type);
+                status = UIOHOOK_FAILURE;
+                break;
+        }
     }
 
     XSync(helper_disp, True);
