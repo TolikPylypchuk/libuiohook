@@ -123,7 +123,7 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
     else if (uiocode == VC_SCROLL_LOCK) { set_modifier_mask(MASK_SCROLL_LOCK); }
 
     // Populate key pressed event.
-    uio_event.time = x_event->serial;
+    uio_event.time = timestamp;
     uio_event.type = EVENT_KEY_PRESSED;
     uio_event.mask = get_modifiers();
     if (x_event->send_event) {
@@ -193,7 +193,7 @@ bool dispatch_key_release(uint64_t timestamp, XKeyReleasedEvent * const x_event)
     // handled when setting the modifier mask based on the X11 event.
 
     // Populate key released event.
-    uio_event.time = x_event->serial;
+    uio_event.time = timestamp;
     uio_event.type = EVENT_KEY_RELEASED;
     uio_event.mask = get_modifiers();
     if (x_event->send_event) {
@@ -215,7 +215,7 @@ bool dispatch_key_release(uint64_t timestamp, XKeyReleasedEvent * const x_event)
     return consumed;
 }
 
-static bool dispatch_mouse_wheel_rotated(XButtonEvent * const x_event) {
+static bool dispatch_mouse_wheel_rotated(uint64_t timestamp, XButtonEvent * const x_event) {
     bool consumed = false;
 
     // Reset the click count and previous button.
@@ -223,7 +223,7 @@ static bool dispatch_mouse_wheel_rotated(XButtonEvent * const x_event) {
     click.button = MOUSE_NOBUTTON;
 
     // Populate mouse wheel event.
-    uio_event.time = x_event->serial;
+    uio_event.time = timestamp;
     uio_event.type = EVENT_MOUSE_WHEEL;
     uio_event.mask = get_modifiers();
     if (x_event->send_event) {
@@ -284,7 +284,7 @@ static bool dispatch_mouse_wheel_rotated(XButtonEvent * const x_event) {
     return consumed;
 }
 
-static bool dispatch_mouse_button_pressed(XButtonPressedEvent * const x_event) {
+static bool dispatch_mouse_button_pressed(uint64_t timestamp, XButtonPressedEvent * const x_event) {
     bool consumed = false;
 
     switch (x_event->button) {
@@ -343,7 +343,7 @@ static bool dispatch_mouse_button_pressed(XButtonPressedEvent * const x_event) {
     click.time = x_event->serial;
 
     // Populate mouse pressed event.
-    uio_event.time = x_event->serial;
+    uio_event.time = timestamp;
     uio_event.type = EVENT_MOUSE_PRESSED;
     uio_event.mask = get_modifiers();
     if (x_event->send_event) {
@@ -390,18 +390,18 @@ bool dispatch_mouse_press(uint64_t timestamp, XButtonEvent * const x_event) {
         case WheelDown:
         case WheelLeft:
         case WheelRight:
-            consumed = dispatch_mouse_wheel_rotated((XButtonEvent *) x_event);
+            consumed = dispatch_mouse_wheel_rotated(timestamp, (XButtonEvent *) x_event);
             break;
 
         default:
-            consumed = dispatch_mouse_button_pressed((XButtonPressedEvent *) x_event);
+            consumed = dispatch_mouse_button_pressed(timestamp, (XButtonPressedEvent *) x_event);
             break;
     }
 
     return consumed;
 }
 
-static bool dispatch_mouse_button_released(XButtonReleasedEvent * const x_event) {
+static bool dispatch_mouse_button_released(uint64_t timestamp, XButtonReleasedEvent * const x_event) {
     bool consumed = false;
 
     switch (x_event->button) {
@@ -441,7 +441,7 @@ static bool dispatch_mouse_button_released(XButtonReleasedEvent * const x_event)
     }
 
     // Populate mouse released event.
-    uio_event.time = x_event->serial;
+    uio_event.time = timestamp;
     uio_event.type = EVENT_MOUSE_RELEASED;
     uio_event.mask = get_modifiers();
     if (x_event->send_event) {
@@ -478,11 +478,11 @@ static bool dispatch_mouse_button_released(XButtonReleasedEvent * const x_event)
     return consumed;
 }
 
-static bool dispatch_mouse_button_clicked(XButtonEvent * const x_event) {
+static bool dispatch_mouse_button_clicked(uint64_t timestamp, XButtonEvent * const x_event) {
     bool consumed = false;
 
     // Populate mouse clicked event.
-    uio_event.time = x_event->serial;
+    uio_event.time = timestamp;
     uio_event.type = EVENT_MOUSE_CLICKED;
     uio_event.mask = get_modifiers();
     if (x_event->send_event) {
@@ -531,12 +531,12 @@ bool dispatch_mouse_release(uint64_t timestamp, XButtonEvent * const x_event) {
             return consumed;
     }
 
-    consumed = dispatch_mouse_button_released((XButtonReleasedEvent *) x_event);
+    consumed = dispatch_mouse_button_released(timestamp, (XButtonReleasedEvent *) x_event);
     bool is_dragged = (bool) (get_modifiers() & 0x1F00);
 
     if (!consumed && !is_dragged) {
         // If the pressed event was not consumed...
-        dispatch_mouse_button_clicked(x_event);
+        dispatch_mouse_button_clicked(timestamp, x_event);
     }
 
     // Reset the number of clicks.
@@ -558,7 +558,7 @@ bool dispatch_mouse_move(uint64_t timestamp, XMotionEvent * const x_event) {
     }
 
     // Populate mouse move event.
-    uio_event.time = x_event->serial;
+    uio_event.time = timestamp;
     uio_event.mask = get_modifiers();
     if (x_event->send_event) {
         uio_event.mask |= MASK_EMULATED;
