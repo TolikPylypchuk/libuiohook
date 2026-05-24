@@ -221,7 +221,7 @@ KeyCode uiocode_to_keycode(uint16_t uiocode) {
     KeyCode keycode = 0x0;
 
     for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
-        if (uiocode == uiocode_keycode_table[i].uiocode) {
+        if (uiocode == uiocode_keycode_table[i].uiocode && uiocode_keycode_table[i].x11_key_code != 0) {
             keycode = uiocode_keycode_table[i].x11_key_code;
             break;
         }
