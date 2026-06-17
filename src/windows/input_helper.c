@@ -306,6 +306,14 @@ bool is_scroll_direction_reversed() {
     return result;
 }
 
+int hook_get_linux_backend() {
+    return LINUX_BACKEND_AUTO;
+}
+
+bool hook_set_linux_backend(int backend) {
+    return true;
+}
+
 bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
     return true;
 }

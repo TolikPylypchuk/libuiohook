@@ -1,5 +1,3 @@
-/* libUIOHook: Wayland backend dispatch stub. */
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <uiohook.h>

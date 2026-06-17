@@ -1,5 +1,3 @@
-/* libUIOHook: Wayland backend system properties stub. */
-
 #include <uiohook.h>
 
 screen_data* hook_create_screen_info(unsigned char *count) {

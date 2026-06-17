@@ -1,4 +1,9 @@
-/* libUIOHook: Wayland backend input helper stub.
- * This file exists to preserve the Linux backend source layout while the
- * Wayland implementation is being built incrementally.
- */
+#include <uiohook.h>
+
+int hook_get_linux_backend() {
+    return LINUX_BACKEND_WAYLAND;
+}
+
+bool hook_set_linux_backend(int backend) {
+    return false;
+}

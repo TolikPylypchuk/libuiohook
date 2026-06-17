@@ -1,5 +1,3 @@
-/* libUIOHook: Wayland backend input hook stub. */
-
 #include <uiohook.h>
 
 int hook_run() {

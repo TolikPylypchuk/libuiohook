@@ -518,6 +518,14 @@ void unload_input_helper() {
     }
 }
 
+int hook_get_linux_backend() {
+    return LINUX_BACKEND_X11;
+}
+
+bool hook_set_linux_backend(int backend) {
+    return false;
+}
+
 bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
     return true;
 }

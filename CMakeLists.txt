@@ -34,6 +34,7 @@ if (WIN32 OR WIN64)
         "src/logger.c"
         "src/${UIOHOOK_SOURCE_DIR}/dispatch_event.c"
         "src/${UIOHOOK_SOURCE_DIR}/input_helper.c"
+        "src/${UIOHOOK_SOURCE_DIR}/monitor_helper.c"
         "src/${UIOHOOK_SOURCE_DIR}/input_hook.c"
         "src/${UIOHOOK_SOURCE_DIR}/post_event.c"
         "src/${UIOHOOK_SOURCE_DIR}/system_properties.c"
@@ -252,6 +253,11 @@ if(ENABLE_TEST)
     target_include_directories(uiohook_tests PRIVATE "./src/${UIOHOOK_SOURCE_DIR}")
     add_dependencies(uiohook_tests uiohook)
     target_link_libraries(uiohook_tests uiohook "${CMAKE_THREAD_LIBS_INIT}")
+
+    if (UNIX AND NOT APPLE)
+        add_dependencies(uiohook_tests uiohook-legacy)
+        target_link_libraries(uiohook_tests uiohook-legacy)
+    endif()
 endif()
 
 option(USE_EPOCH_TIME "Use Unix epoch time for event timestamps (default: ON)" ON)
