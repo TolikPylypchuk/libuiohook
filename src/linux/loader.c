@@ -1,9 +1,3 @@
-/* libUIOHook: Linux loader shim for backend selection.
- *
- * This loader dynamically loads either libuiohook-x11.so or
- * libuiohook-wayland.so based on the current session environment.
- */
-
 #include <dlfcn.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -271,12 +265,12 @@ static const char *get_preferred_backend_name() {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: Using the Wayland backend.\n",
                 __FUNCTION__, __LINE__);
 
-        return "libuiohook-wayland.so";
+        return "./libuiohook-wayland.so";
     } else {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: Using the X11 backend.\n",
                 __FUNCTION__, __LINE__);
 
-        return "libuiohook-x11.so";
+        return "./libuiohook-x11.so";
     }
 }
 
