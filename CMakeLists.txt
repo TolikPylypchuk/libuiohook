@@ -24,9 +24,9 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 if (WIN32 OR WIN64)
     set(UIOHOOK_SOURCE_DIR "windows")
 elseif (APPLE)
-    set(UIOHOOK_SOURCE_DIR "darwin")
+    set(UIOHOOK_SOURCE_DIR "macos")
 else()
-    set(UIOHOOK_SOURCE_DIR "x11")
+    set(UIOHOOK_SOURCE_DIR "linux/legacy")
 endif()
 
 if (WIN32 OR WIN64)
@@ -50,11 +50,11 @@ elseif (APPLE)
 else()
     add_library(uiohook-x11 SHARED
         "src/logger.c"
-        "src/x11/dispatch_event.c"
-        "src/x11/input_helper.c"
-        "src/x11/input_hook.c"
-        "src/x11/post_event.c"
-        "src/x11/system_properties.c"
+        "src/linux/x11/dispatch_event.c"
+        "src/linux/x11/input_helper.c"
+        "src/linux/x11/input_hook.c"
+        "src/linux/x11/post_event.c"
+        "src/linux/x11/system_properties.c"
     )
 
     set_target_properties(uiohook-x11 PROPERTIES
@@ -62,17 +62,16 @@ else()
         C_STANDARD_REQUIRED ON
         POSITION_INDEPENDENT_CODE 1
         OUTPUT_NAME "uiohook-x11"
-        VERSION ${PROJECT_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR}
+        PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/uiohook.h
     )
 
     add_library(uiohook-wayland SHARED
         "src/logger.c"
-        "src/wayland/dispatch_event.c"
-        "src/wayland/input_helper.c"
-        "src/wayland/input_hook.c"
-        "src/wayland/post_event.c"
-        "src/wayland/system_properties.c"
+        "src/linux/wayland/dispatch_event.c"
+        "src/linux/wayland/input_helper.c"
+        "src/linux/wayland/input_hook.c"
+        "src/linux/wayland/post_event.c"
+        "src/linux/wayland/system_properties.c"
     )
 
     set_target_properties(uiohook-wayland PROPERTIES
@@ -80,26 +79,29 @@ else()
         C_STANDARD_REQUIRED ON
         POSITION_INDEPENDENT_CODE 1
         OUTPUT_NAME "uiohook-wayland"
-        VERSION ${PROJECT_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR}
+        PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/uiohook.h
+    )
+
+    add_library(uiohook-legacy SHARED
+        "src/logger.c"
+        "src/linux/legacy/dispatch_event.c"
+        "src/linux/legacy/input_helper.c"
+        "src/linux/legacy/input_hook.c"
+        "src/linux/legacy/post_event.c"
+        "src/linux/legacy/system_properties.c"
+    )
+
+    set_target_properties(uiohook-legacy PROPERTIES
+        C_STANDARD 99
+        C_STANDARD_REQUIRED ON
+        POSITION_INDEPENDENT_CODE 1
+        OUTPUT_NAME "uiohook-legacy"
+        PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/uiohook.h
     )
 
     add_library(uiohook SHARED
         "src/logger.c"
         "src/linux/loader.c"
-    )
-
-    target_link_libraries(uiohook PRIVATE dl)
-
-    set_target_properties(uiohook PROPERTIES
-        C_STANDARD 99
-        C_STANDARD_REQUIRED ON
-        POSITION_INDEPENDENT_CODE 1
-        OUTPUT_NAME "${PROJECT_NAME}"
-        VERSION ${PROJECT_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR}
-        BUILD_RPATH "$ORIGIN"
-        INSTALL_RPATH "\$ORIGIN"
     )
 endif()
 
@@ -108,8 +110,6 @@ set_target_properties(uiohook PROPERTIES
     C_STANDARD_REQUIRED ON
     POSITION_INDEPENDENT_CODE 1
     OUTPUT_NAME "${PROJECT_NAME}"
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
     PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/uiohook.h
 )
 
@@ -123,7 +123,7 @@ if (UNIX AND NOT APPLE)
 
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/x11
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/x11
     )
 
     target_include_directories(uiohook-wayland
@@ -133,7 +133,17 @@ if (UNIX AND NOT APPLE)
 
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/wayland
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/wayland
+    )
+
+    target_include_directories(uiohook-legacy
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/legacy
     )
 
     target_include_directories(uiohook
@@ -158,7 +168,7 @@ else()
 endif()
 
 if (UNIX AND NOT APPLE)
-    install(TARGETS uiohook uiohook-x11 uiohook-wayland
+    install(TARGETS uiohook uiohook-x11 uiohook-wayland uiohook-legacy
         EXPORT ${PROJECT_NAME}-config
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -166,7 +176,7 @@ if (UNIX AND NOT APPLE)
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
     )
 
-    export(TARGETS uiohook uiohook-x11 uiohook-wayland FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
+    export(TARGETS uiohook uiohook-x11 uiohook-wayland uiohook-legacy FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
     install(EXPORT ${PROJECT_NAME}-config DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 else()
     install(TARGETS uiohook
@@ -252,13 +262,19 @@ endif()
 if(UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
 
+    target_link_libraries(uiohook PRIVATE dl)
+
     pkg_check_modules(X11 REQUIRED x11)
     target_include_directories(uiohook-x11 PRIVATE "${X11_INCLUDE_DIRS}")
     target_link_libraries(uiohook-x11 "${X11_LDFLAGS}")
+    target_include_directories(uiohook-legacy PRIVATE "${X11_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-legacy "${X11_LDFLAGS}")
 
     pkg_check_modules(XTST REQUIRED xtst)
     target_include_directories(uiohook-x11 PRIVATE "${XTST_INCLUDE_DIRS}")
     target_link_libraries(uiohook-x11 "${XTST_LDFLAGS}")
+    target_include_directories(uiohook-legacy PRIVATE "${XTST_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-legacy "${XTST_LDFLAGS}")
 
     include(CheckLibraryExists)
     check_library_exists(Xtst XRecordQueryVersion "" HAVE_XRECORD)
@@ -269,10 +285,14 @@ if(UNIX AND NOT APPLE)
     pkg_check_modules(XKB_COMMON REQUIRED xkbcommon-x11)
     target_include_directories(uiohook-x11 PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
     target_link_libraries(uiohook-x11 "${XKB_COMMON_LDFLAGS}")
+    target_include_directories(uiohook-legacy PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-legacy "${XKB_COMMON_LDFLAGS}")
 
     pkg_check_modules(X11_XCB REQUIRED x11-xcb)
     target_include_directories(uiohook-x11 PRIVATE "${X11_XCB_INCLUDE_DIRS}")
     target_link_libraries(uiohook-x11 "${X11_XCB_LDFLAGS}")
+    target_include_directories(uiohook-legacy PRIVATE "${X11_XCB_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-legacy "${X11_XCB_LDFLAGS}")
 
     option(USE_XT "X Toolkit Extension (default: ON)" ON)
     if(USE_XT)
@@ -280,6 +300,9 @@ if(UNIX AND NOT APPLE)
         target_compile_definitions(uiohook-x11 PRIVATE USE_XT)
         target_include_directories(uiohook-x11 PRIVATE "${XT_INCLUDE_DIRS}")
         target_link_libraries(uiohook-x11 "${XT_LDFLAGS}")
+        target_compile_definitions(uiohook-legacy PRIVATE USE_XT)
+        target_include_directories(uiohook-legacy PRIVATE "${XT_INCLUDE_DIRS}")
+        target_link_libraries(uiohook-legacy "${XT_LDFLAGS}")
     endif()
 
     pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
@@ -294,6 +317,9 @@ if(UNIX AND NOT APPLE)
         target_compile_definitions(uiohook-x11 PRIVATE USE_XF86MISC)
         target_include_directories(uiohook-x11 PRIVATE "${XF86MISC_INCLUDE_DIRS}")
         target_link_libraries(uiohook-x11 "${XF86MISC_LDFLAGS}")
+        target_compile_definitions(uiohook-legacy PRIVATE USE_XF86MISC)
+        target_include_directories(uiohook-legacy PRIVATE "${XF86MISC_INCLUDE_DIRS}")
+        target_link_libraries(uiohook-legacy "${XF86MISC_LDFLAGS}")
     endif()
 
     option(USE_XRANDR "XRandR Extension (default: OFF)" OFF)
@@ -302,6 +328,9 @@ if(UNIX AND NOT APPLE)
         target_compile_definitions(uiohook-x11 PRIVATE USE_XRANDR)
         target_include_directories(uiohook-x11 PRIVATE "${XRANDR_INCLUDE_DIRS}")
         target_link_libraries(uiohook-x11 "${XRANDR_LDFLAGS}")
+        target_compile_definitions(uiohook-legacy PRIVATE USE_XRANDR)
+        target_include_directories(uiohook-legacy PRIVATE "${XRANDR_INCLUDE_DIRS}")
+        target_link_libraries(uiohook-legacy "${XRANDR_LDFLAGS}")
     endif()
 
     option(USE_XINERAMA "Xinerama Extension (default: ON)" ON)
@@ -310,14 +339,9 @@ if(UNIX AND NOT APPLE)
         target_compile_definitions(uiohook-x11 PRIVATE USE_XINERAMA)
         target_include_directories(uiohook-x11 PRIVATE "${XINERAMA_INCLUDE_DIRS}")
         target_link_libraries(uiohook-x11 "${XINERAMA_LDFLAGS}")
-    endif()
-
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        option(USE_EVDEV "Generic Linux input driver (default: ON)" ON)
-        if(USE_EVDEV)
-            target_compile_definitions(uiohook-x11 PRIVATE USE_EVDEV)
-            target_compile_definitions(uiohook-wayland PRIVATE USE_EVDEV)
-        endif()
+        target_compile_definitions(uiohook-legacy PRIVATE USE_XINERAMA)
+        target_include_directories(uiohook-legacy PRIVATE "${XINERAMA_INCLUDE_DIRS}")
+        target_link_libraries(uiohook-legacy "${XINERAMA_LDFLAGS}")
     endif()
 elseif(APPLE)
     set(CMAKE_MACOSX_RPATH 1)
@@ -364,7 +388,6 @@ elseif(APPLE)
 elseif(WIN32)
     target_link_libraries(uiohook Advapi32)
 endif()
-
 
 list(REMOVE_DUPLICATES INTERFACE_LINK_LIBRARIES)
 string(REPLACE ";" " " COMPILE_LIBRARIES "${INTERFACE_LINK_LIBRARIES}")

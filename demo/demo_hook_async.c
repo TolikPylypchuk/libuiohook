@@ -368,7 +368,7 @@ int main() {
             WaitForSingleObject(hook_thread,  INFINITE);
             #else
             #if defined(__APPLE__) && defined(__MACH__)
-            // NOTE Darwin requires that you start your own runloop from main.
+            // NOTE macOS requires that you start your own runloop from main.
             CFRunLoopRun();
             #endif
             

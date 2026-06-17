@@ -148,7 +148,7 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
 
         wchar_t surrogate[2] = {};
         size_t count = event_to_unicode(x_event, surrogate, sizeof(surrogate) - 1, &keysym);
-    
+
         for (unsigned int i = 0; i < count; i++) {
             // Populate key typed event.
             uio_event.time = x_event->serial;
