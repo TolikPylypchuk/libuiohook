@@ -17,7 +17,7 @@
 
 cmake_minimum_required(VERSION 4.2)
 
-project(uiohook VERSION 1.3.0 LANGUAGES C)
+project(uiohook VERSION 2.0.0 LANGUAGES C)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 
