@@ -55,6 +55,13 @@
 #define UIOHOOK_ERROR_AXAPI_REVOKED              0x45
 /* End Error Codes */
 
+/* Begin Linux Back-ends */
+#define LINUX_BACKEND_AUTO       0x0
+#define LINUX_BACKEND_X11        0x1
+#define LINUX_BACKEND_WAYLAND    0x2
+#define LINUX_BACKEND_LEGACY     0x3
+/* End Linux Back-ends */
+
 /* Begin Log Levels and Function Prototype */
 typedef enum _log_level {
     LOG_LEVEL_DEBUG = 1,
@@ -413,6 +420,12 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+    // Get the back-end for Linux.
+    int hook_get_linux_backend();
+
+    // Set the back-end for Linux.
+    bool hook_set_linux_backend(int backend);
 
     // Set the logger callback function.
     void hook_set_logger_proc(logger_t logger_proc, void *user_data);

@@ -1,5 +1,3 @@
-/* libUIOHook: Wayland backend post event stub. */
-
 #include <uiohook.h>
 
 int hook_post_event(uiohook_event * const event) {

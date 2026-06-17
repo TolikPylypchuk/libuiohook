@@ -33,6 +33,11 @@ typedef long int (*get_pointer_sensitivity_t)(void);
 typedef long int (*get_multi_click_time_t)(void);
 
 static void *backend_handle = NULL;
+static const char *backend_name = NULL;
+
+static const char const * BACKEND_X11_NAME = "./libuiohook-x11.so";
+static const char const * BACKEND_WAYLAND_NAME = "./libuiohook-wayland.so";
+static const char const * BACKEND_LEGACY_NAME = "./libuiohook-legacy.so";
 
 static set_dispatch_proc_t set_dispatch_proc = NULL;
 static post_event_t post_event = NULL;
@@ -60,6 +65,55 @@ static get_pointer_sensitivity_t get_pointer_sensitivity = NULL;
 static get_multi_click_time_t get_multi_click_time = NULL;
 
 static bool ensure_backend_loaded();
+
+int hook_get_linux_backend() {
+    if (backend_name == NULL) {
+        return LINUX_BACKEND_AUTO;
+    } else if (strcmp(backend_name, BACKEND_X11_NAME) == 0) {
+        return LINUX_BACKEND_X11;
+    } else if (strcmp(backend_name, BACKEND_WAYLAND_NAME) == 0) {
+        return LINUX_BACKEND_WAYLAND;
+    } else if (strcmp(backend_name, BACKEND_LEGACY_NAME) == 0) {
+        return LINUX_BACKEND_LEGACY;
+    } else {
+        logger(LOG_LEVEL_WARN, "%s [%u]: Unrecognized Linux back-end: %s.\n",
+                __FUNCTION__, __LINE__, backend_name);
+        return LINUX_BACKEND_AUTO;
+    }
+}
+
+bool hook_set_linux_backend(int backend) {
+    if (backend_handle != NULL) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: The Linux back-end has already been loaded.\n",
+                __FUNCTION__, __LINE__);
+        return false;
+    }
+
+    switch (backend) {
+        case LINUX_BACKEND_X11:
+            logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting the Linux back-end to X11.\n",
+                    __FUNCTION__, __LINE__);
+            backend_name = BACKEND_X11_NAME;
+            break;
+        case LINUX_BACKEND_WAYLAND:
+            logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting the Linux back-end to Wayland.\n",
+                    __FUNCTION__, __LINE__);
+            backend_name = BACKEND_WAYLAND_NAME;
+            break;
+        case LINUX_BACKEND_LEGACY:
+            logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting the Linux back-end to legacy X11.\n",
+                    __FUNCTION__, __LINE__);
+            backend_name = BACKEND_LEGACY_NAME;
+            break;
+        default:
+            logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting the Linux back-end to auto-selection.\n",
+                    __FUNCTION__, __LINE__);
+            backend_name = NULL;
+            break;
+    }
+
+    return true;
+}
 
 void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
     if (!ensure_backend_loaded()) {
@@ -253,7 +307,7 @@ long int hook_get_multi_click_time() {
     return get_multi_click_time();
 }
 
-static const char *get_preferred_backend_name() {
+static const char *get_backend_name() {
     const char *session_type = getenv("XDG_SESSION_TYPE");
     const char *wayland_display = getenv("WAYLAND_DISPLAY");
 
@@ -265,12 +319,12 @@ static const char *get_preferred_backend_name() {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: Using the Wayland backend.\n",
                 __FUNCTION__, __LINE__);
 
-        return "./libuiohook-wayland.so";
+        return BACKEND_WAYLAND_NAME;
     } else {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: Using the X11 backend.\n",
                 __FUNCTION__, __LINE__);
 
-        return "./libuiohook-x11.so";
+        return BACKEND_X11_NAME;
     }
 }
 
@@ -399,23 +453,25 @@ static bool load_backend_symbols() {
 }
 
 static bool open_backend() {
-    const char *backend_name = get_preferred_backend_name();
+    const char* selected_backend_name = backend_name != NULL
+        ? backend_name
+        : get_backend_name();
 
-    backend_handle = dlopen(backend_name, RTLD_LAZY | RTLD_LOCAL);
+    backend_handle = dlopen(selected_backend_name, RTLD_LAZY | RTLD_LOCAL);
     if (backend_handle == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to open %s: %s!\n",
-                __FUNCTION__, __LINE__, backend_name, dlerror());
+                __FUNCTION__, __LINE__, selected_backend_name, dlerror());
 
         return false;
     }
 
     if (!load_backend_symbols()) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to load symbols from %s: %s!\n",
-                __FUNCTION__, __LINE__, backend_name, dlerror());
+                __FUNCTION__, __LINE__, selected_backend_name, dlerror());
 
         if (!dlclose(backend_handle)) {
             logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to close %s: %s!\n",
-                    __FUNCTION__, __LINE__, backend_name, dlerror());
+                    __FUNCTION__, __LINE__, selected_backend_name, dlerror());
         }
 
         backend_handle = NULL;

@@ -807,3 +807,11 @@ void unload_input_helper() {
     }
     #endif
 }
+
+int hook_get_linux_backend() {
+    return LINUX_BACKEND_AUTO;
+}
+
+bool hook_set_linux_backend(int backend) {
+    return true;
+}
