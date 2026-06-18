@@ -47,7 +47,7 @@ static unsigned short click_count = 0;
 static CGEventTimestamp click_time = 0;
 static unsigned short int click_button = MOUSE_NOBUTTON;
 
-static bool key_typed_enabled = true;
+static bool key_typed_enabled = false;
 
 bool hook_is_key_typed_enabled() {
     return key_typed_enabled;

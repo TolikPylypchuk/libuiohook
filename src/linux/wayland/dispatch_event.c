@@ -7,7 +7,7 @@
 static dispatcher_t dispatch = NULL;
 static void *dispatch_data = NULL;
 
-static bool key_typed_enabled = true;
+static bool key_typed_enabled = false;
 
 void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting new dispatch callback to %#p.\n",

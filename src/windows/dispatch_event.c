@@ -35,7 +35,7 @@ static POINT last_click;
 static dispatcher_t dispatch = NULL;
 static void *dispatch_data = NULL;
 
-static bool key_typed_enabled = true;
+static bool key_typed_enabled = false;
 
 bool hook_is_key_typed_enabled() {
     return key_typed_enabled;
