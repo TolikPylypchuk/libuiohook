@@ -101,7 +101,6 @@ else()
     )
 
     add_library(uiohook SHARED
-        "src/logger.c"
         "src/linux/loader.c"
     )
 endif()
