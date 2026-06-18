@@ -7,30 +7,31 @@
 #include <logger.h>
 #include <uiohook.h>
 
-typedef void (*set_dispatch_proc_t)(dispatcher_t dispatch_proc, void *user_data);
-typedef int (*post_event_t)(uiohook_event * const event);
-typedef int (*post_events_t)(uiohook_event * const events, uint32_t size);
-typedef int (*post_text_t)(const uint16_t * const text);
-typedef uint64_t (*get_post_text_delay_x11_t)(void);
-typedef void (*set_post_text_delay_x11_t)(uint64_t delay);
-typedef int (*run_t)(void);
-typedef int (*run_keyboard_t)(void);
-typedef int (*run_mouse_t)(void);
-typedef int (*stop_t)(void);
-typedef bool (*is_key_typed_enabled_t)(void);
-typedef void (*set_key_typed_enabled_t)(bool enabled);
-typedef bool (*is_ax_api_enabled_t)(bool promptUserIfDisabled);
-typedef bool (*get_prompt_user_if_ax_api_disabled_t)(void);
-typedef void (*set_prompt_user_if_ax_api_disabled_t)(bool promptUserIfDisabled);
-typedef uint32_t (*get_ax_poll_frequency_t)(void);
-typedef void (*set_ax_poll_frequency_t)(uint32_t frequency);
-typedef screen_data* (*create_screen_info_t)(unsigned char *count);
-typedef long int (*get_auto_repeat_rate_t)(void);
-typedef long int (*get_auto_repeat_delay_t)(void);
-typedef long int (*get_pointer_acceleration_multiplier_t)(void);
-typedef long int (*get_pointer_acceleration_threshold_t)(void);
-typedef long int (*get_pointer_sensitivity_t)(void);
-typedef long int (*get_multi_click_time_t)(void);
+typedef void (*set_logger_proc_t)(logger_t, void *);
+typedef void (*set_dispatch_proc_t)(dispatcher_t, void *);
+typedef int (*post_event_t)(uiohook_event * const);
+typedef int (*post_events_t)(uiohook_event * const, uint32_t);
+typedef int (*post_text_t)(const uint16_t * const);
+typedef uint64_t (*get_post_text_delay_x11_t)();
+typedef void (*set_post_text_delay_x11_t)(uint64_t);
+typedef int (*run_t)();
+typedef int (*run_keyboard_t)();
+typedef int (*run_mouse_t)();
+typedef int (*stop_t)();
+typedef bool (*is_key_typed_enabled_t)();
+typedef void (*set_key_typed_enabled_t)(bool);
+typedef bool (*is_ax_api_enabled_t)(bool);
+typedef bool (*get_prompt_user_if_ax_api_disabled_t)();
+typedef void (*set_prompt_user_if_ax_api_disabled_t)(bool);
+typedef uint32_t (*get_ax_poll_frequency_t)();
+typedef void (*set_ax_poll_frequency_t)(uint32_t);
+typedef screen_data* (*create_screen_info_t)(unsigned char *);
+typedef long int (*get_auto_repeat_rate_t)();
+typedef long int (*get_auto_repeat_delay_t)();
+typedef long int (*get_pointer_acceleration_multiplier_t)();
+typedef long int (*get_pointer_acceleration_threshold_t)();
+typedef long int (*get_pointer_sensitivity_t)();
+typedef long int (*get_multi_click_time_t)();
 
 static void *backend_handle = NULL;
 static const char *backend_name = NULL;
@@ -39,6 +40,10 @@ static const char const * BACKEND_X11_NAME = "./libuiohook-x11.so";
 static const char const * BACKEND_WAYLAND_NAME = "./libuiohook-wayland.so";
 static const char const * BACKEND_LEGACY_NAME = "./libuiohook-legacy.so";
 
+static logger_t callback = NULL;
+static void *callback_data = NULL;
+
+static set_logger_proc_t set_logger_proc = NULL;
 static set_dispatch_proc_t set_dispatch_proc = NULL;
 static post_event_t post_event = NULL;
 static post_events_t post_events = NULL;
@@ -66,6 +71,16 @@ static get_multi_click_time_t get_multi_click_time = NULL;
 
 static bool ensure_backend_loaded();
 
+void logger(unsigned int level, const char *format, ...) {
+    if (callback != NULL) {
+        va_list args;
+
+        va_start(args, format);
+        callback(level, callback_data, format, args);
+        va_end(args);
+    }
+}
+
 int hook_get_linux_backend() {
     if (backend_name == NULL) {
         return LINUX_BACKEND_AUTO;
@@ -76,43 +91,42 @@ int hook_get_linux_backend() {
     } else if (strcmp(backend_name, BACKEND_LEGACY_NAME) == 0) {
         return LINUX_BACKEND_LEGACY;
     } else {
-        logger(LOG_LEVEL_WARN, "%s [%u]: Unrecognized Linux back-end: %s.\n",
-                __FUNCTION__, __LINE__, backend_name);
         return LINUX_BACKEND_AUTO;
     }
 }
 
 bool hook_set_linux_backend(int backend) {
     if (backend_handle != NULL) {
-        logger(LOG_LEVEL_WARN, "%s [%u]: The Linux back-end has already been loaded.\n",
-                __FUNCTION__, __LINE__);
         return false;
     }
 
     switch (backend) {
         case LINUX_BACKEND_X11:
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting the Linux back-end to X11.\n",
-                    __FUNCTION__, __LINE__);
             backend_name = BACKEND_X11_NAME;
             break;
         case LINUX_BACKEND_WAYLAND:
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting the Linux back-end to Wayland.\n",
-                    __FUNCTION__, __LINE__);
             backend_name = BACKEND_WAYLAND_NAME;
             break;
         case LINUX_BACKEND_LEGACY:
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting the Linux back-end to legacy X11.\n",
-                    __FUNCTION__, __LINE__);
             backend_name = BACKEND_LEGACY_NAME;
             break;
         default:
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting the Linux back-end to auto-selection.\n",
-                    __FUNCTION__, __LINE__);
             backend_name = NULL;
             break;
     }
 
     return true;
+}
+
+void hook_set_logger_proc(logger_t logger_proc, void *user_data) {
+    callback = logger_proc;
+    callback_data = user_data;
+
+    if (!ensure_backend_loaded()) {
+        return;
+    }
+
+    set_logger_proc(logger_proc, user_data);
 }
 
 void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
@@ -329,6 +343,11 @@ static const char *get_backend_name() {
 }
 
 static bool load_backend_symbols() {
+    set_logger_proc = (set_logger_proc_t) dlsym(backend_handle, "hook_set_logger_proc");
+    if (set_logger_proc == NULL) {
+        return false;
+    }
+
     set_dispatch_proc = (set_dispatch_proc_t) dlsym(backend_handle, "hook_set_dispatch_proc");
     if (set_dispatch_proc == NULL) {
         return false;

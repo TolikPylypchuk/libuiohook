@@ -536,3 +536,10 @@ bool hook_get_prompt_user_if_ax_api_disabled() {
 
 void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
 }
+
+uint32_t hook_get_ax_poll_frequency() {
+    return 0;
+}
+
+void hook_set_ax_poll_frequency(uint32_t frequency) {
+}
