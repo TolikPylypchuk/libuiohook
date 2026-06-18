@@ -34,10 +34,11 @@ if (WIN32 OR WIN64)
         "src/logger.c"
         "src/${UIOHOOK_SOURCE_DIR}/dispatch_event.c"
         "src/${UIOHOOK_SOURCE_DIR}/input_helper.c"
-        "src/${UIOHOOK_SOURCE_DIR}/monitor_helper.c"
         "src/${UIOHOOK_SOURCE_DIR}/input_hook.c"
+        "src/${UIOHOOK_SOURCE_DIR}/monitor_helper.c"
         "src/${UIOHOOK_SOURCE_DIR}/post_event.c"
         "src/${UIOHOOK_SOURCE_DIR}/system_properties.c"
+        "src/${UIOHOOK_SOURCE_DIR}/unused_functions.c"
     )
 elseif (APPLE)
     add_library(uiohook
@@ -47,6 +48,7 @@ elseif (APPLE)
         "src/${UIOHOOK_SOURCE_DIR}/input_hook.c"
         "src/${UIOHOOK_SOURCE_DIR}/post_event.c"
         "src/${UIOHOOK_SOURCE_DIR}/system_properties.c"
+        "src/${UIOHOOK_SOURCE_DIR}/unused_functions.c"
     )
 else()
     add_library(uiohook-x11 SHARED
@@ -56,6 +58,7 @@ else()
         "src/linux/x11/input_hook.c"
         "src/linux/x11/post_event.c"
         "src/linux/x11/system_properties.c"
+        "src/linux/x11/unused_functions.c"
     )
 
     set_target_properties(uiohook-x11 PROPERTIES
@@ -71,8 +74,10 @@ else()
         "src/linux/wayland/dispatch_event.c"
         "src/linux/wayland/input_helper.c"
         "src/linux/wayland/input_hook.c"
+        "src/linux/wayland/monitor_helper.c"
         "src/linux/wayland/post_event.c"
         "src/linux/wayland/system_properties.c"
+        "src/linux/wayland/unused_functions.c"
     )
 
     set_target_properties(uiohook-wayland PROPERTIES
@@ -90,6 +95,7 @@ else()
         "src/linux/legacy/input_hook.c"
         "src/linux/legacy/post_event.c"
         "src/linux/legacy/system_properties.c"
+        "src/linux/legacy/unused_functions.c"
     )
 
     set_target_properties(uiohook-legacy PROPERTIES

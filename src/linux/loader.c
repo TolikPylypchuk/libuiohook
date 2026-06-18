@@ -9,22 +9,28 @@
 
 typedef void (*set_logger_proc_t)(logger_t, void *);
 typedef void (*set_dispatch_proc_t)(dispatcher_t, void *);
-typedef int (*post_event_t)(uiohook_event * const);
-typedef int (*post_events_t)(uiohook_event * const, uint32_t);
-typedef int (*post_text_t)(const uint16_t * const);
-typedef uint64_t (*get_post_text_delay_x11_t)();
-typedef void (*set_post_text_delay_x11_t)(uint64_t);
+
 typedef int (*run_t)();
 typedef int (*run_keyboard_t)();
 typedef int (*run_mouse_t)();
 typedef int (*stop_t)();
+
+typedef int (*post_event_t)(uiohook_event * const);
+typedef int (*post_events_t)(uiohook_event * const, uint32_t);
+typedef int (*post_text_t)(const uint16_t * const);
+
 typedef bool (*is_key_typed_enabled_t)();
 typedef void (*set_key_typed_enabled_t)(bool);
+
 typedef bool (*is_ax_api_enabled_t)(bool);
 typedef bool (*get_prompt_user_if_ax_api_disabled_t)();
 typedef void (*set_prompt_user_if_ax_api_disabled_t)(bool);
 typedef uint32_t (*get_ax_poll_frequency_t)();
 typedef void (*set_ax_poll_frequency_t)(uint32_t);
+
+typedef uint64_t (*get_post_text_delay_x11_t)();
+typedef void (*set_post_text_delay_x11_t)(uint64_t);
+
 typedef screen_data* (*create_screen_info_t)(unsigned char *);
 typedef long int (*get_auto_repeat_rate_t)();
 typedef long int (*get_auto_repeat_delay_t)();
@@ -45,22 +51,28 @@ static void *callback_data = NULL;
 
 static set_logger_proc_t set_logger_proc = NULL;
 static set_dispatch_proc_t set_dispatch_proc = NULL;
-static post_event_t post_event = NULL;
-static post_events_t post_events = NULL;
-static post_text_t post_text = NULL;
-static get_post_text_delay_x11_t get_post_text_delay_x11 = NULL;
-static set_post_text_delay_x11_t set_post_text_delay_x11 = NULL;
+
 static run_t run = NULL;
 static run_keyboard_t run_keyboard = NULL;
 static run_mouse_t run_mouse = NULL;
 static stop_t stop = NULL;
+
+static post_event_t post_event = NULL;
+static post_events_t post_events = NULL;
+static post_text_t post_text = NULL;
+
 static is_key_typed_enabled_t is_key_typed_enabled = NULL;
 static set_key_typed_enabled_t set_key_typed_enabled = NULL;
+
 static is_ax_api_enabled_t is_ax_api_enabled = NULL;
 static get_prompt_user_if_ax_api_disabled_t get_prompt_user_if_ax_api_disabled = NULL;
 static set_prompt_user_if_ax_api_disabled_t set_prompt_user_if_ax_api_disabled = NULL;
 static get_ax_poll_frequency_t get_ax_poll_frequency = NULL;
 static set_ax_poll_frequency_t set_ax_poll_frequency = NULL;
+
+static get_post_text_delay_x11_t get_post_text_delay_x11 = NULL;
+static set_post_text_delay_x11_t set_post_text_delay_x11 = NULL;
+
 static create_screen_info_t create_screen_info = NULL;
 static get_auto_repeat_rate_t get_auto_repeat_rate = NULL;
 static get_auto_repeat_delay_t get_auto_repeat_delay = NULL;
@@ -137,46 +149,6 @@ void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
     set_dispatch_proc(dispatch_proc, user_data);
 }
 
-int hook_post_event(uiohook_event * const event) {
-    if (!ensure_backend_loaded()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
-    }
-
-    return post_event(event);
-}
-
-int hook_post_events(uiohook_event * const events, uint32_t size) {
-    if (!ensure_backend_loaded()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
-    }
-
-    return post_events(events, size);
-}
-
-int hook_post_text(const uint16_t * const text) {
-    if (!ensure_backend_loaded()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
-    }
-
-    return post_text(text);
-}
-
-uint64_t hook_get_post_text_delay_x11() {
-    if (!ensure_backend_loaded()) {
-        return 0;
-    }
-
-    return get_post_text_delay_x11();
-}
-
-void hook_set_post_text_delay_x11(uint64_t delay) {
-    if (!ensure_backend_loaded()) {
-        return;
-    }
-
-    set_post_text_delay_x11(delay);
-}
-
 int hook_run() {
     if (!ensure_backend_loaded()) {
         return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
@@ -207,6 +179,30 @@ int hook_stop() {
     }
 
     return stop();
+}
+
+int hook_post_event(uiohook_event * const event) {
+    if (!ensure_backend_loaded()) {
+        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+    }
+
+    return post_event(event);
+}
+
+int hook_post_events(uiohook_event * const events, uint32_t size) {
+    if (!ensure_backend_loaded()) {
+        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+    }
+
+    return post_events(events, size);
+}
+
+int hook_post_text(const uint16_t * const text) {
+    if (!ensure_backend_loaded()) {
+        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+    }
+
+    return post_text(text);
 }
 
 bool hook_is_key_typed_enabled() {
@@ -263,6 +259,22 @@ void hook_set_ax_poll_frequency(uint32_t frequency) {
     }
 
     set_ax_poll_frequency(frequency);
+}
+
+uint64_t hook_get_post_text_delay_x11() {
+    if (!ensure_backend_loaded()) {
+        return 0;
+    }
+
+    return get_post_text_delay_x11();
+}
+
+void hook_set_post_text_delay_x11(uint64_t delay) {
+    if (!ensure_backend_loaded()) {
+        return;
+    }
+
+    set_post_text_delay_x11(delay);
 }
 
 screen_data* hook_create_screen_info(unsigned char *count) {
@@ -353,31 +365,6 @@ static bool load_backend_symbols() {
         return false;
     }
 
-    post_event = (post_event_t) dlsym(backend_handle, "hook_post_event");
-    if (post_event == NULL) {
-        return false;
-    }
-
-    post_events = (post_events_t) dlsym(backend_handle, "hook_post_events");
-    if (post_events == NULL) {
-        return false;
-    }
-
-    post_text = (post_text_t) dlsym(backend_handle, "hook_post_text");
-    if (post_text == NULL) {
-        return false;
-    }
-
-    get_post_text_delay_x11 = (get_post_text_delay_x11_t) dlsym(backend_handle, "hook_get_post_text_delay_x11");
-    if (get_post_text_delay_x11 == NULL) {
-        return false;
-    }
-
-    set_post_text_delay_x11 = (set_post_text_delay_x11_t) dlsym(backend_handle, "hook_set_post_text_delay_x11");
-    if (set_post_text_delay_x11 == NULL) {
-        return false;
-    }
-
     run = (run_t) dlsym(backend_handle, "hook_run");
     if (run == NULL) {
         return false;
@@ -395,6 +382,21 @@ static bool load_backend_symbols() {
 
     stop = (stop_t) dlsym(backend_handle, "hook_stop");
     if (stop == NULL) {
+        return false;
+    }
+
+    post_event = (post_event_t) dlsym(backend_handle, "hook_post_event");
+    if (post_event == NULL) {
+        return false;
+    }
+
+    post_events = (post_events_t) dlsym(backend_handle, "hook_post_events");
+    if (post_events == NULL) {
+        return false;
+    }
+
+    post_text = (post_text_t) dlsym(backend_handle, "hook_post_text");
+    if (post_text == NULL) {
         return false;
     }
 
@@ -430,6 +432,16 @@ static bool load_backend_symbols() {
 
     set_ax_poll_frequency = (set_ax_poll_frequency_t) dlsym(backend_handle, "hook_set_ax_poll_frequency");
     if (set_ax_poll_frequency == NULL) {
+        return false;
+    }
+
+    get_post_text_delay_x11 = (get_post_text_delay_x11_t) dlsym(backend_handle, "hook_get_post_text_delay_x11");
+    if (get_post_text_delay_x11 == NULL) {
+        return false;
+    }
+
+    set_post_text_delay_x11 = (set_post_text_delay_x11_t) dlsym(backend_handle, "hook_set_post_text_delay_x11");
+    if (set_post_text_delay_x11 == NULL) {
         return false;
     }
 
