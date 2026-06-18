@@ -421,32 +421,13 @@ typedef void (*dispatcher_t)(uiohook_event * const, void *);
 extern "C" {
 #endif
 
-    // Get the back-end for Linux.
-    int hook_get_linux_backend();
-
-    // Set the back-end for Linux.
-    bool hook_set_linux_backend(int backend);
+    /* Begin Main Functions */
 
     // Set the logger callback function.
     void hook_set_logger_proc(logger_t logger_proc, void *user_data);
 
     // Set the event callback function.
     void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data);
-
-    // Send a virtual event back to the system.
-    int hook_post_event(uiohook_event * const event);
-
-    // Send virtual events back to the system.
-    int hook_post_events(uiohook_event * const events, uint32_t size);
-
-    // Send text back to the system.
-    int hook_post_text(const uint16_t * const text);
-
-    // Get the delay between character sending when posting text on X11.
-    uint64_t hook_get_post_text_delay_x11();
-
-    // Set the delay between character sending when posting text on X11.
-    void hook_set_post_text_delay_x11(uint64_t delay);
 
     // Insert the event hook for all events.
     int hook_run();
@@ -460,11 +441,28 @@ extern "C" {
     // Withdraw the event hook.
     int hook_stop();
 
+    // Send a virtual event back to the system.
+    int hook_post_event(uiohook_event * const event);
+
+    // Send virtual events back to the system.
+    int hook_post_events(uiohook_event * const events, uint32_t size);
+
+    // Send text back to the system.
+    int hook_post_text(const uint16_t * const text);
+
+    /* End Main Functions */
+
+    /* Begin Platform-Independent Configuration Functions */
+
     // Check whether key typed events are enabled.
     bool hook_is_key_typed_enabled();
 
     // Enable or disable key typed events.
     void hook_set_key_typed_enabled(bool enabled);
+
+    /* End Platform-Independent Configuration Functions */
+
+    /* Begin macOS Configuration Functions */
 
     // Check whether access to macOS Accessibility API is enabled, optionally prompting the user if it is not.
     bool hook_is_ax_api_enabled(bool promptUserIfDisabled);
@@ -480,6 +478,26 @@ extern "C" {
 
     // Sets the frequency for polling access to macOS Accessibility API.
     void hook_set_ax_poll_frequency(uint32_t frequency);
+
+    /* End macOS Configuration Functions */
+
+    /* Begin Linux Configuration Functions */
+
+    // Get the delay between character sending when posting text on X11.
+    uint64_t hook_get_post_text_delay_x11();
+
+    // Set the delay between character sending when posting text on X11.
+    void hook_set_post_text_delay_x11(uint64_t delay);
+
+    // Get the back-end for Linux.
+    int hook_get_linux_backend();
+
+    // Set the back-end for Linux.
+    bool hook_set_linux_backend(int backend);
+
+    /* End Linux Configuration Functions */
+
+    /* Begin System Info Functions */
 
     // Retrieves an array of screen data for each available monitor.
     screen_data* hook_create_screen_info(unsigned char *count);
@@ -501,6 +519,8 @@ extern "C" {
 
     // Retrieves the double/triple click interval.
     long int hook_get_multi_click_time();
+
+    /* End System Info Functions */
 
 #ifdef __cplusplus
 }

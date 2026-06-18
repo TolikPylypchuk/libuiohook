@@ -55,15 +55,6 @@ typedef struct {
     LONG y;
 } normalized_coordinates;
 
-uint64_t hook_get_post_text_delay_x11() {
-    // Not applicable on Windows, so does nothing
-    return 0;
-}
-
-void hook_set_post_text_delay_x11(uint64_t delay) {
-    // Not applicable on Windows, so does nothing
-}
-
 static LONG get_absolute_coordinate(LONG coordinate, int screen_size) {
     return MulDiv((int) coordinate, MAX_WINDOWS_COORD_VALUE, screen_size) + MAX_WINDOWS_COORD_VALUE / (screen_size * 2);
 }

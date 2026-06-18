@@ -479,10 +479,3 @@ int hook_stop() {
 
     return status;
 }
-
-uint32_t hook_get_ax_poll_frequency() {
-    return 0;
-}
-
-void hook_set_ax_poll_frequency(uint32_t frequency) {
-}
