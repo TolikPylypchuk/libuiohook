@@ -3,6 +3,7 @@
 #include <dlfcn.h>
 #include <libgen.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -44,8 +45,9 @@ typedef long int (*get_pointer_acceleration_threshold_t)();
 typedef long int (*get_pointer_sensitivity_t)();
 typedef long int (*get_multi_click_time_t)();
 
-static void *backend_handle = NULL;
+static bool backend_loaded = false;
 static const char *backend_name = NULL;
+static pthread_mutex_t backend_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static const char const * BACKEND_X11_NAME = "x11";
 static const char const * BACKEND_WAYLAND_NAME = "wayland";
@@ -86,7 +88,7 @@ static get_pointer_acceleration_threshold_t get_pointer_acceleration_threshold =
 static get_pointer_sensitivity_t get_pointer_sensitivity = NULL;
 static get_multi_click_time_t get_multi_click_time = NULL;
 
-static bool ensure_backend_loaded();
+static bool load_backend();
 
 void logger(unsigned int level, const char *format, ...) {
     if (callback != NULL) {
@@ -99,21 +101,32 @@ void logger(unsigned int level, const char *format, ...) {
 }
 
 int hook_get_linux_backend() {
+    int result = LINUX_BACKEND_AUTO;
+
+    pthread_mutex_lock(&backend_mutex);
+
     if (backend_name == NULL) {
-        return LINUX_BACKEND_AUTO;
+        result = LINUX_BACKEND_AUTO;
     } else if (strcmp(backend_name, BACKEND_X11_NAME) == 0) {
-        return LINUX_BACKEND_X11;
+        result = LINUX_BACKEND_X11;
     } else if (strcmp(backend_name, BACKEND_WAYLAND_NAME) == 0) {
-        return LINUX_BACKEND_WAYLAND;
+        result = LINUX_BACKEND_WAYLAND;
     } else if (strcmp(backend_name, BACKEND_LEGACY_NAME) == 0) {
-        return LINUX_BACKEND_LEGACY;
+        result = LINUX_BACKEND_LEGACY;
     } else {
-        return LINUX_BACKEND_AUTO;
+        result = LINUX_BACKEND_AUTO;
     }
+
+    pthread_mutex_unlock(&backend_mutex);
+
+    return result;
 }
 
 bool hook_set_linux_backend(int backend) {
-    if (backend_handle != NULL) {
+    pthread_mutex_lock(&backend_mutex);
+
+    if (backend_loaded) {
+        pthread_mutex_unlock(&backend_mutex);
         return false;
     }
 
@@ -132,6 +145,7 @@ bool hook_set_linux_backend(int backend) {
             break;
     }
 
+    pthread_mutex_unlock(&backend_mutex);
     return true;
 }
 
@@ -139,7 +153,7 @@ void hook_set_logger_proc(logger_t logger_proc, void *user_data) {
     callback = logger_proc;
     callback_data = user_data;
 
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return;
     }
 
@@ -147,7 +161,7 @@ void hook_set_logger_proc(logger_t logger_proc, void *user_data) {
 }
 
 void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return;
     }
 
@@ -155,7 +169,7 @@ void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
 }
 
 int hook_run() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
     }
 
@@ -163,7 +177,7 @@ int hook_run() {
 }
 
 int hook_run_keyboard() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
     }
 
@@ -171,7 +185,7 @@ int hook_run_keyboard() {
 }
 
 int hook_run_mouse() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
     }
 
@@ -179,7 +193,7 @@ int hook_run_mouse() {
 }
 
 int hook_stop() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
     }
 
@@ -187,7 +201,7 @@ int hook_stop() {
 }
 
 int hook_post_event(uiohook_event * const event) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
     }
 
@@ -195,7 +209,7 @@ int hook_post_event(uiohook_event * const event) {
 }
 
 int hook_post_events(uiohook_event * const events, uint32_t size) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
     }
 
@@ -203,7 +217,7 @@ int hook_post_events(uiohook_event * const events, uint32_t size) {
 }
 
 int hook_post_text(const uint16_t * const text) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
     }
 
@@ -211,7 +225,7 @@ int hook_post_text(const uint16_t * const text) {
 }
 
 bool hook_is_key_typed_enabled() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return false;
     }
 
@@ -219,7 +233,7 @@ bool hook_is_key_typed_enabled() {
 }
 
 void hook_set_key_typed_enabled(bool enabled) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return;
     }
 
@@ -227,7 +241,7 @@ void hook_set_key_typed_enabled(bool enabled) {
 }
 
 bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return false;
     }
 
@@ -235,7 +249,7 @@ bool hook_is_ax_api_enabled(bool promptUserIfDisabled) {
 }
 
 bool hook_get_prompt_user_if_ax_api_disabled() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return false;
     }
 
@@ -243,7 +257,7 @@ bool hook_get_prompt_user_if_ax_api_disabled() {
 }
 
 void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return;
     }
 
@@ -251,7 +265,7 @@ void hook_set_prompt_user_if_ax_api_disabled(bool promptUserIfDisabled) {
 }
 
 uint32_t hook_get_ax_poll_frequency() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return 0;
     }
 
@@ -259,7 +273,7 @@ uint32_t hook_get_ax_poll_frequency() {
 }
 
 void hook_set_ax_poll_frequency(uint32_t frequency) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return;
     }
 
@@ -267,7 +281,7 @@ void hook_set_ax_poll_frequency(uint32_t frequency) {
 }
 
 uint64_t hook_get_post_text_delay_x11() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return 0;
     }
 
@@ -275,7 +289,7 @@ uint64_t hook_get_post_text_delay_x11() {
 }
 
 void hook_set_post_text_delay_x11(uint64_t delay) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return;
     }
 
@@ -283,7 +297,7 @@ void hook_set_post_text_delay_x11(uint64_t delay) {
 }
 
 screen_data* hook_create_screen_info(unsigned char *count) {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return NULL;
     }
 
@@ -291,7 +305,7 @@ screen_data* hook_create_screen_info(unsigned char *count) {
 }
 
 long int hook_get_auto_repeat_rate() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return -1;
     }
 
@@ -299,7 +313,7 @@ long int hook_get_auto_repeat_rate() {
 }
 
 long int hook_get_auto_repeat_delay() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return -1;
     }
 
@@ -307,7 +321,7 @@ long int hook_get_auto_repeat_delay() {
 }
 
 long int hook_get_pointer_acceleration_multiplier() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return -1;
     }
 
@@ -315,7 +329,7 @@ long int hook_get_pointer_acceleration_multiplier() {
 }
 
 long int hook_get_pointer_acceleration_threshold() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return -1;
     }
 
@@ -323,7 +337,7 @@ long int hook_get_pointer_acceleration_threshold() {
 }
 
 long int hook_get_pointer_sensitivity() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return -1;
     }
 
@@ -331,7 +345,7 @@ long int hook_get_pointer_sensitivity() {
 }
 
 long int hook_get_multi_click_time() {
-    if (!ensure_backend_loaded()) {
+    if (!load_backend()) {
         return -1;
     }
 
@@ -359,128 +373,128 @@ static const char *get_backend_name() {
     }
 }
 
-static bool load_backend_symbols() {
-    set_logger_proc = (set_logger_proc_t) dlsym(backend_handle, "hook_set_logger_proc");
+static bool load_backend_symbols(void *handle) {
+    set_logger_proc = (set_logger_proc_t) dlsym(handle, "hook_set_logger_proc");
     if (set_logger_proc == NULL) {
         return false;
     }
 
-    set_dispatch_proc = (set_dispatch_proc_t) dlsym(backend_handle, "hook_set_dispatch_proc");
+    set_dispatch_proc = (set_dispatch_proc_t) dlsym(handle, "hook_set_dispatch_proc");
     if (set_dispatch_proc == NULL) {
         return false;
     }
 
-    run = (run_t) dlsym(backend_handle, "hook_run");
+    run = (run_t) dlsym(handle, "hook_run");
     if (run == NULL) {
         return false;
     }
 
-    run_keyboard = (run_keyboard_t) dlsym(backend_handle, "hook_run_keyboard");
+    run_keyboard = (run_keyboard_t) dlsym(handle, "hook_run_keyboard");
     if (run_keyboard == NULL) {
         return false;
     }
 
-    run_mouse = (run_mouse_t) dlsym(backend_handle, "hook_run_mouse");
+    run_mouse = (run_mouse_t) dlsym(handle, "hook_run_mouse");
     if (run_mouse == NULL) {
         return false;
     }
 
-    stop = (stop_t) dlsym(backend_handle, "hook_stop");
+    stop = (stop_t) dlsym(handle, "hook_stop");
     if (stop == NULL) {
         return false;
     }
 
-    post_event = (post_event_t) dlsym(backend_handle, "hook_post_event");
+    post_event = (post_event_t) dlsym(handle, "hook_post_event");
     if (post_event == NULL) {
         return false;
     }
 
-    post_events = (post_events_t) dlsym(backend_handle, "hook_post_events");
+    post_events = (post_events_t) dlsym(handle, "hook_post_events");
     if (post_events == NULL) {
         return false;
     }
 
-    post_text = (post_text_t) dlsym(backend_handle, "hook_post_text");
+    post_text = (post_text_t) dlsym(handle, "hook_post_text");
     if (post_text == NULL) {
         return false;
     }
 
-    is_key_typed_enabled = (is_key_typed_enabled_t) dlsym(backend_handle, "hook_is_key_typed_enabled");
+    is_key_typed_enabled = (is_key_typed_enabled_t) dlsym(handle, "hook_is_key_typed_enabled");
     if (is_key_typed_enabled == NULL) {
         return false;
     }
 
-    set_key_typed_enabled = (set_key_typed_enabled_t) dlsym(backend_handle, "hook_set_key_typed_enabled");
+    set_key_typed_enabled = (set_key_typed_enabled_t) dlsym(handle, "hook_set_key_typed_enabled");
     if (set_key_typed_enabled == NULL) {
         return false;
     }
 
-    is_ax_api_enabled = (is_ax_api_enabled_t) dlsym(backend_handle, "hook_is_ax_api_enabled");
+    is_ax_api_enabled = (is_ax_api_enabled_t) dlsym(handle, "hook_is_ax_api_enabled");
     if (is_ax_api_enabled == NULL) {
         return false;
     }
 
-    get_prompt_user_if_ax_api_disabled = (get_prompt_user_if_ax_api_disabled_t) dlsym(backend_handle, "hook_get_prompt_user_if_ax_api_disabled");
+    get_prompt_user_if_ax_api_disabled = (get_prompt_user_if_ax_api_disabled_t) dlsym(handle, "hook_get_prompt_user_if_ax_api_disabled");
     if (get_prompt_user_if_ax_api_disabled == NULL) {
         return false;
     }
 
-    set_prompt_user_if_ax_api_disabled = (set_prompt_user_if_ax_api_disabled_t) dlsym(backend_handle, "hook_set_prompt_user_if_ax_api_disabled");
+    set_prompt_user_if_ax_api_disabled = (set_prompt_user_if_ax_api_disabled_t) dlsym(handle, "hook_set_prompt_user_if_ax_api_disabled");
     if (set_prompt_user_if_ax_api_disabled == NULL) {
         return false;
     }
 
-    get_ax_poll_frequency = (get_ax_poll_frequency_t) dlsym(backend_handle, "hook_get_ax_poll_frequency");
+    get_ax_poll_frequency = (get_ax_poll_frequency_t) dlsym(handle, "hook_get_ax_poll_frequency");
     if (get_ax_poll_frequency == NULL) {
         return false;
     }
 
-    set_ax_poll_frequency = (set_ax_poll_frequency_t) dlsym(backend_handle, "hook_set_ax_poll_frequency");
+    set_ax_poll_frequency = (set_ax_poll_frequency_t) dlsym(handle, "hook_set_ax_poll_frequency");
     if (set_ax_poll_frequency == NULL) {
         return false;
     }
 
-    get_post_text_delay_x11 = (get_post_text_delay_x11_t) dlsym(backend_handle, "hook_get_post_text_delay_x11");
+    get_post_text_delay_x11 = (get_post_text_delay_x11_t) dlsym(handle, "hook_get_post_text_delay_x11");
     if (get_post_text_delay_x11 == NULL) {
         return false;
     }
 
-    set_post_text_delay_x11 = (set_post_text_delay_x11_t) dlsym(backend_handle, "hook_set_post_text_delay_x11");
+    set_post_text_delay_x11 = (set_post_text_delay_x11_t) dlsym(handle, "hook_set_post_text_delay_x11");
     if (set_post_text_delay_x11 == NULL) {
         return false;
     }
 
-    create_screen_info = (create_screen_info_t) dlsym(backend_handle, "hook_create_screen_info");
+    create_screen_info = (create_screen_info_t) dlsym(handle, "hook_create_screen_info");
     if (create_screen_info == NULL) {
         return false;
     }
 
-    get_auto_repeat_rate = (get_auto_repeat_rate_t) dlsym(backend_handle, "hook_get_auto_repeat_rate");
+    get_auto_repeat_rate = (get_auto_repeat_rate_t) dlsym(handle, "hook_get_auto_repeat_rate");
     if (get_auto_repeat_rate == NULL) {
         return false;
     }
 
-    get_auto_repeat_delay = (get_auto_repeat_delay_t) dlsym(backend_handle, "hook_get_auto_repeat_delay");
+    get_auto_repeat_delay = (get_auto_repeat_delay_t) dlsym(handle, "hook_get_auto_repeat_delay");
     if (get_auto_repeat_delay == NULL) {
         return false;
     }
 
-    get_pointer_acceleration_multiplier = (get_pointer_acceleration_multiplier_t) dlsym(backend_handle, "hook_get_pointer_acceleration_multiplier");
+    get_pointer_acceleration_multiplier = (get_pointer_acceleration_multiplier_t) dlsym(handle, "hook_get_pointer_acceleration_multiplier");
     if (get_pointer_acceleration_multiplier == NULL) {
         return false;
     }
 
-    get_pointer_acceleration_threshold = (get_pointer_acceleration_threshold_t) dlsym(backend_handle, "hook_get_pointer_acceleration_threshold");
+    get_pointer_acceleration_threshold = (get_pointer_acceleration_threshold_t) dlsym(handle, "hook_get_pointer_acceleration_threshold");
     if (get_pointer_acceleration_threshold == NULL) {
         return false;
     }
 
-    get_pointer_sensitivity = (get_pointer_sensitivity_t) dlsym(backend_handle, "hook_get_pointer_sensitivity");
+    get_pointer_sensitivity = (get_pointer_sensitivity_t) dlsym(handle, "hook_get_pointer_sensitivity");
     if (get_pointer_sensitivity == NULL) {
         return false;
     }
 
-    get_multi_click_time = (get_multi_click_time_t) dlsym(backend_handle, "hook_get_multi_click_time");
+    get_multi_click_time = (get_multi_click_time_t) dlsym(handle, "hook_get_multi_click_time");
     if (get_multi_click_time == NULL) {
         return false;
     }
@@ -488,15 +502,28 @@ static bool load_backend_symbols() {
     return true;
 }
 
-static bool open_backend() {
+static bool load_backend() {
+    if (backend_loaded) {
+        return true;
+    }
+
+    pthread_mutex_lock(&backend_mutex);
+
+    if (backend_loaded) {
+        pthread_mutex_unlock(&backend_mutex);
+        return true;
+    }
+
     const char* selected_backend_name = backend_name != NULL
         ? backend_name
         : get_backend_name();
 
     Dl_info info;
-    if (dladdr((void *) open_backend, &info) == 0) {
+    if (dladdr((void *) load_backend, &info) == 0) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to get the path of the current shared object: %s!\n",
                 __FUNCTION__, __LINE__, dlerror());
+
+        pthread_mutex_unlock(&backend_mutex);
         return false;
     }
 
@@ -509,34 +536,25 @@ static bool open_backend() {
     char backend_path[PATH_MAX];
     snprintf(backend_path, sizeof(backend_path), "%s/libuiohook-%s.so", backend_directory, selected_backend_name);
 
-    backend_handle = dlopen(backend_path, RTLD_LAZY | RTLD_LOCAL);
+    void *backend_handle = dlopen(backend_path, RTLD_LAZY | RTLD_LOCAL | RTLD_NODELETE);
     if (backend_handle == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to open backend '%s': %s!\n",
                 __FUNCTION__, __LINE__, selected_backend_name, dlerror());
 
+        pthread_mutex_unlock(&backend_mutex);
         return false;
     }
 
-    if (!load_backend_symbols()) {
+    if (!load_backend_symbols(backend_handle)) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to load symbols from backend '%s': %s!\n",
                 __FUNCTION__, __LINE__, selected_backend_name, dlerror());
 
-        if (!dlclose(backend_handle)) {
-            logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to close backend '%s': %s!\n",
-                    __FUNCTION__, __LINE__, selected_backend_name, dlerror());
-        }
-
-        backend_handle = NULL;
+        pthread_mutex_unlock(&backend_mutex);
         return false;
     }
 
+    backend_loaded = true;
+    pthread_mutex_unlock(&backend_mutex);
+
     return true;
-}
-
-static bool ensure_backend_loaded() {
-    if (backend_handle != NULL) {
-        return true;
-    }
-
-    return open_backend();
 }
