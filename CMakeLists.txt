@@ -62,7 +62,7 @@ else()
     )
 
     set_target_properties(uiohook-x11 PROPERTIES
-        C_STANDARD 99
+        C_STANDARD 23
         C_STANDARD_REQUIRED ON
         POSITION_INDEPENDENT_CODE 1
         OUTPUT_NAME "uiohook-x11"
@@ -81,7 +81,7 @@ else()
     )
 
     set_target_properties(uiohook-wayland PROPERTIES
-        C_STANDARD 99
+        C_STANDARD 23
         C_STANDARD_REQUIRED ON
         POSITION_INDEPENDENT_CODE 1
         OUTPUT_NAME "uiohook-wayland"
@@ -99,7 +99,7 @@ else()
     )
 
     set_target_properties(uiohook-legacy PROPERTIES
-        C_STANDARD 99
+        C_STANDARD 23
         C_STANDARD_REQUIRED ON
         POSITION_INDEPENDENT_CODE 1
         OUTPUT_NAME "uiohook-legacy"
@@ -112,7 +112,7 @@ else()
 endif()
 
 set_target_properties(uiohook PROPERTIES
-    C_STANDARD 99
+    C_STANDARD 23
     C_STANDARD_REQUIRED ON
     POSITION_INDEPENDENT_CODE 1
     OUTPUT_NAME "${PROJECT_NAME}"
@@ -273,7 +273,22 @@ endif()
 if(UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
 
+    find_package(ECM REQUIRED NO_MODULE)
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${ECM_MODULE_PATH}")
+
     target_link_libraries(uiohook PRIVATE dl)
+
+    pkg_check_modules(Libinput REQUIRED libinput)
+    target_include_directories(uiohook-x11 PRIVATE ${LIBINPUT_INCLUDE_DIRS})
+    target_link_libraries(uiohook-x11 ${LIBINPUT_LIBRARIES})
+    target_include_directories(uiohook-wayland PRIVATE ${LIBINPUT_INCLUDE_DIRS})
+    target_link_libraries(uiohook-wayland ${LIBINPUT_LIBRARIES})
+
+    pkg_check_modules(LIBUDEV REQUIRED libudev)
+    target_include_directories(uiohook-x11 PRIVATE ${LIBUDEV_INCLUDE_DIRS})
+    target_link_libraries(uiohook-x11 ${LIBUDEV_LIBRARIES})
+    target_include_directories(uiohook-wayland PRIVATE ${LIBUDEV_INCLUDE_DIRS})
+    target_link_libraries(uiohook-wayland ${LIBUDEV_LIBRARIES})
 
     pkg_check_modules(X11 REQUIRED x11)
     target_include_directories(uiohook-x11 PRIVATE "${X11_INCLUDE_DIRS}")
@@ -316,12 +331,6 @@ if(UNIX AND NOT APPLE)
         target_link_libraries(uiohook-legacy "${XT_LDFLAGS}")
     endif()
 
-    pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
-    pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl)
-    pkg_check_modules(XKB_COMMON_WAYLAND REQUIRED xkbcommon)
-    target_include_directories(uiohook-wayland PRIVATE "${WAYLAND_CLIENT_INCLUDE_DIRS}" "${WAYLAND_EGL_INCLUDE_DIRS}" "${XKB_COMMON_WAYLAND_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-wayland "${WAYLAND_CLIENT_LDFLAGS}" "${WAYLAND_EGL_LDFLAGS}" "${XKB_COMMON_WAYLAND_LDFLAGS}")
-
     option(USE_XF86MISC "XFree86-Misc X Extension (default: OFF)" OFF)
     if(USE_XF86MISC)
         pkg_check_modules(XF86MISC REQUIRED Xxf86misc)
@@ -354,6 +363,26 @@ if(UNIX AND NOT APPLE)
         target_include_directories(uiohook-legacy PRIVATE "${XINERAMA_INCLUDE_DIRS}")
         target_link_libraries(uiohook-legacy "${XINERAMA_LDFLAGS}")
     endif()
+
+    pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
+    target_include_directories(uiohook-wayland PRIVATE "${WAYLAND_CLIENT_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-wayland "${WAYLAND_CLIENT_LIBRARIES}")
+
+    pkg_check_modules(XKB_COMMON_WAYLAND REQUIRED xkbcommon)
+    target_include_directories(uiohook-wayland PRIVATE "${XKB_COMMON_WAYLAND_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-wayland "${XKB_COMMON_WAYLAND_LIBRARIES}")
+
+    find_package(WaylandProtocols REQUIRED)
+    find_package(WaylandScanner REQUIRED)
+
+    ecm_add_wayland_client_protocol(
+        WAYLAND_SOURCES                              
+        PROTOCOL ${WaylandProtocols_DATADIR}/unstable/xdg-output/xdg-output-unstable-v1.xml
+        BASENAME xdg-output-unstable-v1
+    )
+
+    target_sources(uiohook-wayland PRIVATE ${WAYLAND_SOURCES})
+    target_include_directories(uiohook-wayland PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 elseif(APPLE)
     set(CMAKE_MACOSX_RPATH 1)
 
