@@ -1,6 +1,11 @@
+#define _GNU_SOURCE
+
 #include <dlfcn.h>
+#include <libgen.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -42,9 +47,9 @@ typedef long int (*get_multi_click_time_t)();
 static void *backend_handle = NULL;
 static const char *backend_name = NULL;
 
-static const char const * BACKEND_X11_NAME = "./libuiohook-x11.so";
-static const char const * BACKEND_WAYLAND_NAME = "./libuiohook-wayland.so";
-static const char const * BACKEND_LEGACY_NAME = "./libuiohook-legacy.so";
+static const char const * BACKEND_X11_NAME = "x11";
+static const char const * BACKEND_WAYLAND_NAME = "wayland";
+static const char const * BACKEND_LEGACY_NAME = "legacy";
 
 static logger_t callback = NULL;
 static void *callback_data = NULL;
@@ -488,20 +493,36 @@ static bool open_backend() {
         ? backend_name
         : get_backend_name();
 
-    backend_handle = dlopen(selected_backend_name, RTLD_LAZY | RTLD_LOCAL);
+    Dl_info info;
+    if (dladdr((void *) open_backend, &info) == 0) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to get the path of the current shared object: %s!\n",
+                __FUNCTION__, __LINE__, dlerror());
+        return false;
+    }
+
+    char dir[PATH_MAX];
+    strncpy(dir, info.dli_fname, sizeof(dir) - 1);
+    dir[sizeof(dir) - 1] = '\0';
+
+    char *backend_directory = dirname(dir);
+
+    char backend_path[PATH_MAX];
+    snprintf(backend_path, sizeof(backend_path), "%s/libuiohook-%s.so", backend_directory, selected_backend_name);
+
+    backend_handle = dlopen(backend_path, RTLD_LAZY | RTLD_LOCAL);
     if (backend_handle == NULL) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to open %s: %s!\n",
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to open backend '%s': %s!\n",
                 __FUNCTION__, __LINE__, selected_backend_name, dlerror());
 
         return false;
     }
 
     if (!load_backend_symbols()) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to load symbols from %s: %s!\n",
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to load symbols from backend '%s': %s!\n",
                 __FUNCTION__, __LINE__, selected_backend_name, dlerror());
 
         if (!dlclose(backend_handle)) {
-            logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to close %s: %s!\n",
+            logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to close backend '%s': %s!\n",
                     __FUNCTION__, __LINE__, selected_backend_name, dlerror());
         }
 
