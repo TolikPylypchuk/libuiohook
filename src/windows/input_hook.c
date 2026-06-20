@@ -34,7 +34,6 @@ static BOOL invisible_win_class_initialized = FALSE;
 // The handle to the DLL module pulled in DllMain on DLL_PROCESS_ATTACH.
 extern HINSTANCE hInst;
 
-#ifdef USE_EPOCH_TIME
 static uint64_t get_unix_timestamp() {
     FILETIME system_time;
 
@@ -50,7 +49,6 @@ static uint64_t get_unix_timestamp() {
 
     return timestamp;
 }
-#endif
 
 // Set the modifier mask to the current modifiers.
 static void set_modifiers() {
@@ -121,11 +119,7 @@ LRESULT CALLBACK keyboard_hook_event_proc(int nCode, WPARAM wParam, LPARAM lPara
 
     KBDLLHOOKSTRUCT *kbhook = (KBDLLHOOKSTRUCT *) lParam;
 
-    #ifdef USE_EPOCH_TIME
     uint64_t timestamp = get_unix_timestamp();
-    #else
-    uint64_t timestamp = kbhook->time;
-    #endif
 
     switch (wParam) {
         case WM_KEYDOWN:
@@ -163,11 +157,7 @@ LRESULT CALLBACK mouse_hook_event_proc(int nCode, WPARAM wParam, LPARAM lParam) 
 
     MSLLHOOKSTRUCT *mshook = (MSLLHOOKSTRUCT *) lParam;
 
-    #ifdef USE_EPOCH_TIME
     uint64_t timestamp = get_unix_timestamp();
-    #else
-    uint64_t timestamp = mshook->time;
-    #endif
 
     switch (wParam) {
         case WM_LBUTTONDOWN:
@@ -407,12 +397,8 @@ int run(bool run_keyboard_hook, bool run_mouse_hook) {
         // Set the exit status.
         status = UIOHOOK_SUCCESS;
 
-        // Get the local system time in UNIX epoch form.
-        #ifdef USE_EPOCH_TIME
+        // Get the local system time in Unix epoch form.
         uint64_t timestamp = get_unix_timestamp();
-        #else
-        uint64_t timestamp = GetMessageTime();
-        #endif
 
         // Windows does not have a hook start event or callback so we need to manually fake it.
         dispatch_hook_enable(timestamp);
@@ -424,12 +410,8 @@ int run(bool run_keyboard_hook, bool run_mouse_hook) {
             DispatchMessage(&message);
         }
 
-        // Get the local system time in UNIX epoch form.
-        #ifdef USE_EPOCH_TIME
+        // Get the local system time in Unix epoch form.
         timestamp = get_unix_timestamp();
-        #else
-        timestamp = GetMessageTime();
-        #endif
 
         // We must explicitly call the cleanup handler because Windows does not
         // provide a thread cleanup method like POSIX pthread_cleanup_push/pop.

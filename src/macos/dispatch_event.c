@@ -26,12 +26,6 @@
 #include "input_helper.h"
 #include "logger.h"
 
-#ifdef USE_EPOCH_TIME
-#define TIMER_RESOLUTION_MS 1
-#else
-#define TIMER_RESOLUTION_MS 1000000
-#endif
-
 // Required to transport messages between the main runloop and our thread for Unicode look-ups.
 #define KEY_BUFFER_SIZE 4
 
@@ -421,7 +415,7 @@ bool dispatch_button_press(uint64_t timestamp, CGEventRef event_ref, uint16_t bu
     bool consumed = false;
 
     // Track the number of clicks.
-    if (button == click_button && (long int) (timestamp - click_time) / TIMER_RESOLUTION_MS <= hook_get_multi_click_time()) {
+    if (button == click_button && (long int) (timestamp - click_time) <= hook_get_multi_click_time()) {
         if (click_count < USHRT_MAX) {
             click_count++;
         }
@@ -520,7 +514,7 @@ bool dispatch_button_release(uint64_t timestamp, CGEventRef event_ref, uint16_t 
     }
 
     // Reset the number of clicks.
-    if ((long int) (timestamp - click_time) / TIMER_RESOLUTION_MS > hook_get_multi_click_time()) {
+    if ((long int) (timestamp - click_time) > hook_get_multi_click_time()) {
         // Reset the click count.
         click_count = 0;
     }
@@ -532,7 +526,7 @@ bool dispatch_mouse_move(uint64_t timestamp, CGEventRef event_ref) {
     bool consumed = false;
 
     // Reset the click count.
-    if (click_count != 0 && (long int) (timestamp - click_time) / TIMER_RESOLUTION_MS > hook_get_multi_click_time()) {
+    if (click_count != 0 && (long int) (timestamp - click_time) > hook_get_multi_click_time()) {
         click_count = 0;
     }
 

@@ -265,11 +265,6 @@ if(ENABLE_TEST)
     endif()
 endif()
 
-option(USE_EPOCH_TIME "Use Unix epoch time for event timestamps (default: ON)" ON)
-if(USE_EPOCH_TIME)
-    add_compile_definitions(uiohook PRIVATE USE_EPOCH_TIME)
-endif()
-
 if(UNIX AND NOT APPLE)
     find_package(PkgConfig REQUIRED)
 

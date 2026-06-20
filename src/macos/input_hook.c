@@ -25,6 +25,9 @@
 
 #include <stdbool.h>
 #include <pthread.h>
+
+#include <sys/time.h>
+
 #include <uiohook.h>
 
 #include "dispatch_event.h"
@@ -43,14 +46,8 @@ typedef struct _event_runloop_info {
 static id auto_release_pool;
 #endif
 
-
-#ifdef USE_EPOCH_TIME
-#include <sys/time.h>
 // Structure for the current Unix epoch in milliseconds.
 static struct timeval system_time;
-#else
-#include <mach/mach_time.h>
-#endif
 
 // We define the event_runloop_info as a static so that hook_event_proc can
 // re-enable the tap when it gets disabled by a timeout
@@ -87,7 +84,6 @@ static CGEventMask event_mask =
         CGEventMaskBit(NX_SYSDEFINED);
 
 
-#ifdef USE_EPOCH_TIME
 static uint64_t get_unix_timestamp() {
 	// Get the local system time in UTC.
 	gettimeofday(&system_time, NULL);
@@ -97,7 +93,6 @@ static uint64_t get_unix_timestamp() {
 
 	return timestamp;
 }
-#endif
 
 // Set the modifier mask to the current modifiers.
 static void set_modifiers() {
@@ -159,11 +154,7 @@ static CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, C
     set_modifiers();
 
     bool consumed = false;
-    #ifdef USE_EPOCH_TIME
     uint64_t timestamp = get_unix_timestamp();
-    #else
-    uint64_t timestamp = (uint64_t) CGEventGetTimestamp(event_ref);
-    #endif
 
     // Get the event class.
     switch (type) {
@@ -309,11 +300,7 @@ static CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, C
 }
 
 static void hook_status_proc(CFRunLoopObserverRef observer, CFRunLoopActivity activity, void *info) {
-    #ifdef USE_EPOCH_TIME
 	uint64_t timestamp = get_unix_timestamp();
-    #else
-    uint64_t timestamp = mach_absolute_time();
-    #endif
 
     switch (activity) {
         case kCFRunLoopEntry:
