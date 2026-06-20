@@ -13,7 +13,7 @@ else()
 endif()
 
 if (WIN32 OR WIN64)
-    add_library(uiohook
+    add_library(uiohook SHARED
         "src/logger.c"
         "src/${UIOHOOK_SOURCE_DIR}/dispatch_event.c"
         "src/${UIOHOOK_SOURCE_DIR}/input_helper.c"
@@ -24,7 +24,7 @@ if (WIN32 OR WIN64)
         "src/${UIOHOOK_SOURCE_DIR}/unused_functions.c"
     )
 elseif (APPLE)
-    add_library(uiohook
+    add_library(uiohook SHARED
         "src/logger.c"
         "src/${UIOHOOK_SOURCE_DIR}/dispatch_event.c"
         "src/${UIOHOOK_SOURCE_DIR}/input_helper.c"
