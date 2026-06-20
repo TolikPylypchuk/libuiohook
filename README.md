@@ -20,6 +20,7 @@ Prerequisites:
   - libxkbcommon-dev
   - libxkbcommon-x11-dev
   - libxkbfile-dev
+  - libxrandr-dev
 
 ```
 $ git clone https://github.com/kwhat/libuiohook
@@ -36,7 +37,6 @@ $ cmake --build . --parallel 2 --target install
 | **all**   | BUILD_DEMO:BOOL               | demo applications      | OFF     |
 |           | BUILD_SHARED_LIBS:BOOL        | shared library         | ON      |
 |           | ENABLE_TEST:BOOL              | testing                | OFF     |
-|           | USE_EPOCH_TIME:BOOL           | unix epch event times  | OFF     |
 | **OSX**   | USE_APPLICATION_SERVICES:BOOL | framework              | ON      |
 |           | USE_IOKIT:BOOL                | framework              | ON      |
 |           | USE_APPKIT:BOOL               | obj-c api              | ON      |

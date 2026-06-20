@@ -18,12 +18,9 @@
 
 #include <inttypes.h>
 #include <limits.h>
-
 #include <stdint.h>
-#ifdef USE_EPOCH_TIME
+
 #include <sys/time.h>
-#endif
-#include <uiohook.h>
 
 #include <xcb/xkb.h>
 #include <X11/XKBlib.h>
@@ -44,6 +41,8 @@
 #pragma message("... Assuming single-head display.")
 #endif
 
+#include <uiohook.h>
+
 #include "dispatch_event.h"
 #include "input_helper.h"
 #include "logger.h"
@@ -63,8 +62,7 @@ static hook_info *hook;
 static bool keyboard = true;
 static bool mouse = true;
 
-#ifdef USE_EPOCH_TIME
-/* Get the current timestamp in unix epoch time. */
+/* Get the current timestamp in Unix epoch time. */
 static uint64_t get_unix_timestamp() {
     struct timeval system_time;
 
@@ -76,7 +74,6 @@ static uint64_t get_unix_timestamp() {
 
     return timestamp;
 }
-#endif
 
 // Initialize the modifier lock masks.
 static void set_locks() {
@@ -147,11 +144,7 @@ static void set_modifiers() {
 }
 
 void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
-    #ifdef USE_EPOCH_TIME
     uint64_t timestamp = get_unix_timestamp();
-    #else
-    uint64_t timestamp = (uint64_t) recorded_data->server_time;
-    #endif
 
     XEvent event;
     wire_data_to_event(recorded_data, &event);
