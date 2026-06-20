@@ -1,8 +1,8 @@
-#ifndef _included_logger
-#define _included_logger
+#ifndef LOGGER_H
+#define LOGGER_H
 
-#include <uiohook.h>
 #include <stdbool.h>
+#include <uiohook.h>
 
 #ifndef __FUNCTION__
 #define __FUNCTION__ __func__

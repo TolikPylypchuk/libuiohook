@@ -1,3 +1,6 @@
+#ifndef DISPATCH_EVENT_H
+#define DISPATCH_EVENT_H
+
 #include <stdbool.h>
 #include <windows.h>
 
@@ -16,3 +19,5 @@ extern bool dispatch_button_release(uint64_t timestamp, MSLLHOOKSTRUCT *mshook, 
 extern bool dispatch_mouse_move(uint64_t timestamp, MSLLHOOKSTRUCT *mshook);
 
 extern bool dispatch_mouse_wheel(uint64_t timestamp, MSLLHOOKSTRUCT *mshook, uint8_t direction);
+
+#endif

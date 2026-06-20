@@ -1,3 +1,6 @@
+#ifndef DISPATCH_EVENT_H
+#define DISPATCH_EVENT_H
+
 #include <X11/Xlib.h>
 #include <uiohook.h>
 
@@ -14,3 +17,5 @@ extern bool dispatch_mouse_press(uint64_t timestamp, XButtonEvent * const x_even
 extern bool dispatch_mouse_release(uint64_t timestamp, XButtonEvent * const x_event);
 
 extern bool dispatch_mouse_move(uint64_t timestamp, XMotionEvent * const x_event);
+
+#endif

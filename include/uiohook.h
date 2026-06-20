@@ -1,5 +1,5 @@
-#ifndef __UIOHOOK_H
-#define __UIOHOOK_H
+#ifndef UIOHOOK_H
+#define UIOHOOK_H
 
 #include <stdarg.h>
 #include <stdbool.h>
