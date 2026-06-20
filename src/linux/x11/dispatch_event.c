@@ -215,7 +215,6 @@ static bool dispatch_mouse_wheel_rotated(uint64_t timestamp, XButtonEvent * cons
     uio_event.data.wheel.x = x_event->x_root;
     uio_event.data.wheel.y = x_event->y_root;
 
-    #if defined(USE_XINERAMA) || defined(USE_XRANDR)
     uint8_t count;
     screen_data *screens = hook_create_screen_info(&count);
     if (count > 1) {
@@ -226,7 +225,6 @@ static bool dispatch_mouse_wheel_rotated(uint64_t timestamp, XButtonEvent * cons
     if (screens != NULL) {
         free(screens);
     }
-    #endif
 
     /* X11 does not have an API call for acquiring the mouse scroll type. This maybe part of the XInput2 (XI2)
      * extension but I will wont know until it is available on my platform. For the time being we will just use the
@@ -337,7 +335,6 @@ static bool dispatch_mouse_button_pressed(uint64_t timestamp, XButtonPressedEven
     uio_event.data.mouse.x = x_event->x_root;
     uio_event.data.mouse.y = x_event->y_root;
 
-    #if defined(USE_XINERAMA) || defined(USE_XRANDR)
     // FIXME There is something still broken about this.
     uint8_t count;
     screen_data *screens = hook_create_screen_info(&count);
@@ -349,7 +346,6 @@ static bool dispatch_mouse_button_pressed(uint64_t timestamp, XButtonPressedEven
     if (screens != NULL) {
         free(screens);
     }
-    #endif
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Button %u  pressed %u time(s). (%u, %u)\n",
             __FUNCTION__, __LINE__,
@@ -435,7 +431,6 @@ static bool dispatch_mouse_button_released(uint64_t timestamp, XButtonReleasedEv
     uio_event.data.mouse.x = x_event->x_root;
     uio_event.data.mouse.y = x_event->y_root;
 
-    #if defined(USE_XINERAMA) || defined(USE_XRANDR)
     uint8_t count;
     screen_data *screens = hook_create_screen_info(&count);
     if (count > 1) {
@@ -446,7 +441,6 @@ static bool dispatch_mouse_button_released(uint64_t timestamp, XButtonReleasedEv
     if (screens != NULL) {
         free(screens);
     }
-    #endif
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Button %u released %u time(s). (%u, %u)\n",
             __FUNCTION__, __LINE__,
@@ -476,7 +470,6 @@ static bool dispatch_mouse_button_clicked(uint64_t timestamp, XButtonEvent * con
     uio_event.data.mouse.x = x_event->x_root;
     uio_event.data.mouse.y = x_event->y_root;
 
-    #if defined(USE_XINERAMA) || defined(USE_XRANDR)
     uint8_t count;
     screen_data *screens = hook_create_screen_info(&count);
     if (count > 1) {
@@ -487,7 +480,6 @@ static bool dispatch_mouse_button_clicked(uint64_t timestamp, XButtonEvent * con
     if (screens != NULL) {
         free(screens);
     }
-    #endif
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Button %u clicked %u time(s). (%u, %u)\n",
             __FUNCTION__, __LINE__,
@@ -562,7 +554,6 @@ bool dispatch_mouse_move(uint64_t timestamp, XMotionEvent * const x_event) {
     uio_event.data.mouse.x = x_event->x_root;
     uio_event.data.mouse.y = x_event->y_root;
 
-    #if defined(USE_XINERAMA) || defined(USE_XRANDR)
     uint8_t count;
     screen_data *screens = hook_create_screen_info(&count);
     if (count > 1) {
@@ -573,7 +564,6 @@ bool dispatch_mouse_move(uint64_t timestamp, XMotionEvent * const x_event) {
     if (screens != NULL) {
         free(screens);
     }
-    #endif
 
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Mouse %s to %i, %i. (%#X)\n",
             __FUNCTION__, __LINE__,

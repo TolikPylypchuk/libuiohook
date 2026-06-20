@@ -6,22 +6,11 @@
 
 #include <xcb/xkb.h>
 #include <X11/XKBlib.h>
-
 #include <X11/keysym.h>
 #include <X11/Xlibint.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/record.h>
-
-#if defined(USE_XINERAMA) && !defined(USE_XRANDR)
-#include <X11/extensions/Xinerama.h>
-#elif defined(USE_XRANDR)
-#include <X11/extensions/Xrandr.h>
-#else
-// TODO We may need to fallback to the xf86vm extension for things like TwinView.
-#pragma message("*** Warning: Xinerama or XRandR support is required to produce cross-platform mouse coordinates for multi-head configurations!")
-#pragma message("... Assuming single-head display.")
-#endif
 
 #include <uiohook.h>
 
