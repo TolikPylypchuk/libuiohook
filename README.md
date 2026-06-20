@@ -26,7 +26,7 @@ Prerequisites:
 $ git clone https://github.com/kwhat/libuiohook
 $ cd libuiohook
 $ mkdir build && cd build
-$ cmake -S .. -D BUILD_SHARED_LIBS=ON -D BUILD_DEMO=ON -DCMAKE_INSTALL_PREFIX=../dist
+$ cmake -S .. -D BUILD_DEMO=ON -DCMAKE_INSTALL_PREFIX=../dist
 $ cmake --build . --parallel 2 --target install
 ```
 
@@ -35,7 +35,6 @@ $ cmake --build . --parallel 2 --target install
 |           | option                        | description            | default |
 | --------- | ----------------------------- | ---------------------- | ------- |
 | **all**   | BUILD_DEMO:BOOL               | demo applications      | OFF     |
-|           | BUILD_SHARED_LIBS:BOOL        | shared library         | ON      |
 |           | ENABLE_TEST:BOOL              | testing                | OFF     |
 | **OSX**   | USE_APPLICATION_SERVICES:BOOL | framework              | ON      |
 |           | USE_IOKIT:BOOL                | framework              | ON      |
