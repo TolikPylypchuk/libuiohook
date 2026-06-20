@@ -39,12 +39,8 @@ $ cmake --build . --parallel 2 --target install
 | **OSX**   | USE_APPLICATION_SERVICES:BOOL | framework              | ON      |
 |           | USE_IOKIT:BOOL                | framework              | ON      |
 |           | USE_APPKIT:BOOL               | obj-c api              | ON      |
-| **Win32** |                               |                        |         |
-| **Linux** | USE_EVDEV:BOOL                | generic input driver   | ON      |
-| **\*nix** | USE_XF86MISC:BOOL             | xfree86-misc extension | OFF     |
-|           | USE_XINERAMA:BOOL             | xinerama library       | ON      |
+| **Linux** | USE_XINERAMA:BOOL             | xinerama library       | ON      |
 |           | USE_XRANDR:BOOL               | xrandt extension       | OFF     |
-|           | USE_XT:BOOL                   | x toolkit extension    | ON      |
 
 ## Usage
 

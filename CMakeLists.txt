@@ -1,20 +1,3 @@
-# libUIOHook: Cross-platform keyboard and mouse hooking from userland.
-# Copyright (C) 2006-2023 Alexander Barker.  All Rights Reserved.
-# https://github.com/kwhat/libuiohook/
-#
-# libUIOHook is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# libUIOHook is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 cmake_minimum_required(VERSION 4.2)
 
 project(uiohook VERSION 2.0.0 LANGUAGES C)
@@ -197,6 +180,147 @@ else()
     install(EXPORT ${PROJECT_NAME}-config DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 endif()
 
+if(UNIX AND NOT APPLE)
+    find_package(PkgConfig REQUIRED)
+
+    find_package(ECM REQUIRED NO_MODULE)
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${ECM_MODULE_PATH}")
+
+    target_link_libraries(uiohook PRIVATE dl)
+
+    pkg_check_modules(Libinput REQUIRED libinput)
+    target_include_directories(uiohook-x11 PRIVATE ${LIBINPUT_INCLUDE_DIRS})
+    target_link_libraries(uiohook-x11 ${LIBINPUT_LIBRARIES})
+    target_include_directories(uiohook-wayland PRIVATE ${LIBINPUT_INCLUDE_DIRS})
+    target_link_libraries(uiohook-wayland ${LIBINPUT_LIBRARIES})
+
+    pkg_check_modules(LIBUDEV REQUIRED libudev)
+    target_include_directories(uiohook-x11 PRIVATE ${LIBUDEV_INCLUDE_DIRS})
+    target_link_libraries(uiohook-x11 ${LIBUDEV_LIBRARIES})
+    target_include_directories(uiohook-wayland PRIVATE ${LIBUDEV_INCLUDE_DIRS})
+    target_link_libraries(uiohook-wayland ${LIBUDEV_LIBRARIES})
+
+    pkg_check_modules(X11 REQUIRED x11)
+    target_include_directories(uiohook-x11 PRIVATE "${X11_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-x11 "${X11_LDFLAGS}")
+    target_include_directories(uiohook-legacy PRIVATE "${X11_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-legacy "${X11_LDFLAGS}")
+
+    pkg_check_modules(XTST REQUIRED xtst)
+    target_include_directories(uiohook-x11 PRIVATE "${XTST_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-x11 "${XTST_LDFLAGS}")
+    target_include_directories(uiohook-legacy PRIVATE "${XTST_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-legacy "${XTST_LDFLAGS}")
+
+    include(CheckLibraryExists)
+    check_library_exists(Xtst XRecordQueryVersion "" HAVE_XRECORD)
+
+    include(CheckIncludeFile)
+    check_include_file(X11/extensions/record.h HAVE_RECORD_H "-include X11/Xlib.h")
+
+    pkg_check_modules(XKB_COMMON REQUIRED xkbcommon-x11)
+    target_include_directories(uiohook-x11 PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-x11 "${XKB_COMMON_LDFLAGS}")
+    target_include_directories(uiohook-legacy PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-legacy "${XKB_COMMON_LDFLAGS}")
+
+    pkg_check_modules(X11_XCB REQUIRED x11-xcb)
+    target_include_directories(uiohook-x11 PRIVATE "${X11_XCB_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-x11 "${X11_XCB_LDFLAGS}")
+    target_include_directories(uiohook-legacy PRIVATE "${X11_XCB_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-legacy "${X11_XCB_LDFLAGS}")
+
+    pkg_check_modules(XT REQUIRED xt)
+    target_include_directories(uiohook-x11 PRIVATE "${XT_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-x11 "${XT_LDFLAGS}")
+    target_include_directories(uiohook-legacy PRIVATE "${XT_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-legacy "${XT_LDFLAGS}")
+
+    option(USE_XRANDR "XRandR Extension (default: OFF)" OFF)
+    if(USE_XRANDR)
+        pkg_check_modules(XRANDR REQUIRED xrandr)
+        target_compile_definitions(uiohook-x11 PRIVATE USE_XRANDR)
+        target_include_directories(uiohook-x11 PRIVATE "${XRANDR_INCLUDE_DIRS}")
+        target_link_libraries(uiohook-x11 "${XRANDR_LDFLAGS}")
+        target_compile_definitions(uiohook-legacy PRIVATE USE_XRANDR)
+        target_include_directories(uiohook-legacy PRIVATE "${XRANDR_INCLUDE_DIRS}")
+        target_link_libraries(uiohook-legacy "${XRANDR_LDFLAGS}")
+    endif()
+
+    option(USE_XINERAMA "Xinerama Extension (default: ON)" ON)
+    if(USE_XINERAMA)
+        pkg_check_modules(XINERAMA REQUIRED xinerama)
+        target_compile_definitions(uiohook-x11 PRIVATE USE_XINERAMA)
+        target_include_directories(uiohook-x11 PRIVATE "${XINERAMA_INCLUDE_DIRS}")
+        target_link_libraries(uiohook-x11 "${XINERAMA_LDFLAGS}")
+        target_compile_definitions(uiohook-legacy PRIVATE USE_XINERAMA)
+        target_include_directories(uiohook-legacy PRIVATE "${XINERAMA_INCLUDE_DIRS}")
+        target_link_libraries(uiohook-legacy "${XINERAMA_LDFLAGS}")
+    endif()
+
+    pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
+    target_include_directories(uiohook-wayland PRIVATE "${WAYLAND_CLIENT_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-wayland "${WAYLAND_CLIENT_LIBRARIES}")
+
+    pkg_check_modules(XKB_COMMON_WAYLAND REQUIRED xkbcommon)
+    target_include_directories(uiohook-wayland PRIVATE "${XKB_COMMON_WAYLAND_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-wayland "${XKB_COMMON_WAYLAND_LIBRARIES}")
+
+    find_package(WaylandProtocols REQUIRED)
+    find_package(WaylandScanner REQUIRED)
+
+    ecm_add_wayland_client_protocol(
+        WAYLAND_SOURCES                              
+        PROTOCOL ${WaylandProtocols_DATADIR}/unstable/xdg-output/xdg-output-unstable-v1.xml
+        BASENAME xdg-output-unstable-v1
+    )
+
+    target_sources(uiohook-wayland PRIVATE ${WAYLAND_SOURCES})
+    target_include_directories(uiohook-wayland PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+elseif(APPLE)
+    set(CMAKE_MACOSX_RPATH 1)
+
+    option(USE_APPLICATION_SERVICES "ApplicationServices framework (default: ON)" ON)
+    if(USE_APPLICATION_SERVICES)
+        find_package(Threads REQUIRED)
+        target_link_libraries(uiohook "${CMAKE_THREAD_LIBS_INIT}")
+
+        find_library(CARBON Carbon REQUIRED)
+        target_include_directories(uiohook PRIVATE "${CARBON}")
+        target_link_libraries(uiohook "${CARBON}")
+
+        find_library(APPLICATION_SERVICES ApplicationServices REQUIRED)
+        add_compile_definitions(USE_APPLICATION_SERVICES)
+        target_include_directories(uiohook PRIVATE "${APPLICATION_SERVICES}")
+        target_link_libraries(uiohook "${APPLICATION_SERVICES}")
+    else() # If we aren't using APPLICATION_SERVICES, we need to link against other required libraries.
+        find_library(CORE_FOUNDATION CoreFoundation REQUIRED)
+        target_include_directories(uiohook PRIVATE "${CORE_FOUNDATION}")
+        target_link_libraries(uiohook "${CORE_FOUNDATION}")
+
+        find_library(CORE_GRAPHICS CoreGraphics REQUIRED)
+        target_include_directories(uiohook PRIVATE "${CORE_GRAPHICS}")
+        target_link_libraries(uiohook "${CORE_GRAPHICS}")
+    endif()
+
+    option(USE_IOKIT "IOKit framework (default: ON)" ON)
+    if(USE_IOKIT)
+        find_library(IOKIT IOKit REQUIRED)
+        add_compile_definitions(USE_IOKIT)
+        target_include_directories(uiohook PRIVATE "${IOKIT}")
+        target_link_libraries(uiohook "${IOKIT}")
+    endif()
+
+    option(USE_APPKIT "AppKit framework (default: ON)" ON)
+    if(USE_APPKIT)
+        find_library(APPKIT AppKit REQUIRED)
+        add_compile_definitions(USE_APPKIT)
+        target_include_directories(uiohook PRIVATE "${APPKIT}")
+        target_link_libraries(uiohook "${APPKIT}")
+    endif()
+elseif(WIN32)
+    target_link_libraries(uiohook Advapi32)
+endif()
 
 if (BUILD_DEMO)
     find_package(Threads REQUIRED)
@@ -258,165 +382,6 @@ if(ENABLE_TEST)
         add_dependencies(uiohook_tests uiohook-legacy)
         target_link_libraries(uiohook_tests uiohook-legacy)
     endif()
-endif()
-
-if(UNIX AND NOT APPLE)
-    find_package(PkgConfig REQUIRED)
-
-    find_package(ECM REQUIRED NO_MODULE)
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${ECM_MODULE_PATH}")
-
-    target_link_libraries(uiohook PRIVATE dl)
-
-    pkg_check_modules(Libinput REQUIRED libinput)
-    target_include_directories(uiohook-x11 PRIVATE ${LIBINPUT_INCLUDE_DIRS})
-    target_link_libraries(uiohook-x11 ${LIBINPUT_LIBRARIES})
-    target_include_directories(uiohook-wayland PRIVATE ${LIBINPUT_INCLUDE_DIRS})
-    target_link_libraries(uiohook-wayland ${LIBINPUT_LIBRARIES})
-
-    pkg_check_modules(LIBUDEV REQUIRED libudev)
-    target_include_directories(uiohook-x11 PRIVATE ${LIBUDEV_INCLUDE_DIRS})
-    target_link_libraries(uiohook-x11 ${LIBUDEV_LIBRARIES})
-    target_include_directories(uiohook-wayland PRIVATE ${LIBUDEV_INCLUDE_DIRS})
-    target_link_libraries(uiohook-wayland ${LIBUDEV_LIBRARIES})
-
-    pkg_check_modules(X11 REQUIRED x11)
-    target_include_directories(uiohook-x11 PRIVATE "${X11_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-x11 "${X11_LDFLAGS}")
-    target_include_directories(uiohook-legacy PRIVATE "${X11_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${X11_LDFLAGS}")
-
-    pkg_check_modules(XTST REQUIRED xtst)
-    target_include_directories(uiohook-x11 PRIVATE "${XTST_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-x11 "${XTST_LDFLAGS}")
-    target_include_directories(uiohook-legacy PRIVATE "${XTST_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${XTST_LDFLAGS}")
-
-    include(CheckLibraryExists)
-    check_library_exists(Xtst XRecordQueryVersion "" HAVE_XRECORD)
-
-    include(CheckIncludeFile)
-    check_include_file(X11/extensions/record.h HAVE_RECORD_H "-include X11/Xlib.h")
-
-    pkg_check_modules(XKB_COMMON REQUIRED xkbcommon-x11)
-    target_include_directories(uiohook-x11 PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-x11 "${XKB_COMMON_LDFLAGS}")
-    target_include_directories(uiohook-legacy PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${XKB_COMMON_LDFLAGS}")
-
-    pkg_check_modules(X11_XCB REQUIRED x11-xcb)
-    target_include_directories(uiohook-x11 PRIVATE "${X11_XCB_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-x11 "${X11_XCB_LDFLAGS}")
-    target_include_directories(uiohook-legacy PRIVATE "${X11_XCB_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${X11_XCB_LDFLAGS}")
-
-    option(USE_XT "X Toolkit Extension (default: ON)" ON)
-    if(USE_XT)
-        pkg_check_modules(XT REQUIRED xt)
-        target_compile_definitions(uiohook-x11 PRIVATE USE_XT)
-        target_include_directories(uiohook-x11 PRIVATE "${XT_INCLUDE_DIRS}")
-        target_link_libraries(uiohook-x11 "${XT_LDFLAGS}")
-        target_compile_definitions(uiohook-legacy PRIVATE USE_XT)
-        target_include_directories(uiohook-legacy PRIVATE "${XT_INCLUDE_DIRS}")
-        target_link_libraries(uiohook-legacy "${XT_LDFLAGS}")
-    endif()
-
-    option(USE_XF86MISC "XFree86-Misc X Extension (default: OFF)" OFF)
-    if(USE_XF86MISC)
-        pkg_check_modules(XF86MISC REQUIRED Xxf86misc)
-        target_compile_definitions(uiohook-x11 PRIVATE USE_XF86MISC)
-        target_include_directories(uiohook-x11 PRIVATE "${XF86MISC_INCLUDE_DIRS}")
-        target_link_libraries(uiohook-x11 "${XF86MISC_LDFLAGS}")
-        target_compile_definitions(uiohook-legacy PRIVATE USE_XF86MISC)
-        target_include_directories(uiohook-legacy PRIVATE "${XF86MISC_INCLUDE_DIRS}")
-        target_link_libraries(uiohook-legacy "${XF86MISC_LDFLAGS}")
-    endif()
-
-    option(USE_XRANDR "XRandR Extension (default: OFF)" OFF)
-    if(USE_XRANDR)
-        pkg_check_modules(XRANDR REQUIRED xrandr)
-        target_compile_definitions(uiohook-x11 PRIVATE USE_XRANDR)
-        target_include_directories(uiohook-x11 PRIVATE "${XRANDR_INCLUDE_DIRS}")
-        target_link_libraries(uiohook-x11 "${XRANDR_LDFLAGS}")
-        target_compile_definitions(uiohook-legacy PRIVATE USE_XRANDR)
-        target_include_directories(uiohook-legacy PRIVATE "${XRANDR_INCLUDE_DIRS}")
-        target_link_libraries(uiohook-legacy "${XRANDR_LDFLAGS}")
-    endif()
-
-    option(USE_XINERAMA "Xinerama Extension (default: ON)" ON)
-    if(USE_XINERAMA)
-        pkg_check_modules(XINERAMA REQUIRED xinerama)
-        target_compile_definitions(uiohook-x11 PRIVATE USE_XINERAMA)
-        target_include_directories(uiohook-x11 PRIVATE "${XINERAMA_INCLUDE_DIRS}")
-        target_link_libraries(uiohook-x11 "${XINERAMA_LDFLAGS}")
-        target_compile_definitions(uiohook-legacy PRIVATE USE_XINERAMA)
-        target_include_directories(uiohook-legacy PRIVATE "${XINERAMA_INCLUDE_DIRS}")
-        target_link_libraries(uiohook-legacy "${XINERAMA_LDFLAGS}")
-    endif()
-
-    pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
-    target_include_directories(uiohook-wayland PRIVATE "${WAYLAND_CLIENT_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-wayland "${WAYLAND_CLIENT_LIBRARIES}")
-
-    pkg_check_modules(XKB_COMMON_WAYLAND REQUIRED xkbcommon)
-    target_include_directories(uiohook-wayland PRIVATE "${XKB_COMMON_WAYLAND_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-wayland "${XKB_COMMON_WAYLAND_LIBRARIES}")
-
-    find_package(WaylandProtocols REQUIRED)
-    find_package(WaylandScanner REQUIRED)
-
-    ecm_add_wayland_client_protocol(
-        WAYLAND_SOURCES                              
-        PROTOCOL ${WaylandProtocols_DATADIR}/unstable/xdg-output/xdg-output-unstable-v1.xml
-        BASENAME xdg-output-unstable-v1
-    )
-
-    target_sources(uiohook-wayland PRIVATE ${WAYLAND_SOURCES})
-    target_include_directories(uiohook-wayland PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-elseif(APPLE)
-    set(CMAKE_MACOSX_RPATH 1)
-
-    option(USE_APPLICATION_SERVICES "ApplicationServices framework (default: ON)" ON)
-    if(USE_APPLICATION_SERVICES)
-        find_package(Threads REQUIRED)
-        target_link_libraries(uiohook "${CMAKE_THREAD_LIBS_INIT}")
-
-        find_library(CARBON Carbon REQUIRED)
-        target_include_directories(uiohook PRIVATE "${CARBON}")
-        target_link_libraries(uiohook "${CARBON}")
-
-        find_library(APPLICATION_SERVICES ApplicationServices REQUIRED)
-        add_compile_definitions(USE_APPLICATION_SERVICES)
-        target_include_directories(uiohook PRIVATE "${APPLICATION_SERVICES}")
-        target_link_libraries(uiohook "${APPLICATION_SERVICES}")
-    else()
-        # If we aren't using APPLICATION_SERVICES, we need to link against other required libraries.
-        find_library(CORE_FOUNDATION CoreFoundation REQUIRED)
-        target_include_directories(uiohook PRIVATE "${CORE_FOUNDATION}")
-        target_link_libraries(uiohook "${CORE_FOUNDATION}")
-
-        find_library(CORE_GRAPHICS CoreGraphics REQUIRED)
-        target_include_directories(uiohook PRIVATE "${CORE_GRAPHICS}")
-        target_link_libraries(uiohook "${CORE_GRAPHICS}")
-    endif()
-
-    option(USE_IOKIT "IOKit framework (default: ON)" ON)
-    if(USE_IOKIT)
-        find_library(IOKIT IOKit REQUIRED)
-        add_compile_definitions(USE_IOKIT)
-        target_include_directories(uiohook PRIVATE "${IOKIT}")
-        target_link_libraries(uiohook "${IOKIT}")
-    endif()
-
-    option(USE_APPKIT "AppKit framework (default: ON)" ON)
-    if(USE_APPKIT)
-        find_library(APPKIT AppKit REQUIRED)
-        add_compile_definitions(USE_APPKIT)
-        target_include_directories(uiohook PRIVATE "${APPKIT}")
-        target_link_libraries(uiohook "${APPKIT}")
-    endif()
-elseif(WIN32)
-    target_link_libraries(uiohook Advapi32)
 endif()
 
 list(REMOVE_DUPLICATES INTERFACE_LINK_LIBRARIES)
