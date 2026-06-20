@@ -1,4 +1,4 @@
-#ifdef USE_APPLICATION_SERVICES
+#ifndef MAC_CATALYST
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 

@@ -9,9 +9,9 @@
 
 Prerequisites:
 
-- [cmake](https://cmake.org)
-- gcc, clang or msvc
-- x11 dependencies:
+- [CMake](https://cmake.org) - at least version 4.2
+- GCC, Clang, or MSVC
+- X11 dependencies:
   - libx11-dev
   - libxtst-dev
   - libxrandr-dev
@@ -21,23 +21,23 @@ Prerequisites:
   - libxkbcommon-x11-dev
   - libxkbfile-dev
 
-```
-$ git clone https://github.com/kwhat/libuiohook
-$ cd libuiohook
-$ mkdir build && cd build
-$ cmake -S .. -D BUILD_DEMO=ON -DCMAKE_INSTALL_PREFIX=../dist
-$ cmake --build . --parallel 2 --target install
+To build, run the following commands:
+
+```sh
+git clone https://github.com/TolikPylypchuk/libuiohook
+cd libuiohook
+mkdir build && cd build
+cmake -S .. -D BUILD_DEMO=ON -D CMAKE_INSTALL_PREFIX=../dist
+cmake --build . --parallel 2 --target install
 ```
 
-### Configuration
+On Windows, add CMake parameters `-G "Visual Studio 18 2026"` and `-D CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded`.
+On macOS and Linux, add CMake parameter `-G "Unix Makefiles"`.
 
-|           | option                        | description            | default |
-| --------- | ----------------------------- | ---------------------- | ------- |
-| **all**   | BUILD_DEMO:BOOL               | demo applications      | OFF     |
-|           | ENABLE_TEST:BOOL              | testing                | OFF     |
-| **OSX**   | USE_APPLICATION_SERVICES:BOOL | framework              | ON      |
-|           | USE_IOKIT:BOOL                | framework              | ON      |
-|           | USE_APPKIT:BOOL               | obj-c api              | ON      |
+On macOS, you can add the `MAC_CATALYST=ON` option to build libuiohook for Mac Catalyst instead of macOS.
+
+You can optionally add the `BUILD_DEMO=ON` option to build demo applications, and `BUILD_TEST=ON` to build tests.
+Note that on Linux, tests require X11 to be present, so they cannot run in headless environments like CI pipelines.
 
 ## Usage
 
@@ -46,4 +46,3 @@ $ cmake --build . --parallel 2 --target install
 - [Event Post Demo](demo/demo_post.c)
 - [Properties Demo](demo/demo_properties.c)
 - [Public Interface](include/uiohook.h)
-- Please see the man pages for function documentation.

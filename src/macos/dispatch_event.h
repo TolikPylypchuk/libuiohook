@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef USE_APPLICATION_SERVICES
+#ifndef MAC_CATALYST
 #include <ApplicationServices/ApplicationServices.h>
 #else
 #include <CoreGraphics/CoreGraphics.h>

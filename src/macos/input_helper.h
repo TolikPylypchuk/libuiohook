@@ -5,7 +5,9 @@
 #ifndef INPUT_HELPER_H
 #define INPUT_HELPER_H
 
-#ifdef USE_APPLICATION_SERVICES
+#include <stdbool.h>
+
+#ifndef MAC_CATALYST
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h> // For HIToolbox kVK_ key codes and TIS functions.
 #else
@@ -13,12 +15,9 @@
 #include <CoreGraphics/CoreGraphics.h>
 #endif
 
-#ifdef USE_IOKIT
 #include <IOKit/hidsystem/ev_keymap.h>
-#endif
-#include <stdbool.h>
 
-#ifndef USE_APPLICATION_SERVICES
+#ifdef MAC_CATALYST
 // If we are not using ApplicationServices, we don't need Carbon.HIToolbox but we still need some of the constants.
 
 /*
@@ -168,116 +167,6 @@ enum {
   kVK_JIS_Eisu                  = 0x66,
   kVK_JIS_Kana                  = 0x68
 };
-
-#endif
-
-
-#ifndef USE_IOKIT
-// Some of the system key codes that maybe missing from IOKit.  They appear to have shown up over the years.
-
-#ifndef NX_NOSPECIALKEY
-#define NX_NOSPECIALKEY                0xFFFF
-#endif
-
-#ifndef NX_KEYTYPE_SOUND_UP
-#define NX_KEYTYPE_SOUND_UP            0x00
-#endif
-
-#ifndef NX_KEYTYPE_SOUND_DOWN
-#define NX_KEYTYPE_SOUND_DOWN          0x01
-#endif
-
-#ifndef NX_KEYTYPE_BRIGHTNESS_UP
-#define NX_KEYTYPE_BRIGHTNESS_UP       0x02
-#endif
-
-#ifndef NX_KEYTYPE_BRIGHTNESS_DOWN
-#define NX_KEYTYPE_BRIGHTNESS_DOWN     0x03
-#endif
-
-#ifndef NX_KEYTYPE_CAPS_LOCK
-#define NX_KEYTYPE_CAPS_LOCK           0x04
-#endif
-
-#ifndef NX_KEYTYPE_HELP
-#define NX_KEYTYPE_HELP                0x05
-#endif
-
-#ifndef NX_POWER_KEY
-#define NX_POWER_KEY                   0x06
-#endif
-
-#ifndef NX_KEYTYPE_MUTE
-#define NX_KEYTYPE_MUTE                0x07
-#endif
-
-#ifndef NX_UP_ARROW_KEY
-#define NX_UP_ARROW_KEY                0x0B
-#endif
-
-#ifndef NX_DOWN_ARROW_KEY
-#define NX_DOWN_ARROW_KEY              0x09
-#endif
-
-#ifndef NX_KEYTYPE_NUM_LOCK
-#define NX_KEYTYPE_NUM_LOCK            0x0A
-#endif
-
-#ifndef NX_KEYTYPE_CONTRAST_UP
-#define NX_KEYTYPE_CONTRAST_UP         0x0B
-#endif
-
-#ifndef NX_KEYTYPE_CONTRAST_DOWN
-#define NX_KEYTYPE_CONTRAST_DOWN       0x0C
-#endif
-
-#ifndef NX_KEYTYPE_LAUNCH_PANEL
-#define NX_KEYTYPE_LAUNCH_PANEL        0x0D
-#endif
-
-#ifndef NX_KEYTYPE_EJECT
-#define NX_KEYTYPE_EJECT               0x0E
-#endif
-
-#ifndef NX_KEYTYPE_VIDMIRROR
-#define NX_KEYTYPE_VIDMIRROR           0x0F
-#endif
-
-#ifndef NX_KEYTYPE_PLAY
-#define NX_KEYTYPE_PLAY                0x10
-#endif
-
-#ifndef NX_KEYTYPE_NEXT
-#define NX_KEYTYPE_NEXT                0x11
-#endif
-
-#ifndef NX_KEYTYPE_PREVIOUS
-#define NX_KEYTYPE_PREVIOUS            0x12
-#endif
-
-#ifndef NX_KEYTYPE_FAST
-#define NX_KEYTYPE_FAST                0x13
-#endif
-
-#ifndef NX_KEYTYPE_REWIND
-#define NX_KEYTYPE_REWIND              0x14
-#endif
-
-#ifndef NX_KEYTYPE_ILLUMINATION_UP
-#define NX_KEYTYPE_ILLUMINATION_UP     0x15
-#endif
-
-#ifndef NX_KEYTYPE_ILLUMINATION_DOWN
-#define NX_KEYTYPE_ILLUMINATION_DOWN   0x16
-#endif
-
-#ifndef NX_KEYTYPE_ILLUMINATION_TOGGLE
-#define NX_KEYTYPE_ILLUMINATION_TOGGLE 0x17
-#endif
-
-#ifndef NX_NUMSPECIALKEYS
-#define NX_NUMSPECIALKEYS              0x18 /* Maximum number of special keys */
-#endif
 
 #endif
 
