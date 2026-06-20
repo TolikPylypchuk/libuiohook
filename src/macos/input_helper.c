@@ -1,21 +1,18 @@
-#ifdef USE_APPLICATION_SERVICES
+#include <dlfcn.h>
+#include <stdbool.h>
+#include <uiohook.h>
+
+#ifndef MAC_CATALYST
+#include <pthread.h>
+
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
 #include <CoreGraphics/CoreGraphics.h>
 
-#include <dlfcn.h>
-#include <stdbool.h>
-#include <uiohook.h>
-
 #include "dispatch_event.h"
 #include "input_helper.h"
 #include "logger.h"
-
-#ifdef USE_APPKIT
-#include <objc/objc.h>
-#include <objc/objc-runtime.h>
-#endif
 
 // Dynamic library loading for dispatch_sync_f to offload tasks that must run on the main runloop.
 static struct dispatch_queue_s *dispatch_main_queue_s;
@@ -27,7 +24,7 @@ static bool mouse_dragged = false;
 // Modifiers for tracking key masks.
 static uint16_t modifier_mask = 0x0000;
 
-#ifdef USE_APPLICATION_SERVICES
+#ifndef MAC_CATALYST
 // Tracks the source and observer for the main runloop.
 typedef struct _cf_runloop_info {
     CFRunLoopSourceRef source;
@@ -56,10 +53,8 @@ typedef struct {
     UInt32 data1;
 } TISObjCMessage;
 
-#if defined(USE_APPLICATION_SERVICES)
-// If we are using application services we need pthreads to synchronize main runloop execution.
-#include <pthread.h>
-
+#ifndef MAC_CATALYST
+// If we are using Application Services, we need pthreads to synchronize main runloop execution.
 // FIXME Should we be init these differently? https://pubs.opengroup.org/onlinepubs/7908799/xsh/pthread_mutex_init.html
 static pthread_cond_t main_runloop_cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t main_runloop_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -275,21 +270,6 @@ static void tis_message_to_nsevent(void *info) {
         tis->data1 = 0;
 
         if (CFEqual(CFRunLoopGetCurrent(), CFRunLoopGetMain())) {
-            #ifdef USE_APPKIT
-            // NOTE The following block must execute on the main runloop,
-            // Ex: CFEqual(CFRunLoopGetCurrent(), CFRunLoopGetMain()) to avoid "Exception detected while handling key input"
-            // and "TSMProcessRawKeyCode failed (-192)" errors.
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Using objc_msgSend for system key events.\n",
-                    __FUNCTION__, __LINE__);
-
-            // Contributed by Iván Munsuri Ibáñez <munsuri@gmail.com> and Alex <universailp@web.de>
-            id (*eventWithCGEvent)(id, SEL, CGEventRef) = (id (*)(id, SEL, CGEventRef)) objc_msgSend;
-            id event_data = eventWithCGEvent((id) objc_getClass("NSEvent"), sel_registerName("eventWithCGEvent:"), tis->event);
-
-            UInt32 (*eventWithoutCGEvent)(id, SEL) = (UInt32 (*)(id, SEL)) objc_msgSend;
-            tis->subtype = eventWithoutCGEvent(event_data, sel_registerName("subtype"));
-            tis->data1 = eventWithoutCGEvent(event_data, sel_registerName("data1"));
-            #else
             logger(LOG_LEVEL_DEBUG, "%s [%u]: Using CFDataGetBytes for system key events.\n",
                     __FUNCTION__, __LINE__);
 
@@ -316,12 +296,11 @@ static void tis_message_to_nsevent(void *info) {
                 logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to allocate memory for CGEventRef copy!\n",
                         __FUNCTION__, __LINE__);
             }
-            #endif
         }
     }
 }
 
-#ifdef USE_APPLICATION_SERVICES
+#ifndef MAC_CATALYST
 /* Wrapper for tis_message_to_nsevent with mutex locking for use with runloop context switching. */
 static void main_runloop_objc_proc(void *info) {
     // Lock the msg_port mutex as we enter the main runloop.
@@ -349,7 +328,7 @@ void event_to_objc(CGEventRef event_ref, UInt32 *subtype, UInt32 *data1) {
 
             (*dispatch_sync_f_f)(dispatch_main_queue_s, &tis_objc_message, &tis_message_to_nsevent);
         }
-        #ifdef USE_APPLICATION_SERVICES
+        #ifndef MAC_CATALYST
         else {
             logger(LOG_LEVEL_DEBUG, "%s [%u]: Using CFRunLoopWakeUp for key typed events.\n",
                     __FUNCTION__, __LINE__);
@@ -415,7 +394,7 @@ static void tis_message_to_unicode(void *info) {
      if (tis != NULL && tis->event != NULL) {
         tis->length = 0;
 
-        #ifdef USE_APPLICATION_SERVICES
+        #ifndef MAC_CATALYST
         if (CFEqual(CFRunLoopGetCurrent(), CFRunLoopGetMain())) {
             // NOTE The following block must execute on the main runloop,
             // Ex: CFEqual(CFRunLoopGetCurrent(), CFRunLoopGetMain()) to avoid "Exception detected while handling key input"
@@ -518,7 +497,7 @@ static void tis_message_to_unicode(void *info) {
     }
 }
 
-#ifdef USE_APPLICATION_SERVICES
+#ifndef MAC_CATALYST
 /* Wrapper for tis_message_to_unicode with mutex locking for use with runloop context switching. */
 static void main_runloop_unicode_proc(void *info) {
     // Lock the msg_port mutex as we enter the main runloop.
@@ -546,7 +525,7 @@ UniCharCount event_to_unicode(CGEventRef event_ref, UniChar *buffer, UniCharCoun
                     __FUNCTION__, __LINE__);
             (*dispatch_sync_f_f)(dispatch_main_queue_s, &tis_keycode_message, &tis_message_to_unicode);
         }
-        #ifdef USE_APPLICATION_SERVICES
+        #ifndef MAC_CATALYST
         else {
             logger(LOG_LEVEL_DEBUG, "%s [%u]: Using CFRunLoopWakeUp for key typed events.\n",
                     __FUNCTION__, __LINE__);
@@ -603,7 +582,7 @@ UniCharCount event_to_unicode(CGEventRef event_ref, UniChar *buffer, UniCharCoun
     return tis_keycode_message.length;
 }
 
-#ifdef USE_APPLICATION_SERVICES
+#ifndef MAC_CATALYST
 /* This is the callback for our cf_runloop_info.observer. */
 void main_runloop_status_proc(CFRunLoopObserverRef observer, CFRunLoopActivity activity, void *info) {
     switch (activity) {
@@ -724,7 +703,7 @@ static void destroy_main_runloop_info(cf_runloop_info **main) {
 #endif
 
 int load_input_helper() {
-    #ifdef USE_APPLICATION_SERVICES
+    #ifndef MAC_CATALYST
     // Start with a fresh dead key state.
     deadkey_state = 0;
     #endif
@@ -753,7 +732,7 @@ int load_input_helper() {
             logger(LOG_LEVEL_DEBUG, "%s [%u]: Failed to locate dispatch_sync_f() or dispatch_get_main_queue()!\n",
                     __FUNCTION__, __LINE__);
 
-            #ifdef USE_APPLICATION_SERVICES
+            #ifndef MAC_CATALYST
             logger(LOG_LEVEL_DEBUG, "%s [%u]: Falling back to runloop signaling.\n",
                     __FUNCTION__, __LINE__);
 
@@ -770,7 +749,7 @@ int load_input_helper() {
 }
 
 void unload_input_helper() {
-    #ifdef USE_APPLICATION_SERVICES
+    #ifndef MAC_CATALYST
     if (!CFEqual(CFRunLoopGetCurrent(), CFRunLoopGetMain())) {
         // TODO Are we using the right mutex type? PTHREAD_MUTEX_DEFAULT?
         // TODO See: https://pubs.opengroup.org/onlinepubs/7908799/xsh/pthread_mutexattr_settype.html
@@ -781,7 +760,7 @@ void unload_input_helper() {
     }
     #endif
 
-    #ifdef USE_APPLICATION_SERVICES
+    #ifndef MAC_CATALYST
     if (prev_keyboard_layout != NULL) {
         // Cleanup tracking of the previous layout.
         CFRelease(prev_keyboard_layout);

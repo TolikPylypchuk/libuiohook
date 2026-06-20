@@ -264,8 +264,20 @@ if(UNIX AND NOT APPLE)
 elseif(APPLE)
     set(CMAKE_MACOSX_RPATH 1)
 
-    option(USE_APPLICATION_SERVICES "ApplicationServices framework (default: ON)" ON)
-    if(USE_APPLICATION_SERVICES)
+    option(MAC_CATALYST "ApplicationServices framework (default: OFF)" OFF)
+    if(MAC_CATALYST)
+        # Mac Catalyst does not support the Application Services framework, so we need to link against other required libraries.
+
+        find_library(CORE_FOUNDATION CoreFoundation REQUIRED)
+        target_include_directories(uiohook PRIVATE "${CORE_FOUNDATION}")
+        target_link_libraries(uiohook "${CORE_FOUNDATION}")
+
+        find_library(CORE_GRAPHICS CoreGraphics REQUIRED)
+        target_include_directories(uiohook PRIVATE "${CORE_GRAPHICS}")
+        target_link_libraries(uiohook "${CORE_GRAPHICS}")
+
+        add_compile_definitions(MAC_CATALYST)
+    else()
         find_package(Threads REQUIRED)
         target_link_libraries(uiohook "${CMAKE_THREAD_LIBS_INIT}")
 
@@ -274,38 +286,18 @@ elseif(APPLE)
         target_link_libraries(uiohook "${CARBON}")
 
         find_library(APPLICATION_SERVICES ApplicationServices REQUIRED)
-        add_compile_definitions(USE_APPLICATION_SERVICES)
         target_include_directories(uiohook PRIVATE "${APPLICATION_SERVICES}")
         target_link_libraries(uiohook "${APPLICATION_SERVICES}")
-    else() # If we aren't using APPLICATION_SERVICES, we need to link against other required libraries.
-        find_library(CORE_FOUNDATION CoreFoundation REQUIRED)
-        target_include_directories(uiohook PRIVATE "${CORE_FOUNDATION}")
-        target_link_libraries(uiohook "${CORE_FOUNDATION}")
-
-        find_library(CORE_GRAPHICS CoreGraphics REQUIRED)
-        target_include_directories(uiohook PRIVATE "${CORE_GRAPHICS}")
-        target_link_libraries(uiohook "${CORE_GRAPHICS}")
     endif()
 
-    option(USE_IOKIT "IOKit framework (default: ON)" ON)
-    if(USE_IOKIT)
-        find_library(IOKIT IOKit REQUIRED)
-        add_compile_definitions(USE_IOKIT)
-        target_include_directories(uiohook PRIVATE "${IOKIT}")
-        target_link_libraries(uiohook "${IOKIT}")
-    endif()
-
-    option(USE_APPKIT "AppKit framework (default: ON)" ON)
-    if(USE_APPKIT)
-        find_library(APPKIT AppKit REQUIRED)
-        add_compile_definitions(USE_APPKIT)
-        target_include_directories(uiohook PRIVATE "${APPKIT}")
-        target_link_libraries(uiohook "${APPKIT}")
-    endif()
+    find_library(IOKIT IOKit REQUIRED)
+    target_include_directories(uiohook PRIVATE "${IOKIT}")
+    target_link_libraries(uiohook "${IOKIT}")
 elseif(WIN32)
     target_link_libraries(uiohook Advapi32)
 endif()
 
+option(BUILD_DEMO "Build demo applications (default: OFF)" OFF)
 if (BUILD_DEMO)
     find_package(Threads REQUIRED)
 
@@ -345,7 +337,8 @@ if (BUILD_DEMO)
     install(TARGETS demo_hook demo_hook_async demo_post demo_properties RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
-if(ENABLE_TEST)
+option(BUILD_TEST "Build tests (default: OFF)" OFF)
+if(BUILD_TEST)
     add_executable(uiohook_tests
         "./test/input_helper_test.c"
         "./test/system_properties_test.c"

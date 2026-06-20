@@ -1,10 +1,5 @@
 #include <dlfcn.h>
 
-#ifdef USE_APPKIT
-#include <objc/objc.h>
-#include <objc/objc-runtime.h>
-#endif
-
 #include <stdbool.h>
 #include <pthread.h>
 
@@ -23,10 +18,6 @@ typedef struct _event_runloop_info {
     CFRunLoopSourceRef source;
     CFRunLoopObserverRef observer;
 } event_runloop_info;
-
-#ifdef USE_APPKIT
-static id auto_release_pool;
-#endif
 
 // Structure for the current Unix epoch in milliseconds.
 static struct timeval system_time;
@@ -486,25 +477,8 @@ static int run() {
         return input_helper_status;
     }
 
-    #ifdef USE_APPKIT
-    // Contributed by Alex <universailp@web.de>
-    // Create a garbage collector to handle Cocoa events correctly.
-    Class NSAutoreleasePool_class = (Class) objc_getClass("NSAutoreleasePool");
-    id pool = class_createInstance(NSAutoreleasePool_class, 0);
-
-    id (*eventWithoutCGEvent)(id, SEL) = (id (*)(id, SEL)) objc_msgSend;
-    auto_release_pool = eventWithoutCGEvent(pool, sel_registerName("init"));
-    #endif
-
-
     // Start the hook thread runloop.
     CFRunLoopRun();
-
-
-    #ifdef USE_APPKIT
-    // Contributed by Alex <universailp@web.de>
-    eventWithoutCGEvent(auto_release_pool, sel_registerName("release"));
-    #endif
 
     destroy_event_runloop_info(&hook);
 

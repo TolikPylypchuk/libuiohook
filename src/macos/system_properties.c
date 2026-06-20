@@ -1,28 +1,19 @@
-#if defined(USE_APPLICATION_SERVICES) || defined(USE_IOKIT)
-#include <CoreFoundation/CoreFoundation.h>
-#endif
+#include <stdbool.h>
 
-#ifdef USE_IOKIT
+#include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/hidsystem/event_status_driver.h>
 #include <IOKit/hidsystem/IOHIDLib.h>
 #include <IOKit/hidsystem/IOHIDParameter.h>
-#endif
 
-#include <stdbool.h>
 #include <uiohook.h>
 
 #include "logger.h"
 #include "input_helper.h"
 
-#ifdef USE_IOKIT
-static io_connect_t connection;
-#endif
-
 #define MOUSE_ACCELERATION_MULTIPLIER 65536
 
-/* The following function was contributed by Anthony Liguori Jan 18 2015.
- * https://github.com/kwhat/libuiohook/pull/18
- */
+static io_connect_t connection;
+
 screen_data* hook_create_screen_info(unsigned char *count) {
     CGError status = kCGErrorFailure;
     screen_data* screens = NULL;
@@ -125,14 +116,12 @@ screen_data* hook_create_screen_info(unsigned char *count) {
  * CharSec = 66 / (MS / 15)
  */
 long int hook_get_auto_repeat_rate() {
-    #if defined(USE_APPLICATION_SERVICES) || defined(USE_IOKIT)
     bool successful = false;
     SInt64 rate;
-    #endif
 
     long int value = -1;
 
-    #ifdef USE_APPLICATION_SERVICES
+    #ifndef MAC_CATALYST
     if (!successful) {
         CFTypeRef pref_val = CFPreferencesCopyValue(CFSTR("KeyRepeat"), kCFPreferencesAnyApplication, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
         if (pref_val != NULL) {
@@ -150,7 +139,6 @@ long int hook_get_auto_repeat_rate() {
     }
     #endif
 
-    #ifdef USE_IOKIT
     if (!successful) {
         CFTypeRef cf_type = NULL;
         kern_return_t kern_return = IOHIDCopyCFTypeParameter(connection, CFSTR(kIOHIDKeyRepeatKey), &cf_type);
@@ -183,20 +171,17 @@ long int hook_get_auto_repeat_rate() {
             }
         }
     }
-    #endif
 
     return value;
 }
 
 long int hook_get_auto_repeat_delay() {
-    #if defined(USE_APPLICATION_SERVICES) || defined(USE_IOKIT)
     bool successful = false;
     SInt64 delay;
-    #endif
 
     long int value = -1;
 
-    #ifdef USE_APPLICATION_SERVICES
+    #ifndef MAC_CATALYST
     if (!successful) {
         CFTypeRef pref_val = CFPreferencesCopyValue(CFSTR("InitialKeyRepeat"), kCFPreferencesAnyApplication, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
         if (pref_val != NULL) {
@@ -214,7 +199,6 @@ long int hook_get_auto_repeat_delay() {
     }
     #endif
 
-    #ifdef USE_IOKIT
     if (!successful) {
         CFTypeRef cf_type = NULL;
         kern_return_t kern_return = IOHIDCopyCFTypeParameter(connection, CFSTR(kIOHIDInitialKeyRepeatKey), &cf_type);
@@ -246,13 +230,12 @@ long int hook_get_auto_repeat_delay() {
             }
         }
     }
-    #endif
 
     return value;
 }
 
 long int hook_get_pointer_acceleration_multiplier() {
-    // OS X doesn't currently have an acceleration multiplier so we are using the constant from IOHIDGetMouseAcceleration.
+    // macOS doesn't currently have an acceleration multiplier so we are using the constant from IOHIDGetMouseAcceleration.
     long int value = MOUSE_ACCELERATION_MULTIPLIER;
     if (hook_get_pointer_sensitivity() < 0) {
         value = 0;
@@ -262,7 +245,7 @@ long int hook_get_pointer_acceleration_multiplier() {
 }
 
 long int hook_get_pointer_acceleration_threshold() {
-    // OS X doesn't currently have an acceleration threshold so we are using 1 as a placeholder.
+    // macOS doesn't currently have an acceleration threshold so we are using 1 as a placeholder.
     long int value = 1;
     if (hook_get_pointer_sensitivity() < 0) {
         value = 0;
@@ -272,14 +255,12 @@ long int hook_get_pointer_acceleration_threshold() {
 }
 
 long int hook_get_pointer_sensitivity() {
-    #if defined(USE_APPLICATION_SERVICES) || defined(USE_IOKIT)
     bool successful = false;
     Float32 sensitivity;
-    #endif
 
     long int value = -1;
 
-    #ifdef USE_APPLICATION_SERVICES
+    #ifndef MAC_CATALYST
     if (!successful) {
         CFTypeRef pref_val = CFPreferencesCopyValue(CFSTR("com.apple.mouse.scaling"), kCFPreferencesAnyApplication, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
         if (pref_val != NULL) {
@@ -295,7 +276,6 @@ long int hook_get_pointer_sensitivity() {
     }
     #endif
 
-    #ifdef USE_IOKIT
     if (!successful) {
         CFTypeRef cf_type = NULL;
         kern_return_t kern_return = IOHIDCopyCFTypeParameter(connection, CFSTR(kIOHIDMouseAccelerationTypeKey), &cf_type);
@@ -315,20 +295,17 @@ long int hook_get_pointer_sensitivity() {
             }
         }
     }
-    #endif
 
     return value;
 }
 
 long int hook_get_multi_click_time() {
-    #if defined(USE_APPLICATION_SERVICES) || defined(USE_IOKIT)
     bool successful = false;
     Float64 time;
-    #endif
 
     long int value = -1;
 
-    #ifdef USE_APPLICATION_SERVICES
+    #ifndef MAC_CATALYST
     if (!successful) {
         CFTypeRef pref_val = CFPreferencesCopyValue(CFSTR("com.apple.mouse.doubleClickThreshold"), kCFPreferencesAnyApplication, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
         if (pref_val != NULL) {
@@ -345,7 +322,6 @@ long int hook_get_multi_click_time() {
     }
     #endif
 
-    #ifdef USE_IOKIT
     if (!successful) {
         CFTypeRef cf_type = NULL;
         kern_return_t kern_return = IOHIDCopyCFTypeParameter(connection, CFSTR(kIOHIDClickTimeKey), &cf_type);
@@ -366,7 +342,6 @@ long int hook_get_multi_click_time() {
             }
         }
     }
-    #endif
 
     return value;
 }
@@ -375,7 +350,6 @@ long int hook_get_multi_click_time() {
 // Create a shared object constructor.
 __attribute__ ((constructor))
 void on_library_load() {
-    #ifdef USE_IOKIT
     io_service_t service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(kIOHIDSystemClass));
     if (service) {
         kern_return_t kren_ret = IOServiceOpen(service, mach_task_self(), kIOHIDParamConnectType, &connection);
@@ -384,16 +358,11 @@ void on_library_load() {
                     __FUNCTION__, __LINE__, kren_ret);
         }
     }
-    #endif
 }
 
 // Create a shared object destructor.
 __attribute__ ((destructor))
 void on_library_unload() {
-    // Disable the event hook.
-    //hook_stop();
-
-    #ifdef USE_IOKIT
     if (connection) {
         kern_return_t kren_ret = IOServiceClose(connection);
         if (kren_ret != kIOReturnSuccess) {
@@ -401,5 +370,4 @@ void on_library_unload() {
                     __FUNCTION__, __LINE__, kren_ret, kIOReturnError);
         }
     }
-    #endif
 }

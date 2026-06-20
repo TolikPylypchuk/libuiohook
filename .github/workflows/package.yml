@@ -2,7 +2,7 @@ name: Nightly Build
 on:
   push:
     branches:
-      - '**'
+      - "**"
 
 jobs:
   catalyst-arm64:
@@ -17,17 +17,15 @@ jobs:
       - name: Compile
         env:
           CC: clang
-          CFLAGS: '-O2 -g -target arm64-apple-ios-macabi -miphoneos-version-min=13.1 -flto -fomit-frame-pointer -fno-stack-protector -pipe'
-          LDFLAGS: '-Wl,-dead_strip_dylibs'
+          CFLAGS: "-O2 -g -target arm64-apple-ios-macabi -miphoneos-version-min=13.1 -flto -fomit-frame-pointer -fno-stack-protector -pipe"
+          LDFLAGS: "-Wl,-dead_strip_dylibs"
         shell: bash
         run: |
           cmake -B ${{github.workspace}}/build \
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/catalyst/arm64 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D USE_APPLICATION_SERVICES=OFF \
-            -D USE_IOKIT=OFF \
-            -D USE_APPKIT=OFF \
+            -D MAC_CATALYST=ON \
             -D BUILD_DEMO=OFF
 
           cmake --build ${{github.workspace}}/build \
@@ -56,17 +54,15 @@ jobs:
       - name: Compile
         env:
           CC: clang
-          CFLAGS: '-O2 -g -target x86_64-apple-ios-macabi -miphoneos-version-min=13.1 -flto -fomit-frame-pointer -fno-stack-protector -pipe'
-          LDFLAGS: '-Wl,-dead_strip_dylibs'
+          CFLAGS: "-O2 -g -target x86_64-apple-ios-macabi -miphoneos-version-min=13.1 -flto -fomit-frame-pointer -fno-stack-protector -pipe"
+          LDFLAGS: "-Wl,-dead_strip_dylibs"
         shell: bash
         run: |
           cmake -B ${{github.workspace}}/build \
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/catalyst/x86_64 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D USE_APPLICATION_SERVICES=OFF \
-            -D USE_IOKIT=OFF \
-            -D USE_APPKIT=OFF \
+            -D MAC_CATALYST=ON \
             -D BUILD_DEMO=OFF
 
           cmake --build ${{github.workspace}}/build \
@@ -83,7 +79,6 @@ jobs:
           path: ${{github.workspace}}/dist/**/*
           overwrite: true
 
-
   macos-arm64:
     runs-on: macos-latest
 
@@ -96,8 +91,8 @@ jobs:
       - name: Compile
         env:
           CC: clang
-          CFLAGS: '-O2 -g -target arm64-apple-macos -mmacosx-version-min=10.5 -flto -fomit-frame-pointer -fno-stack-protector -pipe'
-          LDFLAGS: '-Wl,-dead_strip_dylibs'
+          CFLAGS: "-O2 -g -target arm64-apple-macos -mmacosx-version-min=10.5 -flto -fomit-frame-pointer -fno-stack-protector -pipe"
+          LDFLAGS: "-Wl,-dead_strip_dylibs"
         shell: bash
         run: |
           cmake -B ${{github.workspace}}/build \
@@ -132,8 +127,8 @@ jobs:
       - name: Compile
         env:
           CC: clang
-          CFLAGS: '-O2 -g -target x86_64-apple-macos -mmacosx-version-min=10.5 -flto -fomit-frame-pointer -fno-stack-protector -pipe'
-          LDFLAGS: '-Wl,-dead_strip_dylibs'
+          CFLAGS: "-O2 -g -target x86_64-apple-macos -mmacosx-version-min=10.5 -flto -fomit-frame-pointer -fno-stack-protector -pipe"
+          LDFLAGS: "-Wl,-dead_strip_dylibs"
         shell: bash
         run: |
           cmake -B ${{github.workspace}}/build \
@@ -155,7 +150,6 @@ jobs:
           name: ${{github.job}}
           path: ${{github.workspace}}/dist/**/*
           overwrite: true
-
 
   linux-arm:
     runs-on: ubuntu-latest
@@ -204,9 +198,9 @@ jobs:
       - name: Compile
         env:
           CC: arm-linux-gnueabihf-gcc
-          CFLAGS: '-Os -march=armv7ve -mfpu=vfp -mfloat-abi=hard -g -flto -fomit-frame-pointer -fno-stack-protector -pipe'
-          LDFLAGS: '-fuse-ld=gold -Wl,-O1 -Wl,--as-needed'
-          PKG_CONFIG_PATH: '/usr/lib/arm-linux-gnueabihf/pkgconfig'
+          CFLAGS: "-Os -march=armv7ve -mfpu=vfp -mfloat-abi=hard -g -flto -fomit-frame-pointer -fno-stack-protector -pipe"
+          LDFLAGS: "-fuse-ld=gold -Wl,-O1 -Wl,--as-needed"
+          PKG_CONFIG_PATH: "/usr/lib/arm-linux-gnueabihf/pkgconfig"
         shell: bash
         run: |
           cmake -B ${{github.workspace}}/build \
@@ -276,9 +270,9 @@ jobs:
       - name: Compile
         env:
           CC: aarch64-linux-gnu-gcc
-          CFLAGS: '-Os -march=armv8-a+crc -mtune=cortex-a53 -g -flto -fomit-frame-pointer -fno-stack-protector -pipe'
-          LDFLAGS: '-fuse-ld=gold -Wl,-O1 -Wl,--as-needed'
-          PKG_CONFIG_PATH: '/usr/lib/aarch64-linux-gnu/pkgconfig'
+          CFLAGS: "-Os -march=armv8-a+crc -mtune=cortex-a53 -g -flto -fomit-frame-pointer -fno-stack-protector -pipe"
+          LDFLAGS: "-fuse-ld=gold -Wl,-O1 -Wl,--as-needed"
+          PKG_CONFIG_PATH: "/usr/lib/aarch64-linux-gnu/pkgconfig"
         shell: bash
         run: |
           cmake -B ${{github.workspace}}/build \
@@ -342,9 +336,9 @@ jobs:
       - name: Compile
         env:
           CC: i686-linux-gnu-gcc
-          CFLAGS: '-O2 -march=i686 -mtune=generic -g -fomit-frame-pointer -flto -fno-stack-protector -pipe'
-          LDFLAGS: '-fuse-ld=gold -Wl,-O1 -Wl,--as-needed'
-          PKG_CONFIG_PATH: '/usr/lib/i386-linux-gnu/pkgconfig'
+          CFLAGS: "-O2 -march=i686 -mtune=generic -g -fomit-frame-pointer -flto -fno-stack-protector -pipe"
+          LDFLAGS: "-fuse-ld=gold -Wl,-O1 -Wl,--as-needed"
+          PKG_CONFIG_PATH: "/usr/lib/i386-linux-gnu/pkgconfig"
         shell: bash
         run: |
           cmake -B ${{github.workspace}}/build \
@@ -392,9 +386,9 @@ jobs:
       - name: Compile
         env:
           CC: x86_64-linux-gnu-gcc
-          CFLAGS: '-O2 -march=x86-64 -mtune=generic -g -fomit-frame-pointer -flto -fno-stack-protector -pipe'
-          LDFLAGS: '-fuse-ld=gold -Wl,-O1 -Wl,--as-needed'
-          PKG_CONFIG_PATH: '/usr/lib/x86_64-linux-gnu/pkgconfig'
+          CFLAGS: "-O2 -march=x86-64 -mtune=generic -g -fomit-frame-pointer -flto -fno-stack-protector -pipe"
+          LDFLAGS: "-fuse-ld=gold -Wl,-O1 -Wl,--as-needed"
+          PKG_CONFIG_PATH: "/usr/lib/x86_64-linux-gnu/pkgconfig"
         shell: bash
         run: |
           cmake -B ${{github.workspace}}/build \
@@ -416,7 +410,6 @@ jobs:
           name: ${{github.job}}
           path: ${{github.workspace}}/dist/**/*
           overwrite: true
-
 
   windows-arm:
     runs-on: windows-latest
