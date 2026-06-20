@@ -1,21 +1,3 @@
-/* libUIOHook: Cross-platform keyboard and mouse hooking from userland.
- * Copyright (C) 2006-2023 Alexander Barker.  All Rights Reserved.
- * https://github.com/kwhat/libuiohook/
- *
- * libUIOHook is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * libUIOHook is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include <uiohook.h>
 #include <windows.h>
 
@@ -35,15 +17,6 @@ typedef struct _screen_info {
     screen_data *data;
 } screen_info;
 
-/* The following function was contributed by Anthony Liguori Jan 14, 2015.
- * https://github.com/kwhat/libuiohook/pull/17
- *
- * callback function called by EnumDisplayMonitors for each enabled monitor
- * http://msdn.microsoft.com/en-us/library/windows/desktop/dd162610(v=vs.85).aspx
- * http://msdn.microsoft.com/en-us/library/dd162610%28VS.85%29.aspx
- * http://msdn.microsoft.com/en-us/library/dd145061%28VS.85%29.aspx
- * http://msdn.microsoft.com/en-us/library/dd144901(v=vs.85).aspx
- */
 static BOOL CALLBACK monitor_enum_proc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
     int width  = lprcMonitor->right - lprcMonitor->left;
     int height = lprcMonitor->bottom - lprcMonitor->top;
