@@ -1,17 +1,12 @@
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
-#include <X11/Intrinsic.h>
-
-#if defined(USE_XINERAMA) && !defined(USE_XRANDR)
-#include <X11/extensions/Xinerama.h>
-#elif defined(USE_XRANDR)
-#include <pthread.h>
 #include <X11/extensions/Xrandr.h>
-#endif
+#include <X11/Intrinsic.h>
 
 #include <uiohook.h>
 
@@ -21,7 +16,6 @@
 static XtAppContext xt_context;
 static Display *xt_disp;
 
-#ifdef USE_XRANDR
 static pthread_mutex_t xrandr_mutex = PTHREAD_MUTEX_INITIALIZER;
 static XRRScreenResources *xrandr_resources = NULL;
 
@@ -93,7 +87,6 @@ static void *settings_thread_proc(void *arg) {
 
     return NULL;
 }
-#endif
 
 screen_data* hook_create_screen_info(unsigned char *count) {
     *count = 0;
@@ -101,40 +94,8 @@ screen_data* hook_create_screen_info(unsigned char *count) {
 
     // Check and make sure we could connect to the x server.
     if (helper_disp != NULL) {
-        #if defined(USE_XINERAMA) && !defined(USE_XRANDR)
-        if (XineramaIsActive(helper_disp)) {
-            int xine_count = 0;
-            XineramaScreenInfo *xine_info = XineramaQueryScreens(helper_disp, &xine_count);
-
-            if (xine_info != NULL) {
-                if (xine_count > UINT8_MAX) {
-                    *count = UINT8_MAX;
-
-                    logger(LOG_LEVEL_WARN, "%s [%u]: Screen count overflow detected!\n",
-                            __FUNCTION__, __LINE__);
-                } else {
-                    *count = (uint8_t) xine_count;
-                }
-
-                screens = malloc(sizeof(screen_data) * xine_count);
-
-                if (screens != NULL) {
-                    for (int i = 0; i < xine_count; i++) {
-                        screens[i] = (screen_data) {
-                            .number = xine_info[i].screen_number,
-                            .x = xine_info[i].x_org,
-                            .y = xine_info[i].y_org,
-                            .width = xine_info[i].width,
-                            .height = xine_info[i].height
-                        };
-                    }
-                }
-
-                XFree(xine_info);
-            }
-        }
-        #elif defined(USE_XRANDR)
         pthread_mutex_lock(&xrandr_mutex);
+
         if (xrandr_resources != NULL) {
             int xrandr_count = xrandr_resources->ncrtc;
             if (xrandr_count > UINT8_MAX) {
@@ -169,25 +130,8 @@ screen_data* hook_create_screen_info(unsigned char *count) {
                 }
             }
         }
+
         pthread_mutex_unlock(&xrandr_mutex);
-        #else
-        Screen* default_screen = DefaultScreenOfDisplay(helper_disp);
-
-        if (default_screen->width > 0 && default_screen->height > 0) {
-            screens = malloc(sizeof(screen_data));
-
-            if (screens != NULL) {
-                *count = 1;
-                screens[0] = (screen_data) {
-                    .number = 1,
-                    .x = 0,
-                    .y = 0,
-                    .width = default_screen->width,
-                    .height = default_screen->height
-                };
-            }
-        }
-        #endif
     } else {
         logger(LOG_LEVEL_WARN, "%s [%u]: XDisplay helper_disp is unavailable!\n",
                 __FUNCTION__, __LINE__);
@@ -388,7 +332,6 @@ void on_library_load() {
                 __FUNCTION__, __LINE__, "XOpenDisplay success.");
     }
 
-    #ifdef USE_XRANDR
     // Create the thread attribute.
     pthread_attr_t settings_thread_attr;
     pthread_attr_init(&settings_thread_attr);
@@ -404,8 +347,8 @@ void on_library_load() {
 
     // Make sure the thread attribute is removed.
     pthread_attr_destroy(&settings_thread_attr);
-    #endif
 
+    // Open XT display.
     XtToolkitInitialize();
     xt_context = XtCreateApplicationContext();
 
@@ -417,16 +360,16 @@ void on_library_load() {
 // Create a shared object destructor.
 __attribute__ ((destructor))
 void on_library_unload() {
-    // Disable the event hook.
-    //hook_stop();
-
-    // Cleanup.
     unload_input_helper();
 
-    XtCloseDisplay(xt_disp);
-    XtDestroyApplicationContext(xt_context);
+    if (xt_disp != NULL) {
+        XtCloseDisplay(xt_disp);
+    }
 
-    // Destroy the native displays.
+    if (xt_context != NULL) {
+        XtDestroyApplicationContext(xt_context);
+    }
+
     if (helper_disp != NULL) {
         XCloseDisplay(helper_disp);
         helper_disp = NULL;
