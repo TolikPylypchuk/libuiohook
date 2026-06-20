@@ -199,11 +199,6 @@ endif()
 
 
 if (BUILD_DEMO)
-    if (NOT BUILD_SHARED_LIBS)
-        set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-        set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-    endif()
-
     find_package(Threads REQUIRED)
 
     add_executable(demo_hook "./demo/demo_hook.c")

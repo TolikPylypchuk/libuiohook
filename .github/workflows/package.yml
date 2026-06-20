@@ -25,7 +25,6 @@ jobs:
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/catalyst/arm64 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D BUILD_SHARED_LIBS=ON \
             -D USE_APPLICATION_SERVICES=OFF \
             -D USE_IOKIT=OFF \
             -D USE_APPKIT=OFF \
@@ -65,7 +64,6 @@ jobs:
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/catalyst/x86_64 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D BUILD_SHARED_LIBS=ON \
             -D USE_APPLICATION_SERVICES=OFF \
             -D USE_IOKIT=OFF \
             -D USE_APPKIT=OFF \
@@ -106,7 +104,6 @@ jobs:
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/macos/arm64 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D BUILD_SHARED_LIBS=ON \
             -D BUILD_DEMO=ON
 
           cmake --build ${{github.workspace}}/build \
@@ -143,7 +140,6 @@ jobs:
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/macos/x86_64 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D BUILD_SHARED_LIBS=ON \
             -D BUILD_DEMO=ON
 
           cmake --build ${{github.workspace}}/build \
@@ -217,7 +213,6 @@ jobs:
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/linux/arm \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D BUILD_SHARED_LIBS=ON \
             -D BUILD_DEMO=ON
 
           cmake --build ${{github.workspace}}/build \
@@ -290,7 +285,6 @@ jobs:
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/linux/arm64 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D BUILD_SHARED_LIBS=ON \
             -D BUILD_DEMO=ON
 
           cmake --build ${{github.workspace}}/build \
@@ -357,7 +351,6 @@ jobs:
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/linux/x86 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D BUILD_SHARED_LIBS=ON \
             -D BUILD_DEMO=ON
 
           cmake --build ${{github.workspace}}/build \
@@ -408,7 +401,6 @@ jobs:
             -G "Unix Makefiles" \
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}/dist/linux/x86_64 \
             -D CMAKE_VERBOSE_MAKEFILE=true \
-            -D BUILD_SHARED_LIBS=ON \
             -D BUILD_DEMO=ON
 
           cmake --build ${{github.workspace}}/build \
@@ -446,7 +438,6 @@ jobs:
             -G "Visual Studio 17 2022" -A ARM ^
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}\dist\windows\arm ^
             -D CMAKE_VERBOSE_MAKEFILE=true ^
-            -D BUILD_SHARED_LIBS=ON ^
             -D BUILD_DEMO=ON
 
           cmake --build ${{github.workspace}}\build ^
@@ -483,7 +474,6 @@ jobs:
             -G "Visual Studio 17 2022" -A Win32 ^
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}\dist\windows\x86 ^
             -D CMAKE_VERBOSE_MAKEFILE=true ^
-            -D BUILD_SHARED_LIBS=ON ^
             -D BUILD_DEMO=ON
 
           cmake --build ${{github.workspace}}\build ^
@@ -520,7 +510,6 @@ jobs:
             -G "Visual Studio 17 2022" -A x64 ^
             -D CMAKE_INSTALL_PREFIX=${{github.workspace}}\dist\windows\x86_64 ^
             -D CMAKE_VERBOSE_MAKEFILE=true ^
-            -D BUILD_SHARED_LIBS=ON ^
             -D BUILD_DEMO=ON
 
           cmake --build ${{github.workspace}}\build ^
