@@ -1,3 +1,6 @@
+#ifndef DISPATCH_EVENT_H
+#define DISPATCH_EVENT_H
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -27,3 +30,5 @@ extern bool dispatch_button_release(uint64_t timestamp, CGEventRef event_ref, ui
 extern bool dispatch_mouse_move(uint64_t timestamp, CGEventRef event_ref);
 
 extern bool dispatch_mouse_wheel(uint64_t timestamp, CGEventRef event_ref);
+
+#endif

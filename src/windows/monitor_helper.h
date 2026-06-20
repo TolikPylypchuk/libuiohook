@@ -1,3 +1,6 @@
+#ifndef MONITOR_HELPER_H
+#define MONITOR_HELPER_H
+
 #include <stdbool.h>
 #include <Windows.h>
 
@@ -11,3 +14,5 @@ extern void enumerate_displays();
 extern void set_always_enumerate_displays(bool always);
 
 extern largest_negative_coordinates get_largest_negative_coordinates();
+
+#endif

@@ -1,8 +1,9 @@
-#ifndef _included_input_helper
-#define _included_input_helper
+#ifndef INPUT_HELPER_H
+#define INPUT_HELPER_H
 
 #include <stdbool.h>
 #include <stdint.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/record.h>

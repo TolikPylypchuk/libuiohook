@@ -2,8 +2,8 @@
 // Reference: https://svn.blender.org/svnroot/bf-blender/branches/render25/intern/ghost/intern/GHOST_SystemCocoa.mm
 // Reference: http://www.mactech.com/macintosh-c/chap02-1.html
 
-#ifndef _included_input_helper
-#define _included_input_helper
+#ifndef INPUT_HELPER_H
+#define INPUT_HELPER_H
 
 #ifdef USE_APPLICATION_SERVICES
 #include <ApplicationServices/ApplicationServices.h>
