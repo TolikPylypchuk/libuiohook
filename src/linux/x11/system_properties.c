@@ -1,14 +1,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <uiohook.h>
+
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
-
-#ifdef USE_XF86MISC
-#include <X11/extensions/xf86misc.h>
-#include <X11/extensions/xf86mscstr.h>
-#endif
+#include <X11/Intrinsic.h>
 
 #if defined(USE_XINERAMA) && !defined(USE_XRANDR)
 #include <X11/extensions/Xinerama.h>
@@ -17,15 +13,13 @@
 #include <X11/extensions/Xrandr.h>
 #endif
 
-#ifdef USE_XT
-#include <X11/Intrinsic.h>
-
-static XtAppContext xt_context;
-static Display *xt_disp;
-#endif
+#include <uiohook.h>
 
 #include "input_helper.h"
 #include "logger.h"
+
+static XtAppContext xt_context;
+static Display *xt_disp;
 
 #ifdef USE_XRANDR
 static pthread_mutex_t xrandr_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -207,7 +201,7 @@ long int hook_get_auto_repeat_rate() {
     long int value = -1;
     unsigned int delay = 0, rate = 0;
 
-    // Check and make sure we could connect to the x server.
+    // Check and make sure we could connect to the X server.
     if (helper_disp != NULL) {
         // Attempt to acquire the keyboard auto repeat rate using the XKB extension.
         if (!successful) {
@@ -218,21 +212,6 @@ long int hook_get_auto_repeat_rate() {
                         __FUNCTION__, __LINE__, rate);
             }
         }
-
-        #ifdef USE_XF86MISC
-        // Fallback to the XF86 Misc extension if available and other efforts failed.
-        if (!successful) {
-            XF86MiscKbdSettings kb_info;
-            successful = (bool) XF86MiscGetKbdSettings(helper_disp, &kb_info);
-            if (successful) {
-                logger(LOG_LEVEL_DEBUG, "%s [%u]: XF86MiscGetKbdSettings: %i.\n",
-                        __FUNCTION__, __LINE__, kbdinfo.rate);
-
-                delay = (unsigned int) kbdinfo.delay;
-                rate = (unsigned int) kbdinfo.rate;
-            }
-        }
-        #endif
     } else {
         logger(LOG_LEVEL_WARN, "%s [%u]: XDisplay helper_disp is unavailable!\n",
                 __FUNCTION__, __LINE__);
@@ -250,7 +229,7 @@ long int hook_get_auto_repeat_delay() {
     long int value = -1;
     unsigned int delay = 0, rate = 0;
 
-    // Check and make sure we could connect to the x server.
+    // Check and make sure we could connect to the X server.
     if (helper_disp != NULL) {
         // Attempt to acquire the keyboard auto repeat rate using the XKB extension.
         if (!successful) {
@@ -261,21 +240,6 @@ long int hook_get_auto_repeat_delay() {
                         __FUNCTION__, __LINE__, delay);
             }
         }
-
-        #ifdef USE_XF86MISC
-        // Fallback to the XF86 Misc extension if available and other efforts failed.
-        if (!successful) {
-            XF86MiscKbdSettings kb_info;
-            successful = (bool) XF86MiscGetKbdSettings(helper_disp, &kb_info);
-            if (successful) {
-                logger(LOG_LEVEL_DEBUG, "%s [%u]: XF86MiscGetKbdSettings: %i.\n",
-                        __FUNCTION__, __LINE__, kbdinfo.delay);
-
-                delay = (unsigned int) kbdinfo.delay;
-                rate = (unsigned int) kbdinfo.rate;
-            }
-        }
-        #endif
     } else {
         logger(LOG_LEVEL_WARN, "%s [%u]: XDisplay helper_disp is unavailable!\n",
                 __FUNCTION__, __LINE__);
@@ -356,8 +320,7 @@ long int hook_get_multi_click_time() {
     int click_time;
     bool successful = false;
 
-    #ifdef USE_XT
-    // Check and make sure we could connect to the x server.
+    // Check and make sure we could connect to the X server.
     if (xt_disp != NULL) {
         // Try and use the Xt extention to get the current multi-click.
         if (!successful) {
@@ -372,9 +335,8 @@ long int hook_get_multi_click_time() {
         }
     } else {
         logger(LOG_LEVEL_ERROR, "%s [%u]: %s\n",
-                __FUNCTION__, __LINE__, "XOpenDisplay failure!");
+                __FUNCTION__, __LINE__, "XDisplay xt_disp is unavailable!");
     }
-    #endif
 
     // Check and make sure we could connect to the x server.
     if (helper_disp != NULL) {
@@ -444,14 +406,12 @@ void on_library_load() {
     pthread_attr_destroy(&settings_thread_attr);
     #endif
 
-    #ifdef USE_XT
     XtToolkitInitialize();
     xt_context = XtCreateApplicationContext();
 
     int argc = 0;
     char ** argv = { NULL };
     xt_disp = XtOpenDisplay(xt_context, NULL, "UIOHook", "libuiohook", NULL, 0, &argc, argv);
-    #endif
 }
 
 // Create a shared object destructor.
@@ -463,10 +423,8 @@ void on_library_unload() {
     // Cleanup.
     unload_input_helper();
 
-    #ifdef USE_XT
     XtCloseDisplay(xt_disp);
     XtDestroyApplicationContext(xt_context);
-    #endif
 
     // Destroy the native displays.
     if (helper_disp != NULL) {
