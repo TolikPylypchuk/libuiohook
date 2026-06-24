@@ -7,34 +7,41 @@
 #include <wchar.h>
 
 /* Begin Error Codes */
-#define UIOHOOK_SUCCESS                          0x00
-#define UIOHOOK_FAILURE                          0x01
+#define UIOHOOK_SUCCESS                             0x00
+#define UIOHOOK_FAILURE                             0x01
 
 // System-level errors.
-#define UIOHOOK_ERROR_OUT_OF_MEMORY              0x02
-#define UIOHOOK_ERROR_NULL                       0x03
+#define UIOHOOK_ERROR_OUT_OF_MEMORY                 0x02
+#define UIOHOOK_ERROR_NULL                          0x03
 
 // Linux-specific errors.
-#define UIOHOOK_ERROR_LOAD_LINUX_BACKEND         0x20
-#define UIOHOOK_ERROR_X_OPEN_DISPLAY             0x21
-#define UIOHOOK_ERROR_X_RECORD_NOT_FOUND         0x22
-#define UIOHOOK_ERROR_X_RECORD_ALLOC_RANGE       0x23
-#define UIOHOOK_ERROR_X_RECORD_CREATE_CONTEXT    0x24
-#define UIOHOOK_ERROR_X_RECORD_ENABLE_CONTEXT    0x25
-#define UIOHOOK_ERROR_X_RECORD_GET_CONTEXT       0x26
+#define UIOHOOK_ERROR_LOAD_LINUX_BACKEND            0x10
+#define UIOHOOK_ERROR_LINUX_INIT_UDEV               0x11
+#define UIOHOOK_ERROR_LINUX_INIT_LIBINPUT           0x11
+#define UIOHOOK_ERROR_LINUX_ASSIGN_SEAT             0x11
+#define UIOHOOK_ERROR_LINUX_INIT_STOP_NOTIFICATION  0x11
+#define UIOHOOK_ERROR_LINUX_EXEC_STOP_NOTIFICATION  0x12
+
+// X11-specific errors.
+#define UIOHOOK_ERROR_X_OPEN_DISPLAY                0x20
+#define UIOHOOK_ERROR_X_RECORD_NOT_FOUND            0x21
+#define UIOHOOK_ERROR_X_RECORD_ALLOC_RANGE          0x22
+#define UIOHOOK_ERROR_X_RECORD_CREATE_CONTEXT       0x23
+#define UIOHOOK_ERROR_X_RECORD_ENABLE_CONTEXT       0x24
+#define UIOHOOK_ERROR_X_RECORD_GET_CONTEXT          0x25
 
 // Windows-specific errors.
-#define UIOHOOK_ERROR_SET_WINDOWS_HOOK_EX        0x30
-#define UIOHOOK_ERROR_GET_MODULE_HANDLE          0x31
-#define UIOHOOK_ERROR_CREATE_INVISIBLE_WINDOW    0x32
+#define UIOHOOK_ERROR_SET_WINDOWS_HOOK_EX           0x30
+#define UIOHOOK_ERROR_GET_MODULE_HANDLE             0x31
+#define UIOHOOK_ERROR_CREATE_INVISIBLE_WINDOW       0x32
 
 // macOS-specific errors.
-#define UIOHOOK_ERROR_AXAPI_DISABLED             0x40
-#define UIOHOOK_ERROR_CREATE_EVENT_PORT          0x41
-#define UIOHOOK_ERROR_CREATE_RUN_LOOP_SOURCE     0x42
-#define UIOHOOK_ERROR_GET_RUNLOOP                0x43
-#define UIOHOOK_ERROR_CREATE_OBSERVER            0x44
-#define UIOHOOK_ERROR_AXAPI_REVOKED              0x45
+#define UIOHOOK_ERROR_AXAPI_DISABLED                0x40
+#define UIOHOOK_ERROR_CREATE_EVENT_PORT             0x41
+#define UIOHOOK_ERROR_CREATE_RUN_LOOP_SOURCE        0x42
+#define UIOHOOK_ERROR_GET_RUNLOOP                   0x43
+#define UIOHOOK_ERROR_CREATE_OBSERVER               0x44
+#define UIOHOOK_ERROR_AXAPI_REVOKED                 0x45
 /* End Error Codes */
 
 /* Begin Linux Back-ends */

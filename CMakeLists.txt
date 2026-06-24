@@ -36,6 +36,7 @@ elseif (APPLE)
 else()
     add_library(uiohook-x11 SHARED
         "src/logger.c"
+        "src/linux/shared/input_loop.c"
         "src/linux/x11/dispatch_event.c"
         "src/linux/x11/input_helper.c"
         "src/linux/x11/input_hook.c"
@@ -54,6 +55,7 @@ else()
 
     add_library(uiohook-wayland SHARED
         "src/logger.c"
+        "src/linux/shared/input_loop.c"
         "src/linux/wayland/dispatch_event.c"
         "src/linux/wayland/input_helper.c"
         "src/linux/wayland/input_hook.c"
@@ -113,6 +115,7 @@ if (UNIX AND NOT APPLE)
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
             ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/x11
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/shared
     )
 
     target_include_directories(uiohook-wayland
@@ -123,6 +126,7 @@ if (UNIX AND NOT APPLE)
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
             ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/wayland
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/shared
     )
 
     target_include_directories(uiohook-legacy
