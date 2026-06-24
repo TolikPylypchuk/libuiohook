@@ -37,11 +37,11 @@
 
 // macOS-specific errors.
 #define UIOHOOK_ERROR_AXAPI_DISABLED                0x40
-#define UIOHOOK_ERROR_CREATE_EVENT_PORT             0x41
-#define UIOHOOK_ERROR_CREATE_RUN_LOOP_SOURCE        0x42
-#define UIOHOOK_ERROR_GET_RUNLOOP                   0x43
-#define UIOHOOK_ERROR_CREATE_OBSERVER               0x44
-#define UIOHOOK_ERROR_AXAPI_REVOKED                 0x45
+#define UIOHOOK_ERROR_AXAPI_REVOKED                 0x41
+#define UIOHOOK_ERROR_CREATE_EVENT_PORT             0x42
+#define UIOHOOK_ERROR_CREATE_RUN_LOOP_SOURCE        0x43
+#define UIOHOOK_ERROR_GET_RUNLOOP                   0x44
+#define UIOHOOK_ERROR_CREATE_OBSERVER               0x45
 /* End Error Codes */
 
 /* Begin Linux Back-ends */

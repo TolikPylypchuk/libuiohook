@@ -162,7 +162,7 @@ int run_libinput() {
     libinput_unref(li);
     udev_unref(udev);
 
-    return true;
+    return UIOHOOK_SUCCESS;
 }
 
 int stop_libinput() {
