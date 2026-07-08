@@ -39,10 +39,32 @@ void hook_set_post_text_delay_x11(uint64_t delay) {
 }
 
 static int post_key_event(uiohook_event * const event, CGEventSourceRef src) {
-    bool is_pressed;
+    if (event->type != EVENT_KEY_PRESSED && event->type != EVENT_KEY_RELEASED) {
+        logger(LOG_LEVEL_DEBUG, "%s [%u]: Invalid event for keyboard post event: %#X.\n",
+                __FUNCTION__, __LINE__, event->type);
+        return UIOHOOK_FAILURE;
+    }
+
+    CGKeyCode keycode = uiocode_to_keycode(event->data.keyboard.keycode);
+    if (keycode == kVK_Undefined) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: Unable to lookup scancode: %li\n",
+                __FUNCTION__, __LINE__, event->data.keyboard.keycode);
+        return UIOHOOK_FAILURE;
+    }
+
+    CGEventRef cg_event = CGEventCreateKeyboardEvent(
+        src,
+        keycode,
+        event->type == EVENT_KEY_PRESSED
+    );
+
+    if (cg_event == NULL) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: CGEventCreateKeyboardEvent failed!\n",
+                __FUNCTION__, __LINE__);
+        return UIOHOOK_ERROR_OUT_OF_MEMORY;
+    }
 
     if (event->type == EVENT_KEY_PRESSED) {
-        is_pressed = true;
         switch (event->data.keyboard.keycode) {
             case VC_SHIFT_L:
             case VC_SHIFT_R:
@@ -64,36 +86,39 @@ static int post_key_event(uiohook_event * const event, CGEventSourceRef src) {
                 current_modifier_mask |= kCGEventFlagMaskAlternate;
                 break;
         }
-    } else if (event->type == EVENT_KEY_RELEASED) {
-        is_pressed = false;
+    }
+
+    CGEventFlags event_mask = CGEventGetFlags(cg_event);
+    event_mask |= current_modifier_mask;
+
+    if (event->type == EVENT_KEY_RELEASED) {
         switch (event->data.keyboard.keycode) {
             case VC_SHIFT_L:
             case VC_SHIFT_R:
                 current_modifier_mask &= ~kCGEventFlagMaskShift;
+                event_mask &= ~kCGEventFlagMaskShift;
                 break;
 
             case VC_CONTROL_L:
             case VC_CONTROL_R:
                 current_modifier_mask &= ~kCGEventFlagMaskControl;
+                event_mask &= ~kCGEventFlagMaskControl;
                 break;
 
             case VC_META_L:
             case VC_META_R:
                 current_modifier_mask &= ~kCGEventFlagMaskCommand;
+                event_mask &= ~kCGEventFlagMaskCommand;
                 break;
 
             case VC_ALT_L:
             case VC_ALT_R:
                 current_modifier_mask &= ~kCGEventFlagMaskAlternate;
+                event_mask &= ~kCGEventFlagMaskAlternate;
                 break;
         }
-    } else {
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: Invalid event for keyboard post event: %#X.\n",
-                __FUNCTION__, __LINE__, event->type);
-        return UIOHOOK_FAILURE;
     }
 
-    CGEventFlags event_mask = current_modifier_mask;
     switch (event->data.keyboard.keycode) {
         case VC_KP_0:
         case VC_KP_1:
@@ -117,27 +142,7 @@ static int post_key_event(uiohook_event * const event, CGEventSourceRef src) {
             break;
     }
 
-    CGKeyCode keycode = uiocode_to_keycode(event->data.keyboard.keycode);
-    if (keycode == kVK_Undefined) {
-        logger(LOG_LEVEL_WARN, "%s [%u]: Unable to lookup scancode: %li\n",
-                __FUNCTION__, __LINE__, event->data.keyboard.keycode);
-        return UIOHOOK_FAILURE;
-    }
-
-    CGEventRef cg_event = CGEventCreateKeyboardEvent(
-        src,
-        keycode,
-        is_pressed
-    );
-
-    if (cg_event == NULL) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: CGEventCreateKeyboardEvent failed!\n",
-                __FUNCTION__, __LINE__);
-        return UIOHOOK_ERROR_OUT_OF_MEMORY;
-    }
-
     CGEventSetFlags(cg_event, event_mask);
-
     CGEventPost(kCGHIDEventTap, cg_event);
     CFRelease(cg_event);
 
