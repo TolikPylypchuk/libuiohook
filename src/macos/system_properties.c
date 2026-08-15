@@ -14,6 +14,15 @@
 
 static io_connect_t connection;
 
+uint32_t hook_get_optional_feature_support() {
+    return UIOHOOK_FEATURE_EVENT_SUPPRESSION
+        | UIOHOOK_FEATURE_KEY_TYPED_EVENTS
+        | UIOHOOK_FEATURE_POST_TEXT
+        | UIOHOOK_FEATURE_ABSOLUTE_MOUSE_MOVEMENT
+        | UIOHOOK_FEATURE_ABSOLUTE_MOUSE_BUTTON_COORDS
+        | UIOHOOK_FEATURE_POINTER_PROPERTIES;
+}
+
 screen_data* hook_create_screen_info(unsigned char *count) {
     CGError status = kCGErrorFailure;
     screen_data* screens = NULL;

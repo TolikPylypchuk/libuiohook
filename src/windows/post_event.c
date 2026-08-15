@@ -119,7 +119,7 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
         LONG x = event->data.mouse.x;
         LONG y = event->data.mouse.y;
 
-        if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
+        if (event->type == EVENT_MOUSE_MOVED_RELATIVE || event->type == EVENT_MOUSE_DRAGGED_RELATIVE) {
             POINT p;
             if (GetCursorPos(&p)) {
                 x += p.x;
@@ -212,9 +212,10 @@ static int map_mouse_event(uiohook_event * const event, INPUT * const input) {
             }
             break;
 
-        case EVENT_MOUSE_DRAGGED:
         case EVENT_MOUSE_MOVED:
-        case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
+        case EVENT_MOUSE_MOVED_RELATIVE:
+        case EVENT_MOUSE_DRAGGED:
+        case EVENT_MOUSE_DRAGGED_RELATIVE:
             input->mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK;
             break;
 
@@ -267,13 +268,14 @@ int hook_post_events(uiohook_event * const events, uint32_t size) {
                 break;
 
             case EVENT_MOUSE_PRESSED:
-            case EVENT_MOUSE_RELEASED:
-            case EVENT_MOUSE_WHEEL:
-            case EVENT_MOUSE_MOVED:
-            case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
-            case EVENT_MOUSE_DRAGGED:
             case EVENT_MOUSE_PRESSED_IGNORE_COORDS:
+            case EVENT_MOUSE_RELEASED:
             case EVENT_MOUSE_RELEASED_IGNORE_COORDS:
+            case EVENT_MOUSE_MOVED:
+            case EVENT_MOUSE_MOVED_RELATIVE:
+            case EVENT_MOUSE_DRAGGED:
+            case EVENT_MOUSE_DRAGGED_RELATIVE:
+            case EVENT_MOUSE_WHEEL:
                 status = map_mouse_event(event, input);
                 break;
 

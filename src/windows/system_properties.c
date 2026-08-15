@@ -10,6 +10,14 @@ HINSTANCE hInst;
 // input_hook.c
 extern void unregister_running_hooks();
 
+uint32_t hook_get_optional_feature_support() {
+    return UIOHOOK_FEATURE_EVENT_SUPPRESSION
+        | UIOHOOK_FEATURE_KEY_TYPED_EVENTS
+        | UIOHOOK_FEATURE_POST_TEXT
+        | UIOHOOK_FEATURE_ABSOLUTE_MOUSE_MOVEMENT
+        | UIOHOOK_FEATURE_ABSOLUTE_MOUSE_BUTTON_COORDS
+        | UIOHOOK_FEATURE_POINTER_PROPERTIES;
+}
 
 // Structure for the monitor_enum_proc() callback so we can track the count.
 typedef struct _screen_info {

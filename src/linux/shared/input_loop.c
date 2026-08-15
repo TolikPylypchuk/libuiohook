@@ -21,14 +21,41 @@
 #include "input_loop.h"
 
 static int stop_fd = -1;
+
+static pthread_mutex_t device_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t stop_fd_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+static device_open_t device_open_proc = NULL;
+static device_close_t device_close_proc = NULL;
+static device_open_t current_device_open_proc = NULL;
+static device_close_t current_device_close_proc = NULL;
+static void *device_user_data = NULL;
+
+void hook_set_device_procs(device_open_t open_proc, device_close_t close_proc, void *user_data) {
+    pthread_mutex_lock(&device_mutex);
+
+    device_open_proc = open_proc;
+    device_close_proc = close_proc;
+    device_user_data = user_data;
+
+    pthread_mutex_unlock(&device_mutex);
+}
+
 static int open_restricted(const char *path, int flags, void *user_data) {
+    if (current_device_open_proc != NULL) {
+        return current_device_open_proc(path, flags, user_data);
+    }
+
     int fd = open(path, flags);
     return fd < 0 ? -errno : fd;
 }
 
 static void close_restricted(int fd, void *user_data) {
+    if (current_device_close_proc != NULL) {
+        current_device_close_proc(fd, user_data);
+        return;
+    }
+
     close(fd);
 }
 
@@ -85,7 +112,14 @@ int run_libinput() {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Creating a libinput context.\n",
             __FUNCTION__, __LINE__);
 
-    struct libinput *li = libinput_udev_create_context(&interface, NULL, udev);
+    pthread_mutex_lock(&device_mutex);
+
+    current_device_open_proc = device_open_proc;
+    current_device_close_proc = device_close_proc;
+
+    struct libinput *li = libinput_udev_create_context(&interface, device_user_data, udev);
+
+    pthread_mutex_unlock(&device_mutex);
 
     if (li == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to create a libinput context!\n",
@@ -158,6 +192,9 @@ int run_libinput() {
     close(stop_fd);
     stop_fd = -1;
     pthread_mutex_unlock(&stop_fd_mutex);
+
+    current_device_open_proc = NULL;
+    current_device_close_proc = NULL;
 
     libinput_unref(li);
     udev_unref(udev);

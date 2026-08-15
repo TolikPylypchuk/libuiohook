@@ -25,6 +25,11 @@ typedef int (*post_event_t)(uiohook_event * const);
 typedef int (*post_events_t)(uiohook_event * const, uint32_t);
 typedef int (*post_text_t)(const uint16_t * const);
 
+typedef int (*init_virtual_devices_t)();
+typedef int (*destroy_virtual_devices_t)();
+
+typedef uint32_t (*get_optional_feature_support_t)();
+
 typedef bool (*is_key_typed_enabled_t)();
 typedef void (*set_key_typed_enabled_t)(bool);
 
@@ -36,6 +41,8 @@ typedef void (*set_ax_poll_frequency_t)(uint32_t);
 
 typedef uint64_t (*get_post_text_delay_x11_t)();
 typedef void (*set_post_text_delay_x11_t)(uint64_t);
+
+typedef void (*set_device_procs_t)(device_open_t, device_close_t, void *);
 
 typedef screen_data* (*create_screen_info_t)(unsigned char *);
 typedef long int (*get_auto_repeat_rate_t)();
@@ -68,6 +75,11 @@ static post_event_t post_event = NULL;
 static post_events_t post_events = NULL;
 static post_text_t post_text = NULL;
 
+static init_virtual_devices_t init_virtual_devices = NULL;
+static destroy_virtual_devices_t destroy_virtual_devices = NULL;
+
+static get_optional_feature_support_t get_optional_feature_support = NULL;
+
 static is_key_typed_enabled_t is_key_typed_enabled = NULL;
 static set_key_typed_enabled_t set_key_typed_enabled = NULL;
 
@@ -79,6 +91,8 @@ static set_ax_poll_frequency_t set_ax_poll_frequency = NULL;
 
 static get_post_text_delay_x11_t get_post_text_delay_x11 = NULL;
 static set_post_text_delay_x11_t set_post_text_delay_x11 = NULL;
+
+static set_device_procs_t set_device_procs = NULL;
 
 static create_screen_info_t create_screen_info = NULL;
 static get_auto_repeat_rate_t get_auto_repeat_rate = NULL;
@@ -224,6 +238,30 @@ int hook_post_text(const uint16_t * const text) {
     return post_text(text);
 }
 
+int hook_init_virtual_devices() {
+    if (!load_backend()) {
+        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+    }
+
+    return init_virtual_devices();
+}
+
+int hook_destroy_virtual_devices() {
+    if (!load_backend()) {
+        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+    }
+
+    return destroy_virtual_devices();
+}
+
+uint32_t hook_get_optional_feature_support() {
+    if (!load_backend()) {
+        return 0;
+    }
+
+    return get_optional_feature_support();
+}
+
 bool hook_is_key_typed_enabled() {
     if (!load_backend()) {
         return false;
@@ -294,6 +332,14 @@ void hook_set_post_text_delay_x11(uint64_t delay) {
     }
 
     set_post_text_delay_x11(delay);
+}
+
+void hook_set_device_procs(device_open_t open_proc, device_close_t close_proc, void *user_data) {
+    if (!load_backend()) {
+        return;
+    }
+
+    set_device_procs(open_proc, close_proc, user_data);
 }
 
 screen_data* hook_create_screen_info(unsigned char *count) {
@@ -419,6 +465,21 @@ static bool load_backend_symbols(void *handle) {
         return false;
     }
 
+    init_virtual_devices = (init_virtual_devices_t) dlsym(handle, "hook_init_virtual_devices");
+    if (init_virtual_devices == NULL) {
+        return false;
+    }
+
+    destroy_virtual_devices = (destroy_virtual_devices_t) dlsym(handle, "hook_destroy_virtual_devices");
+    if (destroy_virtual_devices == NULL) {
+        return false;
+    }
+
+    get_optional_feature_support = (get_optional_feature_support_t) dlsym(handle, "hook_get_optional_feature_support");
+    if (get_optional_feature_support == NULL) {
+        return false;
+    }
+
     is_key_typed_enabled = (is_key_typed_enabled_t) dlsym(handle, "hook_is_key_typed_enabled");
     if (is_key_typed_enabled == NULL) {
         return false;
@@ -461,6 +522,11 @@ static bool load_backend_symbols(void *handle) {
 
     set_post_text_delay_x11 = (set_post_text_delay_x11_t) dlsym(handle, "hook_set_post_text_delay_x11");
     if (set_post_text_delay_x11 == NULL) {
+        return false;
+    }
+
+    set_device_procs = (set_device_procs_t) dlsym(handle, "hook_set_device_procs");
+    if (set_device_procs == NULL) {
         return false;
     }
 

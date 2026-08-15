@@ -1,6 +1,10 @@
 #include <logger.h>
 #include <uiohook.h>
 
+uint32_t hook_get_optional_feature_support() {
+    return 0;
+}
+
 screen_data* hook_create_screen_info(unsigned char *count) {
     logger(LOG_LEVEL_ERROR, "%s [%u]: hook_create_screen_info is not implemented for Wayland yet.\n",
             __FUNCTION__, __LINE__);

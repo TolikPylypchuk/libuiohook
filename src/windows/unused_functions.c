@@ -38,3 +38,14 @@ int hook_get_linux_backend() {
 bool hook_set_linux_backend(int backend) {
     return true;
 }
+
+int hook_init_virtual_devices() {
+    return UIOHOOK_SUCCESS;
+}
+
+int hook_destroy_virtual_devices() {
+    return UIOHOOK_SUCCESS;
+}
+
+void hook_set_device_procs(device_open_t open_proc, device_close_t close_proc, void *user_data) {
+}

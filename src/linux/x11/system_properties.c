@@ -19,6 +19,14 @@ static Display *xt_disp;
 static pthread_mutex_t xrandr_mutex = PTHREAD_MUTEX_INITIALIZER;
 static XRRScreenResources *xrandr_resources = NULL;
 
+uint32_t hook_get_optional_feature_support() {
+    return UIOHOOK_FEATURE_KEY_TYPED_EVENTS
+        | UIOHOOK_FEATURE_POST_TEXT
+        | UIOHOOK_FEATURE_ABSOLUTE_MOUSE_MOVEMENT
+        | UIOHOOK_FEATURE_ABSOLUTE_MOUSE_BUTTON_COORDS
+        | UIOHOOK_FEATURE_POINTER_PROPERTIES;
+}
+
 static void settings_cleanup_proc(void *arg) {
     if (pthread_mutex_trylock(&xrandr_mutex) == 0) {
         if (xrandr_resources != NULL) {

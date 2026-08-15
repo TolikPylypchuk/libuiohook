@@ -7,8 +7,6 @@
 static dispatcher_t dispatch = NULL;
 static void *dispatch_data = NULL;
 
-static bool key_typed_enabled = false;
-
 void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Setting new dispatch callback to %#p.\n",
             __FUNCTION__, __LINE__, dispatch_proc);
@@ -18,9 +16,12 @@ void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
 }
 
 bool hook_is_key_typed_enabled() {
-    return key_typed_enabled;
+    return false;
 }
 
 void hook_set_key_typed_enabled(bool enabled) {
-    key_typed_enabled = enabled;
+    if (enabled) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: Key typed events are not supported on Wayland.\n",
+                __FUNCTION__, __LINE__);
+    }
 }

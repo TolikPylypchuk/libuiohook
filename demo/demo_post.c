@@ -50,7 +50,7 @@ int main() {
 
     //* Move the mouse cursor in a square shape relative to the current mouse position.
     // Affected by dpi on Windows.
-    event->type = EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR;
+    event->type = EVENT_MOUSE_MOVED_RELATIVE;
     event->data.mouse.x = 0;
     event->data.mouse.y = 100;
     hook_post_event(event);

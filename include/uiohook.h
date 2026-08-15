@@ -7,48 +7,64 @@
 #include <wchar.h>
 
 /* Begin Error Codes */
-#define UIOHOOK_SUCCESS                             0x00
-#define UIOHOOK_FAILURE                             0x01
+#define UIOHOOK_SUCCESS                                       0x00
+#define UIOHOOK_FAILURE                                       0x01
 
 // System-level errors.
-#define UIOHOOK_ERROR_OUT_OF_MEMORY                 0x02
-#define UIOHOOK_ERROR_NULL                          0x03
+#define UIOHOOK_ERROR_OUT_OF_MEMORY                           0x02
+#define UIOHOOK_ERROR_NULL                                    0x03
+#define UIOHOOK_ERROR_UNSUPPORTED_FEATURE                     0x04
 
 // Linux-specific errors.
-#define UIOHOOK_ERROR_LOAD_LINUX_BACKEND            0x10
-#define UIOHOOK_ERROR_LINUX_INIT_UDEV               0x11
-#define UIOHOOK_ERROR_LINUX_INIT_LIBINPUT           0x11
-#define UIOHOOK_ERROR_LINUX_ASSIGN_SEAT             0x11
-#define UIOHOOK_ERROR_LINUX_INIT_STOP_NOTIFICATION  0x11
-#define UIOHOOK_ERROR_LINUX_EXEC_STOP_NOTIFICATION  0x12
+#define UIOHOOK_ERROR_LOAD_LINUX_BACKEND                      0x10
+#define UIOHOOK_ERROR_LINUX_INIT_UDEV                         0x11
+#define UIOHOOK_ERROR_LINUX_INIT_LIBINPUT                     0x12
+#define UIOHOOK_ERROR_LINUX_ASSIGN_SEAT                       0x13
+#define UIOHOOK_ERROR_LINUX_INIT_STOP_NOTIFICATION            0x14
+#define UIOHOOK_ERROR_LINUX_EXEC_STOP_NOTIFICATION            0x15
+#define UIOHOOK_ERROR_LINUX_NO_INPUT_DEVICES                  0x16
+#define UIOHOOK_ERROR_LINUX_OPEN_UINPUT                       0x17
+#define UIOHOOK_ERROR_LINUX_CREATE_UINPUT_DEVICE              0x18
+#define UIOHOOK_ERROR_LINUX_WRITE_UINPUT                      0x19
+#define UIOHOOK_ERROR_LINUX_OPEN_WAYLAND_DISPLAY              0x1A
+#define UIOHOOK_ERROR_LINUX_VIRTUAL_DEVICES_NOT_INITIALIZED   0x1B
 
-// X11-specific errors.
-#define UIOHOOK_ERROR_X_OPEN_DISPLAY                0x20
-#define UIOHOOK_ERROR_X_RECORD_NOT_FOUND            0x21
-#define UIOHOOK_ERROR_X_RECORD_ALLOC_RANGE          0x22
-#define UIOHOOK_ERROR_X_RECORD_CREATE_CONTEXT       0x23
-#define UIOHOOK_ERROR_X_RECORD_ENABLE_CONTEXT       0x24
-#define UIOHOOK_ERROR_X_RECORD_GET_CONTEXT          0x25
+// Legacy X11-specific errors.
+#define UIOHOOK_ERROR_X_OPEN_DISPLAY                          0x20
+#define UIOHOOK_ERROR_X_RECORD_NOT_FOUND                      0x21
+#define UIOHOOK_ERROR_X_RECORD_ALLOC_RANGE                    0x22
+#define UIOHOOK_ERROR_X_RECORD_CREATE_CONTEXT                 0x23
+#define UIOHOOK_ERROR_X_RECORD_ENABLE_CONTEXT                 0x24
+#define UIOHOOK_ERROR_X_RECORD_GET_CONTEXT                    0x25
 
 // Windows-specific errors.
-#define UIOHOOK_ERROR_SET_WINDOWS_HOOK_EX           0x30
-#define UIOHOOK_ERROR_GET_MODULE_HANDLE             0x31
-#define UIOHOOK_ERROR_CREATE_INVISIBLE_WINDOW       0x32
+#define UIOHOOK_ERROR_SET_WINDOWS_HOOK_EX                     0x30
+#define UIOHOOK_ERROR_GET_MODULE_HANDLE                       0x31
+#define UIOHOOK_ERROR_CREATE_INVISIBLE_WINDOW                 0x32
 
 // macOS-specific errors.
-#define UIOHOOK_ERROR_AXAPI_DISABLED                0x40
-#define UIOHOOK_ERROR_AXAPI_REVOKED                 0x41
-#define UIOHOOK_ERROR_CREATE_EVENT_PORT             0x42
-#define UIOHOOK_ERROR_CREATE_RUN_LOOP_SOURCE        0x43
-#define UIOHOOK_ERROR_GET_RUNLOOP                   0x44
-#define UIOHOOK_ERROR_CREATE_OBSERVER               0x45
+#define UIOHOOK_ERROR_AXAPI_DISABLED                          0x40
+#define UIOHOOK_ERROR_AXAPI_REVOKED                           0x41
+#define UIOHOOK_ERROR_CREATE_EVENT_PORT                       0x42
+#define UIOHOOK_ERROR_CREATE_RUN_LOOP_SOURCE                  0x43
+#define UIOHOOK_ERROR_GET_RUNLOOP                             0x44
+#define UIOHOOK_ERROR_CREATE_OBSERVER                         0x45
 /* End Error Codes */
 
+/* Begin Optional Features */
+#define UIOHOOK_FEATURE_EVENT_SUPPRESSION              (1 << 0)
+#define UIOHOOK_FEATURE_KEY_TYPED_EVENTS               (1 << 1)
+#define UIOHOOK_FEATURE_POST_TEXT                      (1 << 2)
+#define UIOHOOK_FEATURE_ABSOLUTE_MOUSE_MOVEMENT        (1 << 3)
+#define UIOHOOK_FEATURE_ABSOLUTE_MOUSE_BUTTON_COORDS   (1 << 4)
+#define UIOHOOK_FEATURE_POINTER_PROPERTIES             (1 << 5)
+/* End Optional Features */
+
 /* Begin Linux Back-ends */
-#define LINUX_BACKEND_AUTO       0x0
-#define LINUX_BACKEND_X11        0x1
-#define LINUX_BACKEND_WAYLAND    0x2
-#define LINUX_BACKEND_LEGACY     0x3
+#define LINUX_BACKEND_AUTO      0x0
+#define LINUX_BACKEND_X11       0x1
+#define LINUX_BACKEND_WAYLAND   0x2
+#define LINUX_BACKEND_LEGACY    0x3
 /* End Linux Back-ends */
 
 /* Begin Log Levels and Function Prototype */
@@ -72,13 +88,14 @@ typedef enum _event_type {
     EVENT_KEY_RELEASED,
     EVENT_MOUSE_CLICKED,
     EVENT_MOUSE_PRESSED,
-    EVENT_MOUSE_RELEASED,
-    EVENT_MOUSE_MOVED,
-    EVENT_MOUSE_DRAGGED,
-    EVENT_MOUSE_WHEEL,
     EVENT_MOUSE_PRESSED_IGNORE_COORDS,
+    EVENT_MOUSE_RELEASED,
     EVENT_MOUSE_RELEASED_IGNORE_COORDS,
-    EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR
+    EVENT_MOUSE_MOVED,
+    EVENT_MOUSE_MOVED_RELATIVE,
+    EVENT_MOUSE_DRAGGED,
+    EVENT_MOUSE_DRAGGED_RELATIVE,
+    EVENT_MOUSE_WHEEL
 } event_type;
 
 typedef struct _screen_data {
@@ -129,6 +146,10 @@ typedef struct _uiohook_event {
 } uiohook_event;
 
 typedef void (*dispatcher_t)(uiohook_event * const, void *);
+
+typedef int (*device_open_t)(const char *path, int flags, void *user_data);
+
+typedef void (*device_close_t)(int fd, void *user_data);
 /* End Virtual Event Types and Data Structures */
 
 
@@ -439,9 +460,18 @@ extern "C" {
     // Send text back to the system.
     int hook_post_text(const uint16_t * const text);
 
+    // Initialize the virtual devices used for event simulation.
+    int hook_init_virtual_devices();
+
+    // Destroy the virtual devices used for event simulation.
+    int hook_destroy_virtual_devices();
+
     /* End Main Functions */
 
     /* Begin Platform-Independent Configuration Functions */
+
+    // Get the bitmask of the optional features which are supported on the current platform.
+    uint32_t hook_get_optional_feature_support();
 
     // Check whether key typed events are enabled.
     bool hook_is_key_typed_enabled();
@@ -483,6 +513,9 @@ extern "C" {
 
     // Set the back-end for Linux.
     bool hook_set_linux_backend(int backend);
+
+    // Supply the device node descriptors instead of opening them directly.
+    void hook_set_device_procs(device_open_t open_proc, device_close_t close_proc, void *user_data);
 
     /* End Linux Configuration Functions */
 

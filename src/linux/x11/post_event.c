@@ -181,7 +181,7 @@ static int post_mouse_wheel_event(uiohook_event * const event) {
 static int post_mouse_motion_event(uiohook_event * const event) {
     int status = UIOHOOK_FAILURE;
 
-    if (event->type == EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR) {
+    if (event->type == EVENT_MOUSE_MOVED_RELATIVE || event->type == EVENT_MOUSE_DRAGGED_RELATIVE) {
         Window window;
         int x, y;
         unsigned int mask;
@@ -248,7 +248,8 @@ int hook_post_events(uiohook_event * const events, uint32_t size) {
 
             case EVENT_MOUSE_MOVED:
             case EVENT_MOUSE_DRAGGED:
-            case EVENT_MOUSE_MOVED_RELATIVE_TO_CURSOR:
+            case EVENT_MOUSE_MOVED_RELATIVE:
+            case EVENT_MOUSE_DRAGGED_RELATIVE:
                 status = post_mouse_motion_event(event);
                 break;
 
@@ -462,4 +463,12 @@ int hook_post_text(const uint16_t * const text) {
     XUnlockDisplay(helper_disp);
 
     return status;
+}
+
+int hook_init_virtual_devices() {
+    return UIOHOOK_SUCCESS;
+}
+
+int hook_destroy_virtual_devices() {
+    return UIOHOOK_SUCCESS;
 }
