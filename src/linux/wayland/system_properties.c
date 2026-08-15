@@ -52,8 +52,6 @@ long int hook_get_pointer_sensitivity() {
 }
 
 long int hook_get_multi_click_time() {
-    logger(LOG_LEVEL_ERROR, "%s [%u]: hook_get_multi_click_time is not implemented for Wayland yet.\n",
-            __FUNCTION__, __LINE__);
-
-    return -1;
+    // Not supported by Wayland, so return the default value for GNOME and KDE.
+    return 400;
 }

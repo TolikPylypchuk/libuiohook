@@ -7,6 +7,10 @@
 extern char * system_properties_tests();
 extern char * input_helper_tests();
 
+#ifdef __linux__
+extern char * evdev_input_helper_tests();
+#endif
+
 int tests_run = 0;
 
 static char *map_log_level_name(unsigned int level) {
@@ -50,6 +54,10 @@ static char * all_tests() {
 
     mu_run_test(system_properties_tests);
     mu_run_test(input_helper_tests);
+
+    #ifdef __linux__
+    mu_run_test(evdev_input_helper_tests);
+    #endif
 
     mu_run_test(cleanup_tests);
 

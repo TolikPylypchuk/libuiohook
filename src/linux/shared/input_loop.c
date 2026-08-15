@@ -6,10 +6,10 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <linux/input-event-codes.h>
 #include <sys/eventfd.h>
 
 #include <libinput.h>
@@ -18,85 +18,155 @@
 #include <logger.h>
 #include <uiohook.h>
 
+#include "device_procs.h"
+#include "dispatch_event.h"
+#include "input_helper.h"
 #include "input_loop.h"
+
+#define VIRTUAL_DEVICE_PATH         "/sys/devices/virtual/"
 
 static int stop_fd = -1;
 
-static pthread_mutex_t device_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t stop_fd_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static device_open_t device_open_proc = NULL;
-static device_close_t device_close_proc = NULL;
-static device_open_t current_device_open_proc = NULL;
-static device_close_t current_device_close_proc = NULL;
-static void *device_user_data = NULL;
+static device_procs procs;
 
-void hook_set_device_procs(device_open_t open_proc, device_close_t close_proc, void *user_data) {
-    pthread_mutex_lock(&device_mutex);
+static const char emulated_device;
 
-    device_open_proc = open_proc;
-    device_close_proc = close_proc;
-    device_user_data = user_data;
-
-    pthread_mutex_unlock(&device_mutex);
-}
+static unsigned int input_device_count = 0;
 
 static int open_restricted(const char *path, int flags, void *user_data) {
-    if (current_device_open_proc != NULL) {
-        return current_device_open_proc(path, flags, user_data);
-    }
-
-    int fd = open(path, flags);
-    return fd < 0 ? -errno : fd;
+    return open_device(&procs, path, flags);
 }
 
 static void close_restricted(int fd, void *user_data) {
-    if (current_device_close_proc != NULL) {
-        current_device_close_proc(fd, user_data);
-        return;
-    }
-
-    close(fd);
+    close_device(&procs, fd);
 }
 
-const static struct libinput_interface interface = {
+static const struct libinput_interface interface = {
     .open_restricted = open_restricted,
     .close_restricted = close_restricted
 };
 
-static void handle_events(struct libinput *li) {
-    libinput_dispatch(li);
+static void add_device(struct libinput_device *device) {
+    if (!libinput_device_has_capability(device, LIBINPUT_DEVICE_CAP_KEYBOARD)
+            && !libinput_device_has_capability(device, LIBINPUT_DEVICE_CAP_POINTER)) {
+        return;
+    }
+
+    input_device_count++;
+
+    struct udev_device *udev_device = libinput_device_get_udev_device(device);
+    if (udev_device == NULL) {
+        return;
+    }
+
+    const char *syspath = udev_device_get_syspath(udev_device);
+    if (syspath != NULL && strncmp(syspath, VIRTUAL_DEVICE_PATH, strlen(VIRTUAL_DEVICE_PATH)) == 0) {
+        libinput_device_set_user_data(device, (void *) &emulated_device);
+    }
+
+    const char *devnode = udev_device_get_devnode(udev_device);
+    if (devnode != NULL) {
+        int fd = open_device(&procs, devnode, O_RDONLY | O_NONBLOCK);
+
+        if (fd >= 0) {
+            seed_modifier_mask(fd);
+            close_device(&procs, fd);
+        } else {
+            logger(LOG_LEVEL_WARN, "%s [%u]: Failed to open %s to read the modifier state: %s\n",
+                    __FUNCTION__, __LINE__, devnode, strerrorname_np(-fd));
+        }
+    }
+
+    udev_device_unref(udev_device);
+}
+
+static void remove_device(struct libinput_device *device) {
+    if (libinput_device_has_capability(device, LIBINPUT_DEVICE_CAP_KEYBOARD)
+            || libinput_device_has_capability(device, LIBINPUT_DEVICE_CAP_POINTER)) {
+        input_device_count--;
+    }
+}
+
+static bool is_device_event(enum libinput_event_type event_type) {
+    return event_type == LIBINPUT_EVENT_DEVICE_ADDED || event_type == LIBINPUT_EVENT_DEVICE_REMOVED;
+}
+
+static void handle_event(struct libinput_event *event, bool keyboard, bool mouse) {
+    struct libinput_device *device = libinput_event_get_device(event);
+    bool emulated = libinput_device_get_user_data(device) != NULL;
+
+    switch (libinput_event_get_type(event)) {
+        case LIBINPUT_EVENT_DEVICE_ADDED:
+            add_device(device);
+            break;
+
+        case LIBINPUT_EVENT_DEVICE_REMOVED:
+            remove_device(device);
+            break;
+
+        case LIBINPUT_EVENT_KEYBOARD_KEY:
+            if (keyboard) {
+                dispatch_libinput_event(event, emulated);
+            }
+            break;
+
+        case LIBINPUT_EVENT_POINTER_MOTION:
+        case LIBINPUT_EVENT_POINTER_MOTION_ABSOLUTE:
+        case LIBINPUT_EVENT_POINTER_BUTTON:
+        case LIBINPUT_EVENT_POINTER_SCROLL_WHEEL:
+        case LIBINPUT_EVENT_POINTER_SCROLL_FINGER:
+        case LIBINPUT_EVENT_POINTER_SCROLL_CONTINUOUS:
+            if (mouse) {
+                dispatch_libinput_event(event, emulated);
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+
+static struct libinput_event *count_devices(struct libinput *li) {
+    if (libinput_dispatch(li) != 0) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: Failed to dispatch libinput events!\n",
+                __FUNCTION__, __LINE__);
+
+        return NULL;
+    }
 
     struct libinput_event *event;
 
     while ((event = libinput_get_event(li)) != NULL) {
-        enum libinput_event_type event_type = libinput_event_get_type(event);
-
-        if (event_type == LIBINPUT_EVENT_POINTER_AXIS) {
-			libinput_event_destroy(event);
-			continue;
-		}
-
-        switch (event_type) {
-            case LIBINPUT_EVENT_KEYBOARD_KEY:
-                struct libinput_event_keyboard *keyboard_event = libinput_event_get_keyboard_event(event);
-                uint32_t key = libinput_event_keyboard_get_key(keyboard_event);
-                enum libinput_key_state state = libinput_event_keyboard_get_key_state(keyboard_event);
-
-                break;
-
-            case LIBINPUT_EVENT_POINTER_MOTION_ABSOLUTE:
-                struct libinput_event_pointer *pointer_event = libinput_event_get_pointer_event(event);
-
-                break;
+        if (!is_device_event(libinput_event_get_type(event))) {
+            return event;
         }
 
+        handle_event(event, false, false);
         libinput_event_destroy(event);
-        libinput_dispatch(li);
+    }
+
+    return NULL;
+}
+
+static void handle_events(struct libinput *li, bool keyboard, bool mouse) {
+    if (libinput_dispatch(li) != 0) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: Failed to dispatch libinput events!\n",
+                __FUNCTION__, __LINE__);
+
+        return;
+    }
+
+    struct libinput_event *event;
+
+    while ((event = libinput_get_event(li)) != NULL) {
+        handle_event(event, keyboard, mouse);
+        libinput_event_destroy(event);
     }
 }
 
-int run_libinput() {
+int run_libinput(bool keyboard, bool mouse) {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Creating a udev context.\n",
             __FUNCTION__, __LINE__);
 
@@ -112,14 +182,9 @@ int run_libinput() {
     logger(LOG_LEVEL_DEBUG, "%s [%u]: Creating a libinput context.\n",
             __FUNCTION__, __LINE__);
 
-    pthread_mutex_lock(&device_mutex);
+    procs = get_device_procs();
 
-    current_device_open_proc = device_open_proc;
-    current_device_close_proc = device_close_proc;
-
-    struct libinput *li = libinput_udev_create_context(&interface, device_user_data, udev);
-
-    pthread_mutex_unlock(&device_mutex);
+    struct libinput *li = libinput_udev_create_context(&interface, procs.user_data, udev);
 
     if (li == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to create a libinput context!\n",
@@ -129,10 +194,15 @@ int run_libinput() {
         return UIOHOOK_ERROR_LINUX_INIT_LIBINPUT;
     }
 
-    logger(LOG_LEVEL_DEBUG, "%s [%u]: Assigning the libinput context to seat0.\n",
-            __FUNCTION__, __LINE__);
+    const char *seat = getenv("XDG_SEAT");
+    if (seat == NULL || seat[0] == '\0') {
+        seat = "seat0";
+    }
 
-    int error = libinput_udev_assign_seat(li, "seat0");
+    logger(LOG_LEVEL_DEBUG, "%s [%u]: Assigning the libinput context to %s.\n",
+            __FUNCTION__, __LINE__, seat);
+
+    int error = libinput_udev_assign_seat(li, seat);
     if (error) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Libinput seat assignment has failed! (%#X)\n",
                 __FUNCTION__, __LINE__, error);
@@ -144,18 +214,20 @@ int run_libinput() {
 
     struct pollfd fds[2];
 
-	fds[0].fd = libinput_get_fd(li);
-	fds[0].events = POLLIN;
-	fds[0].revents = 0;
+    fds[0].fd = libinput_get_fd(li);
+    fds[0].events = POLLIN;
+    fds[0].revents = 0;
 
     pthread_mutex_lock(&stop_fd_mutex);
     stop_fd = eventfd(0, EFD_NONBLOCK);
     pthread_mutex_unlock(&stop_fd_mutex);
 
-    if (stop_fd < -1) {
+    if (stop_fd < 0) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to create a stop notification file descriptor: %s\n",
                 __FUNCTION__, __LINE__, strerrorname_np(errno));
 
+        libinput_unref(li);
+        udev_unref(udev);
         return UIOHOOK_ERROR_LINUX_INIT_STOP_NOTIFICATION;
     }
 
@@ -163,43 +235,71 @@ int run_libinput() {
     fds[1].events = POLLIN;
     fds[1].revents = 0;
 
-    handle_events(li);
+    clear_modifier_mask();
+    input_device_count = 0;
 
-    bool running = true;
-    while (running) {
-        int result = poll(fds, 2, -1) > -1;
-        if (result < 0) {
-            if (errno == EINTR) { // We don't care about interruptions here.
-                continue;
+    struct libinput_event *pending_event = count_devices(li);
+
+    int status = UIOHOOK_SUCCESS;
+
+    if (input_device_count == 0) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: No keyboard or pointer devices are available! "
+                "Access to /dev/input is most likely missing.\n",
+                __FUNCTION__, __LINE__);
+
+        status = UIOHOOK_ERROR_LINUX_NO_INPUT_DEVICES;
+
+        if (pending_event != NULL) {
+            libinput_event_destroy(pending_event);
+        }
+    } else {
+        logger(LOG_LEVEL_DEBUG, "%s [%u]: Watching %u input device(s).\n",
+                __FUNCTION__, __LINE__, input_device_count);
+
+        dispatch_hook_enabled();
+
+        if (pending_event != NULL) {
+            handle_event(pending_event, keyboard, mouse);
+            libinput_event_destroy(pending_event);
+        }
+
+        handle_events(li, keyboard, mouse);
+
+        bool running = true;
+        while (running) {
+            int result = poll(fds, 2, -1);
+            if (result < 0) {
+                if (errno == EINTR) { // We don't care about interruptions here.
+                    continue;
+                }
+
+                logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to poll for events: %s\n",
+                        __FUNCTION__, __LINE__, strerrorname_np(errno));
+
+                break;
             }
 
-            logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to poll for events: %s\n",
-                    __FUNCTION__, __LINE__, strerrorname_np(errno));
+            if (fds[0].revents & POLLIN) {
+                handle_events(li, keyboard, mouse);
+            }
 
-            break;
+            if (fds[1].revents & POLLIN) {
+                running = false;
+            }
         }
 
-        if (fds[0].revents & POLLIN) {
-            handle_events(li);
-        }
-
-        if (fds[1].revents & POLLIN) {
-            running = false;
-        }
-	}
+        dispatch_hook_disabled();
+    }
 
     pthread_mutex_lock(&stop_fd_mutex);
     close(stop_fd);
     stop_fd = -1;
     pthread_mutex_unlock(&stop_fd_mutex);
 
-    current_device_open_proc = NULL;
-    current_device_close_proc = NULL;
-
     libinput_unref(li);
     udev_unref(udev);
 
-    return UIOHOOK_SUCCESS;
+    return status;
 }
 
 int stop_libinput() {

@@ -1,7 +1,9 @@
 #ifndef INPUT_LOOP_H
 #define INPUT_LOOP_H
 
-int run_libinput();
+#include <stdbool.h>
+
+int run_libinput(bool keyboard, bool mouse);
 
 int stop_libinput();
 

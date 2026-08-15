@@ -36,7 +36,7 @@ elseif (APPLE)
 else()
     add_library(uiohook-x11 SHARED
         "src/logger.c"
-        "src/linux/shared/input_loop.c"
+        "src/linux/shared/device_procs.c"
         "src/linux/x11/dispatch_event.c"
         "src/linux/x11/input_helper.c"
         "src/linux/x11/input_hook.c"
@@ -55,9 +55,10 @@ else()
 
     add_library(uiohook-wayland SHARED
         "src/logger.c"
+        "src/linux/shared/device_procs.c"
+        "src/linux/shared/dispatch_event.c"
+        "src/linux/shared/input_helper.c"
         "src/linux/shared/input_loop.c"
-        "src/linux/wayland/dispatch_event.c"
-        "src/linux/wayland/input_helper.c"
         "src/linux/wayland/input_hook.c"
         "src/linux/wayland/monitor_helper.c"
         "src/linux/wayland/post_event.c"
@@ -192,7 +193,7 @@ if(UNIX AND NOT APPLE)
 
     target_link_libraries(uiohook PRIVATE dl)
 
-    pkg_check_modules(Libinput REQUIRED libinput)
+    pkg_check_modules(LIBINPUT REQUIRED libinput)
     target_include_directories(uiohook-x11 PRIVATE ${LIBINPUT_INCLUDE_DIRS})
     target_link_libraries(uiohook-x11 ${LIBINPUT_LIBRARIES})
     target_include_directories(uiohook-wayland PRIVATE ${LIBINPUT_INCLUDE_DIRS})
@@ -360,6 +361,13 @@ if(BUILD_TEST)
     target_link_libraries(uiohook_tests uiohook "${CMAKE_THREAD_LIBS_INIT}")
 
     if (UNIX AND NOT APPLE)
+        target_sources(uiohook_tests PRIVATE
+            "./src/linux/shared/input_helper.c"
+            "./test/evdev_input_helper_test.c"
+        )
+
+        target_include_directories(uiohook_tests PRIVATE "./src/linux")
+
         add_dependencies(uiohook_tests uiohook-legacy)
         target_link_libraries(uiohook_tests uiohook-legacy)
     endif()

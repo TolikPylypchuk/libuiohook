@@ -124,8 +124,8 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
     dispatch_event(&uio_event);
     consumed = uio_event.mask & MASK_CONSUMED;
 
-    // If the pressed event was not consumed and key typed events are enabled.
-    if (key_typed_enabled && !consumed) {
+    // XRecord provides a copy of the event stream, so a consumed key press is still typed.
+    if (key_typed_enabled) {
         KeySym keysym = 0x00;
 
         wchar_t surrogate[2] = {};
@@ -508,8 +508,8 @@ bool dispatch_mouse_release(uint64_t timestamp, XButtonEvent * const x_event) {
     consumed = dispatch_mouse_button_released(timestamp, (XButtonReleasedEvent *) x_event);
     bool is_dragged = (bool) (get_modifiers() & 0x1F00);
 
-    if (!consumed && !is_dragged) {
-        // If the pressed event was not consumed...
+    // XRecord provides a copy of the event stream, so a consumed release is still a click.
+    if (!is_dragged) {
         dispatch_mouse_button_clicked(timestamp, x_event);
     }
 
