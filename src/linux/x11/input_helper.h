@@ -5,8 +5,6 @@
 #include <stdint.h>
 
 #include <X11/Xlib.h>
-#include <X11/Xlibint.h>
-#include <X11/extensions/record.h>
 
 // Virtual button codes that are not defined by X11.
 #define Button1     1
@@ -19,15 +17,8 @@
 #define XButton1    8
 #define XButton2    9
 
-// For this struct, refer to libxnee, requires Xlibint.h
-typedef union {
-    unsigned char       type;
-    xEvent              event;
-    xResourceReq        req;
-    xGenericReply       reply;
-    xError              error;
-    xConnSetupPrefix    setup;
-} XRecordDatum;
+// X11 key codes are offset by 8 from the evdev key codes which they are derived from.
+#define EVDEV_KEYCODE_OFFSET 8
 
 // Helper display used by input helper, properties and post event.
 extern Display *helper_disp;
@@ -35,47 +26,14 @@ extern Display *helper_disp;
 /* Converts a uiohook virtual key code to the appropriate X11 key code. */
 extern KeyCode uiocode_to_keycode(uint16_t uiocode);
 
-/* Converts a X11 key code to the appropriate uiohook virtual key code. */
-extern uint16_t keycode_to_uiocode(KeyCode keycode);
-
-/* Converts a X11 key event to a key symbol and retrieves it's appropriate unicode representation. */
-extern size_t event_to_unicode(XKeyEvent *x_event, wchar_t *surrogate, size_t length, KeySym *keysym);
-
-/* Set the native modifier mask for current event. */
-extern void set_modifier_mask(uint16_t mask);
-
-/* Unset the native modifier mask for current event. */
-extern void unset_modifier_mask(uint16_t mask);
-
-/* Clear the native modifier mask for current event. */
-extern void clear_modifier_mask();
-
-/* Get the current native modifier mask state. */
-extern uint16_t get_modifiers();
-
-/* Convert XRecord data to XEvent structures. */
-extern void wire_data_to_event(XRecordInterceptData *recorded_data, XEvent *x_event);
+/* Converts a X11 key event to its unicode representation using the given input context. */
+extern size_t event_to_unicode(XKeyEvent *x_event, XIC xic, wchar_t *surrogate, size_t length);
 
 /* Lookup a X11 buttons possible remapping and return that value. */
 extern uint8_t button_map_lookup(uint8_t button);
 
-/* Enable detectable auto-repeat for keys */
-extern bool enable_key_repeat();
-
 extern void load_key_mappings();
 
 extern unsigned int get_x11_keycode(const char * keycode_name);
-
-/* Initialize items required for KeyCodeToKeySym() and KeySymToUnicode()
- * functionality.  This method is called by OnLibraryLoad() and may need to be
- * called in combination with UnloadInputHelper() if the native keyboard layout
- * is changed. */
-extern int load_input_helper();
-
-/* De-initialize items required for KeyCodeToKeySym() and KeySymToUnicode()
- * functionality.  This method is called by OnLibraryUnload() and may need to be
- * called in combination with LoadInputHelper() if the native keyboard layout
- * is changed. */
-extern void unload_input_helper();
 
 #endif

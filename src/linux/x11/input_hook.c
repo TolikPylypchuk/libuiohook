@@ -1,418 +1,221 @@
-#include <inttypes.h>
-#include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <wchar.h>
 
-#include <sys/time.h>
-
-#include <xcb/xkb.h>
 #include <X11/XKBlib.h>
-#include <X11/keysym.h>
-#include <X11/Xlibint.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/extensions/record.h>
 
+#include <logger.h>
 #include <uiohook.h>
 
-#include "dispatch_event.h"
+#include "backend.h"
 #include "input_helper.h"
-#include "logger.h"
+#include "input_loop.h"
+#include "system_properties.h"
 
-typedef struct _hook_info {
-    struct _data {
-        Display *display;
-        XRecordRange *range;
-    } data;
-    struct _ctrl {
-        Display *display;
-        XRecordContext context;
-    } ctrl;
-} hook_info;
-static hook_info *hook;
+static Display *hook_disp = NULL;
+static XIM hook_xim = NULL;
+static XIC hook_xic = NULL;
 
-static bool keyboard = true;
-static bool mouse = true;
+static bool pointer_position_unavailable_logged = false;
 
-/* Get the current timestamp in Unix epoch time. */
-static uint64_t get_unix_timestamp() {
-    struct timeval system_time;
+// The input context is only needed for key typed events, so it's created along with the first one.
+static bool input_context_loaded = false;
 
-    // Get the local system time in UTC.
-    gettimeofday(&system_time, NULL);
+static void load_input_context() {
+    if (input_context_loaded) {
+        return;
+    }
 
-    // Convert the local system time to a Unix epoch in MS.
-    uint64_t timestamp = (system_time.tv_sec * 1000) + (system_time.tv_usec / 1000);
+    input_context_loaded = true;
 
-    return timestamp;
-}
+    XSetLocaleModifiers("");
+    hook_xim = XOpenIM(hook_disp, NULL, NULL, NULL);
+    if (hook_xim == NULL) {
+        // Fall back to the internal input method.
+        XSetLocaleModifiers("@im=none");
+        hook_xim = XOpenIM(hook_disp, NULL, NULL, NULL);
+    }
 
-// Initialize the modifier lock masks.
-static void set_locks() {
-    unsigned int led_mask = 0x00;
-    if (XkbGetIndicatorState(helper_disp, XkbUseCoreKbd, &led_mask) == Success) {
-        if (led_mask & 0x01) {
-            set_modifier_mask(MASK_CAPS_LOCK);
-        } else {
-            unset_modifier_mask(MASK_CAPS_LOCK);
-        }
+    if (hook_xim == NULL) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: XOpenIM() failed!\n",
+                __FUNCTION__, __LINE__);
 
-        if (led_mask & 0x02) {
-            set_modifier_mask(MASK_NUM_LOCK);
-        } else {
-            unset_modifier_mask(MASK_NUM_LOCK);
-        }
+        return;
+    }
 
-        if (led_mask & 0x04) {
-            set_modifier_mask(MASK_SCROLL_LOCK);
-        } else {
-            unset_modifier_mask(MASK_SCROLL_LOCK);
-        }
-    } else {
-        logger(LOG_LEVEL_WARN, "%s [%u]: XkbGetIndicatorState failed to get current led mask!\n",
+    Window root = XDefaultRootWindow(hook_disp);
+    hook_xic = XCreateIC(hook_xim,
+        XNInputStyle,   XIMPreeditNothing | XIMStatusNothing,
+        XNClientWindow, root,
+        XNFocusWindow,  root,
+        NULL);
+
+    if (hook_xic == NULL) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: XCreateIC() failed!\n",
                 __FUNCTION__, __LINE__);
     }
 }
 
-// Set the modifier mask to the current modifiers.
-static void set_modifiers() {
-    clear_modifier_mask();
-    set_locks();
+static void unload_input_context() {
+    if (hook_xic != NULL) {
+        XDestroyIC(hook_xic);
+        hook_xic = NULL;
+    }
 
-    KeyCode keycode;
-    char keymap[32];
-    XQueryKeymap(helper_disp, keymap);
+    if (hook_xim != NULL) {
+        XCloseIM(hook_xim);
+        hook_xim = NULL;
+    }
 
-    keycode = XKeysymToKeycode(helper_disp, XK_Shift_L);
-    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_SHIFT_L); }
-    keycode = XKeysymToKeycode(helper_disp, XK_Shift_R);
-    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_SHIFT_R); }
-    keycode = XKeysymToKeycode(helper_disp, XK_Control_L);
-    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_CTRL_L);  }
-    keycode = XKeysymToKeycode(helper_disp, XK_Control_R);
-    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_CTRL_R);  }
-    keycode = XKeysymToKeycode(helper_disp, XK_Alt_L);
-    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_ALT_L);   }
-    keycode = XKeysymToKeycode(helper_disp, XK_Alt_R);
-    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_ALT_R);   }
-    keycode = XKeysymToKeycode(helper_disp, XK_Super_L);
-    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_META_L);  }
-    keycode = XKeysymToKeycode(helper_disp, XK_Super_R);
-    if (keymap[keycode / 8] & (1 << (keycode % 8))) { set_modifier_mask(MASK_META_R);  }
+    input_context_loaded = false;
+}
 
-    Window unused_win;
-    int unused_int;
+// Converts a uiohook modifier mask into the state mask of an X11 key event.
+static unsigned int get_x11_modifier_mask(uint16_t modifier_mask) {
+    unsigned int state = 0x0000;
+
+    if (modifier_mask & (MASK_SHIFT_L | MASK_SHIFT_R)) { state |= ShiftMask;   }
+    if (modifier_mask & (MASK_CTRL_L  | MASK_CTRL_R))  { state |= ControlMask; }
+    if (modifier_mask & (MASK_ALT_L   | MASK_ALT_R))   { state |= Mod1Mask;    }
+    if (modifier_mask & (MASK_META_L  | MASK_META_R))  { state |= Mod4Mask;    }
+    if (modifier_mask & MASK_CAPS_LOCK)                { state |= LockMask;    }
+    if (modifier_mask & MASK_NUM_LOCK)                 { state |= Mod2Mask;    }
+
+    return state;
+}
+
+// Gets the state mask of an X11 key event, along with the currently active layout group.
+static unsigned int get_x11_key_state(uint16_t modifier_mask) {
+    XkbStateRec state;
+
+    if (XkbGetState(hook_disp, XkbUseCoreKbd, &state) == Success) {
+        return XkbBuildCoreState(state.mods, state.group);
+    }
+
+    logger(LOG_LEVEL_WARN, "%s [%u]: XkbGetState() failed!\n",
+            __FUNCTION__, __LINE__);
+
+    return get_x11_modifier_mask(modifier_mask);
+}
+
+size_t backend_key_to_unicode(uint16_t evdev_code, uint16_t modifier_mask, wchar_t *buffer, size_t length) {
+    if (hook_disp == NULL) {
+        return 0;
+    }
+
+    load_input_context();
+
+    Window root = XDefaultRootWindow(hook_disp);
+
+    // Synthesize an XKeyEvent for the X server to translate.
+    XKeyEvent x_event = {
+        .type = KeyPress,
+        .serial = 0,
+        .send_event = False,
+        .display = hook_disp,
+
+        .window = root,
+        .root = root,
+        .subwindow = None,
+
+        .time = CurrentTime,
+
+        .x = 0,
+        .y = 0,
+        .x_root = 0,
+        .y_root = 0,
+
+        .state = get_x11_key_state(modifier_mask),
+        .keycode = evdev_code + EVDEV_KEYCODE_OFFSET,
+        .same_screen = True
+    };
+
+    return event_to_unicode(&x_event, hook_xic, buffer, length);
+}
+
+bool backend_get_pointer_position(int16_t *x, int16_t *y) {
+    if (hook_disp == NULL) {
+        return false;
+    }
+
+    Window root, child;
+    int root_x, root_y, win_x, win_y;
     unsigned int mask;
-    if (XQueryPointer(helper_disp, DefaultRootWindow(helper_disp), &unused_win, &unused_win, &unused_int, &unused_int, &unused_int, &unused_int, &mask)) {
-        if (mask & Button1Mask) { set_modifier_mask(MASK_BUTTON1); }
-        if (mask & Button2Mask) { set_modifier_mask(MASK_BUTTON2); }
-        if (mask & Button3Mask) { set_modifier_mask(MASK_BUTTON3); }
-        if (mask & Button4Mask) { set_modifier_mask(MASK_BUTTON4); }
-        if (mask & Button5Mask) { set_modifier_mask(MASK_BUTTON5); }
-    } else {
-        logger(LOG_LEVEL_WARN, "%s [%u]: XQueryPointer failed to get current modifiers!\n",
-                __FUNCTION__, __LINE__);
-    }
-}
 
-void hook_event_proc(XPointer closeure, XRecordInterceptData *recorded_data) {
-    uint64_t timestamp = get_unix_timestamp();
-
-    XEvent event;
-    wire_data_to_event(recorded_data, &event);
-
-    set_modifiers();
-
-    XRecordDatum *data = (XRecordDatum *) recorded_data->data;
-    switch (recorded_data->category) {
-        case XRecordStartOfData:
-            dispatch_hook_enabled(timestamp);
-            break;
-
-        case XRecordEndOfData:
-            dispatch_hook_disabled(timestamp);
-            break;
-
-        //case XRecordFromClient: // TODO Should we be listening for Client Events?
-        case XRecordFromServer:
-            switch (data->type) {
-                case KeyPress:
-                    if (keyboard) {
-                        dispatch_key_press(timestamp, (XKeyPressedEvent *) &event);
-                    }
-                    break;
-
-                case KeyRelease:
-                    if (keyboard) {
-                        dispatch_key_release(timestamp, (XKeyReleasedEvent *) &event);
-                    }
-                    break;
-
-                case ButtonPress:
-                    if (mouse) {
-                        dispatch_mouse_press(timestamp, (XButtonPressedEvent *) &event);
-                    }
-                    break;
-
-                case ButtonRelease:
-                    if (mouse) {
-                        dispatch_mouse_release(timestamp, (XButtonReleasedEvent *) &event);
-                    }
-                    break;
-
-                case MotionNotify:
-                    if (mouse) {
-                        dispatch_mouse_move(timestamp, (XMotionEvent *) &event);
-                    }
-                    break;
-
-                case MappingNotify:
-                    // FIXME
-                    // event with a request member of MappingKeyboard or MappingModifier occurs
-                    //XRefreshKeyboardMapping(event_map)
-                    //XMappingEvent *event_map;
-                    break;
-
-                default:
-                    logger(LOG_LEVEL_DEBUG, "%s [%u]: Unhandled X11 event: %#X.\n",
-                            __FUNCTION__, __LINE__,
-                            (unsigned int) data->type);
-            }
-            break;
-
-        default:
-            logger(LOG_LEVEL_WARN, "%s [%u]: Unhandled X11 hook category! (%#X)\n",
-                    __FUNCTION__, __LINE__, recorded_data->category);
-    }
-
-    // https://www.x.org/releases/X11R7.7/doc/libXtst/recordlib.html
-    // Recording clients should use the XRecordFreeData function to free the XRecordInterceptData structure.
-    XRecordFreeData(recorded_data);
-
-    // TODO There is no way to consume the XRecord event.
-}
-
-static int xrecord_block() {
-    int status = UIOHOOK_FAILURE;
-
-    // Initialize native input helper.
-    int input_helper_status = load_input_helper();
-    if (input_helper_status != UIOHOOK_SUCCESS) {
-        unload_input_helper();
-        return input_helper_status;
-    }
-
-    // Save the data display associated with this hook so it is passed to each event.
-    XPointer closure = NULL;
-
-    // Sync blocks until XRecordDisableContext() is called.
-    if (XRecordEnableContext(hook->data.display, hook->ctrl.context, hook_event_proc, closure)) {
-        status = UIOHOOK_SUCCESS;
-    } else {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: XRecordEnableContext failure!\n",
-                __FUNCTION__, __LINE__);
-
-        status = UIOHOOK_ERROR_X_RECORD_ENABLE_CONTEXT;
-    }
-
-    // Uninitialize native input helper functions.
-    unload_input_helper();
-
-    return status;
-}
-
-static int xrecord_alloc() {
-    int status = UIOHOOK_FAILURE;
-
-    // Make sure the data display is synchronized to prevent late event delivery!
-    // See Bug 42356 for more information.
-    // https://bugs.freedesktop.org/show_bug.cgi?id=42356#c4
-    XSynchronize(hook->data.display, True);
-
-    // Setup XRecord range.
-    XRecordClientSpec clients = XRecordAllClients;
-
-    hook->data.range = XRecordAllocRange();
-    if (hook->data.range != NULL) {
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: XRecordAllocRange successful.\n",
-                __FUNCTION__, __LINE__);
-
-        hook->data.range->device_events.first = KeyPress;
-        hook->data.range->device_events.last = MappingNotify;
-
-        // Note that the documentation for this function is incorrect,
-        // hook->data.display should be used!
-        // See: http://www.x.org/releases/X11R7.6/doc/libXtst/recordlib.txt
-        hook->ctrl.context = XRecordCreateContext(hook->data.display, XRecordFromServerTime, &clients, 1, &hook->data.range, 1);
-        if (hook->ctrl.context != 0) {
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: XRecordCreateContext successful.\n",
+    if (!XQueryPointer(hook_disp, XDefaultRootWindow(hook_disp), &root, &child,
+            &root_x, &root_y, &win_x, &win_y, &mask)) {
+        if (!pointer_position_unavailable_logged) {
+            logger(LOG_LEVEL_WARN, "%s [%u]: The pointer position is unavailable!\n",
                     __FUNCTION__, __LINE__);
 
-            // Block until hook_stop() is called.
-            status = xrecord_block();
-
-            // Free up the context if it was set.
-            XRecordFreeContext(hook->data.display, hook->ctrl.context);
-        } else {
-            logger(LOG_LEVEL_ERROR, "%s [%u]: XRecordCreateContext failure!\n",
-                    __FUNCTION__, __LINE__);
-
-            // Set the exit status.
-            status = UIOHOOK_ERROR_X_RECORD_CREATE_CONTEXT;
+            pointer_position_unavailable_logged = true;
         }
 
-        // Free the XRecord range.
-        XFree(hook->data.range);
-    } else {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: XRecordAllocRange failure!\n",
-                __FUNCTION__, __LINE__);
-
-        // Set the exit status.
-        status = UIOHOOK_ERROR_X_RECORD_ALLOC_RANGE;
+        return false;
     }
 
-    return status;
-}
-
-static int xrecord_query() {
-    int status = UIOHOOK_FAILURE;
-
-    // Check to make sure XRecord is installed and enabled.
-    int major, minor;
-    if (XRecordQueryVersion(hook->ctrl.display, &major, &minor) != 0) {
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: XRecord version: %i.%i.\n",
-                __FUNCTION__, __LINE__, major, minor);
-
-        status = xrecord_alloc();
-    } else {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: XRecord is not currently available!\n",
-                __FUNCTION__, __LINE__);
-
-        status = UIOHOOK_ERROR_X_RECORD_NOT_FOUND;
+    int16_t origin_x, origin_y;
+    if (get_screen_origin(&origin_x, &origin_y)) {
+        root_x -= origin_x;
+        root_y -= origin_y;
     }
 
-    return status;
+    *x = (int16_t) root_x;
+    *y = (int16_t) root_y;
+
+    return true;
 }
 
-static int xrecord_start() {
-    int status = UIOHOOK_FAILURE;
+bool backend_get_desktop_bounds(uint16_t *width, uint16_t *height) {
+    return get_desktop_bounds(width, height);
+}
 
-    // Use the helper display for XRecord.
-    hook->ctrl.display = XOpenDisplay(NULL);
+void backend_adjust_absolute_position(int16_t *x, int16_t *y) {
+    int16_t origin_x, origin_y;
+    if (get_screen_origin(&origin_x, &origin_y)) {
+        *x -= origin_x;
+        *y -= origin_y;
+    }
+}
 
-    // Open a data display for XRecord.
-    // NOTE This display must be opened on the same thread as XRecord.
-    hook->data.display = XOpenDisplay(NULL);
-    if (hook->ctrl.display != NULL && hook->data.display != NULL) {
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: XOpenDisplay successful.\n",
-                __FUNCTION__, __LINE__);
-
-        bool is_auto_repeat = enable_key_repeat();
-        if (!is_auto_repeat) {
-            logger(LOG_LEVEL_WARN, "%s [%u]: Could not enable detectable auto-repeat!\n",
-                    __FUNCTION__, __LINE__);
-        } else {
-            logger(LOG_LEVEL_DEBUG, "%s [%u]: Successfully enabled detectable auto-repeat.\n",
-                    __FUNCTION__, __LINE__);
-        }
-
-        status = xrecord_query();
-    } else {
+static int run(bool keyboard, bool mouse) {
+    hook_disp = XOpenDisplay(XDisplayName(NULL));
+    if (hook_disp == NULL) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: XOpenDisplay failure!\n",
                 __FUNCTION__, __LINE__);
 
-        status = UIOHOOK_ERROR_X_OPEN_DISPLAY;
+        return UIOHOOK_ERROR_X_OPEN_DISPLAY;
     }
 
-    // Close down the XRecord data display.
-    if (hook->data.display != NULL) {
-        XCloseDisplay(hook->data.display);
-        hook->data.display = NULL;
-    }
-
-    // Close down the XRecord control display.
-    if (hook->ctrl.display) {
-        XCloseDisplay(hook->ctrl.display);
-        hook->ctrl.display = NULL;
-    }
-
-    return status;
-}
-
-int run() {
-    // Hook data for future cleanup.
-    hook = malloc(sizeof(hook_info));
-    if (hook == NULL) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to allocate memory for hook structure!\n",
-                __FUNCTION__, __LINE__);
-
-        return UIOHOOK_ERROR_OUT_OF_MEMORY;
-    }
-
-    int status = xrecord_start();
-
-    // Free data associated with this hook.
-    free(hook);
-    hook = NULL;
-
-    logger(LOG_LEVEL_DEBUG, "%s [%u]: Something, something, something, complete.\n",
+    logger(LOG_LEVEL_DEBUG, "%s [%u]: XOpenDisplay success.\n",
             __FUNCTION__, __LINE__);
+
+    pointer_position_unavailable_logged = false;
+
+    int status = run_libinput(keyboard, mouse);
+
+    unload_input_context();
+
+    XCloseDisplay(hook_disp);
+    hook_disp = NULL;
 
     return status;
 }
 
 int hook_run() {
-    keyboard = true;
-    mouse = true;
-    return run();
+    return run(true, true);
 }
 
 int hook_run_keyboard() {
-    keyboard = true;
-    mouse = false;
-    return run();
+    return run(true, false);
 }
 
 int hook_run_mouse() {
-    keyboard = false;
-    mouse = true;
-    return run();
+    return run(false, true);
 }
 
 int hook_stop() {
-    int status = UIOHOOK_FAILURE;
-
-    if (hook != NULL && hook->ctrl.display != NULL && hook->ctrl.context != 0) {
-        // We need to make sure the context is still valid.
-        XRecordState *state = malloc(sizeof(XRecordState));
-        if (state != NULL) {
-            if (XRecordGetContext(hook->ctrl.display, hook->ctrl.context, &state) != 0) {
-                // Try to exit the thread naturally.
-                if (state->enabled && XRecordDisableContext(hook->ctrl.display, hook->ctrl.context) != 0) {
-                    // See Bug 42356 for more information.
-                    // https://bugs.freedesktop.org/show_bug.cgi?id=42356#c4
-                    //XFlush(hook->ctrl.display);
-                    XSync(hook->ctrl.display, False);
-
-                    status = UIOHOOK_SUCCESS;
-                }
-            } else {
-                logger(LOG_LEVEL_ERROR, "%s [%u]: XRecordGetContext failure!\n",
-                        __FUNCTION__, __LINE__);
-
-                status = UIOHOOK_ERROR_X_RECORD_GET_CONTEXT;
-            }
-
-            free(state);
-        } else {
-            logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to allocate memory for XRecordState!\n",
-                    __FUNCTION__, __LINE__);
-
-            status = UIOHOOK_ERROR_OUT_OF_MEMORY;
-        }
-    }
-
-    logger(LOG_LEVEL_DEBUG, "%s [%u]: Status: %#X.\n",
-            __FUNCTION__, __LINE__, status);
-
-    return status;
+    return stop_libinput();
 }

@@ -40,10 +40,14 @@ size_t backend_key_to_unicode(uint16_t evdev_code, uint16_t modifier_mask, wchar
 }
 
 bool backend_get_pointer_position(int16_t *x, int16_t *y) {
-    // Not supported by Wayland
+    // Not supported by Wayland.
     return false;
 }
 
 bool backend_get_desktop_bounds(uint16_t *width, uint16_t *height) {
     return false;
+}
+
+void backend_adjust_absolute_position(int16_t *x, int16_t *y) {
+    // Absolute positions are already in the coordinate space which Wayland reports.
 }

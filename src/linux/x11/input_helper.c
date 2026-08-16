@@ -1,11 +1,11 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
 #include <X11/XKBlib.h>
-static XkbDescPtr keyboard_map;
 
 #include "input_helper.h"
 #include "logger.h"
@@ -18,11 +18,9 @@ typedef struct _key_mapping {
     unsigned int x11_key_code;
 } key_mapping;
 
-static unsigned char *mouse_button_table;
+static unsigned char mouse_button_table[BUTTON_TABLE_MAX];
 Display *helper_disp;  // Where do we open this display?  FIXME Use the ctrl display via init param
 static bool key_mappings_loaded = false;
-
-static uint16_t modifier_mask;
 
 static key_mapping uiocode_keycode_table[] = {
     { .uiocode = VC_ESCAPE,                .x11_key_name = "ESC"  },
@@ -186,19 +184,6 @@ static key_mapping uiocode_keycode_table[] = {
     { .uiocode = VC_CANCEL,                .x11_key_name = "I231" },
 };
 
-uint16_t keycode_to_uiocode(KeyCode keycode) {
-    uint16_t uiocode = VC_UNDEFINED;
-
-    for (unsigned int i = 0; i < sizeof(uiocode_keycode_table) / sizeof(uiocode_keycode_table[0]); i++) {
-        if (keycode == uiocode_keycode_table[i].x11_key_code) {
-            uiocode = uiocode_keycode_table[i].uiocode;
-            break;
-        }
-    }
-
-    return uiocode;
-}
-
 KeyCode uiocode_to_keycode(uint16_t uiocode) {
     KeyCode keycode = 0x0;
 
@@ -225,99 +210,13 @@ unsigned int get_x11_keycode(const char * keycode_name) {
     return keycode;
 }
 
-// Set the native modifier mask for current event.
-void set_modifier_mask(uint16_t mask) {
-    modifier_mask |= mask;
-}
-
-// Unset the native modifier mask for current event.
-void unset_modifier_mask(uint16_t mask) {
-    modifier_mask &= ~mask;
-}
-
-// Clear the native modifier mask for current eventevents.
-void clear_modifier_mask() {
-    modifier_mask = 0;
-}
-
-// Get the current native modifier mask state.
-uint16_t get_modifiers() {
-    return modifier_mask;
-}
-
-/* Based on mappings from _XWireToEvent in Xlibinit.c */
-void wire_data_to_event(XRecordInterceptData *recorded_data, XEvent *x_event) {
-    if (recorded_data->category == XRecordFromServer) {
-        XRecordDatum *data = (XRecordDatum *) recorded_data->data;
-        switch (recorded_data->category) {
-            //case XRecordFromClient: // TODO Should we be listening for Client Events?
-            case XRecordFromServer:
-                x_event->type = data->event.u.u.type;
-                ((XAnyEvent *) x_event)->display = helper_disp;
-                ((XAnyEvent *) x_event)->send_event = (bool) (data->event.u.u.type & 0x80);
-
-                switch (data->type) {
-                    case KeyPress:
-                    case KeyRelease:
-                        ((XKeyEvent *) x_event)->root           = data->event.u.keyButtonPointer.root;
-                        ((XKeyEvent *) x_event)->window         = data->event.u.keyButtonPointer.event;
-                        ((XKeyEvent *) x_event)->subwindow      = data->event.u.keyButtonPointer.child;
-                        ((XKeyEvent *) x_event)->time           = data->event.u.keyButtonPointer.time;
-                        ((XKeyEvent *) x_event)->x              = cvtINT16toInt(data->event.u.keyButtonPointer.eventX);
-                        ((XKeyEvent *) x_event)->y              = cvtINT16toInt(data->event.u.keyButtonPointer.eventY);
-                        ((XKeyEvent *) x_event)->x_root         = cvtINT16toInt(data->event.u.keyButtonPointer.rootX);
-                        ((XKeyEvent *) x_event)->y_root         = cvtINT16toInt(data->event.u.keyButtonPointer.rootY);
-                        ((XKeyEvent *) x_event)->state          = data->event.u.keyButtonPointer.state;
-                        ((XKeyEvent *) x_event)->same_screen    = data->event.u.keyButtonPointer.sameScreen;
-                        ((XKeyEvent *) x_event)->keycode        = data->event.u.u.detail;
-                        break;
-
-                    case ButtonPress:
-                    case ButtonRelease:
-                        ((XButtonEvent *) x_event)->root        = data->event.u.keyButtonPointer.root;
-                        ((XButtonEvent *) x_event)->window      = data->event.u.keyButtonPointer.event;
-                        ((XButtonEvent *) x_event)->subwindow   = data->event.u.keyButtonPointer.child;
-                        ((XButtonEvent *) x_event)->time        = data->event.u.keyButtonPointer.time;
-                        ((XButtonEvent *) x_event)->x           = cvtINT16toInt(data->event.u.keyButtonPointer.eventX);
-                        ((XButtonEvent *) x_event)->y           = cvtINT16toInt(data->event.u.keyButtonPointer.eventY);
-                        ((XButtonEvent *) x_event)->x_root      = cvtINT16toInt(data->event.u.keyButtonPointer.rootX);
-                        ((XButtonEvent *) x_event)->y_root      = cvtINT16toInt(data->event.u.keyButtonPointer.rootY);
-                        ((XButtonEvent *) x_event)->state       = data->event.u.keyButtonPointer.state;
-                        ((XButtonEvent *) x_event)->same_screen = data->event.u.keyButtonPointer.sameScreen;
-                        ((XButtonEvent *) x_event)->button      = data->event.u.u.detail;
-                        break;
-
-                    case MotionNotify:
-                        ((XMotionEvent *) x_event)->root        = data->event.u.keyButtonPointer.root;
-                        ((XMotionEvent *) x_event)->window      = data->event.u.keyButtonPointer.event;
-                        ((XMotionEvent *) x_event)->subwindow   = data->event.u.keyButtonPointer.child;
-                        ((XMotionEvent *) x_event)->time        = data->event.u.keyButtonPointer.time;
-                        ((XMotionEvent *) x_event)->x           = cvtINT16toInt(data->event.u.keyButtonPointer.eventX);
-                        ((XMotionEvent *) x_event)->y           = cvtINT16toInt(data->event.u.keyButtonPointer.eventY);
-                        ((XMotionEvent *) x_event)->x_root      = cvtINT16toInt(data->event.u.keyButtonPointer.rootX);
-                        ((XMotionEvent *) x_event)->y_root      = cvtINT16toInt(data->event.u.keyButtonPointer.rootY);
-                        ((XMotionEvent *) x_event)->state       = data->event.u.keyButtonPointer.state;
-                        ((XMotionEvent *) x_event)->same_screen = data->event.u.keyButtonPointer.sameScreen;
-                        ((XMotionEvent *) x_event)->is_hint     = data->event.u.u.detail;
-                        break;
-                }
-                break;
-        }
-    }
-}
-
 uint8_t button_map_lookup(uint8_t button) {
     unsigned int map_button = button;
 
     if (helper_disp != NULL) {
-        if (mouse_button_table != NULL) {
-            int map_size = XGetPointerMapping(helper_disp, mouse_button_table, BUTTON_TABLE_MAX);
-            if (map_button > 0 && map_button <= map_size) {
-                map_button = mouse_button_table[map_button -1];
-            }
-        } else {
-            logger(LOG_LEVEL_WARN, "%s [%u]: Mouse button map memory is unavailable!\n",
-                    __FUNCTION__, __LINE__);
+        int map_size = XGetPointerMapping(helper_disp, mouse_button_table, BUTTON_TABLE_MAX);
+        if (map_button > 0 && map_button <= map_size) {
+            map_button = mouse_button_table[map_button - 1];
         }
     } else {
         logger(LOG_LEVEL_WARN, "%s [%u]: XDisplay helper_disp is unavailable!\n",
@@ -331,61 +230,14 @@ uint8_t button_map_lookup(uint8_t button) {
     return map_button;
 }
 
-bool enable_key_repeat() {
-    // Attempt to setup detectable autorepeat.
-    // NOTE: is_auto_repeat is NOT stdbool!
-    Bool is_auto_repeat = False;
-
-    // Enable detectable auto-repeat.
-    XkbSetDetectableAutoRepeat(helper_disp, True, &is_auto_repeat);
-
-    return is_auto_repeat;
-}
-
-size_t event_to_unicode(XKeyEvent *x_event, wchar_t *surrogate, size_t length, KeySym *keysym) {
-    XIC xic = NULL;
-    XIM xim = NULL;
-
-    // KeyPress events can use Xutf8LookupString but KeyRelease events cannot.
-    if (x_event->type == KeyPress) {
-        XSetLocaleModifiers("");
-        xim = XOpenIM(helper_disp, NULL, NULL, NULL);
-        if (xim == NULL) {
-            // fallback to internal input method
-            XSetLocaleModifiers("@im=none");
-            xim = XOpenIM(helper_disp, NULL, NULL, NULL);
-        }
-
-        if (xim != NULL) {
-            Window root_default = XDefaultRootWindow(helper_disp);
-            xic = XCreateIC(xim,
-                XNInputStyle,   XIMPreeditNothing | XIMStatusNothing,
-                XNClientWindow, root_default,
-                XNFocusWindow,  root_default,
-                NULL);
-
-            if (xic == NULL) {
-                logger(LOG_LEVEL_WARN, "%s [%u]: XCreateIC() failed!\n",
-                        __FUNCTION__, __LINE__);
-            }
-        } else {
-            logger(LOG_LEVEL_WARN, "%s [%u]: XOpenIM() failed!\n",
-                    __FUNCTION__, __LINE__);
-        }
-    }
-
+size_t event_to_unicode(XKeyEvent *x_event, XIC xic, wchar_t *surrogate, size_t length) {
     size_t count = 0;
     char buffer[5] = {};
-    
-    if (xic != NULL) {
-        count = Xutf8LookupString(xic, x_event, buffer, sizeof(buffer), keysym, NULL);
-        XDestroyIC(xic);
-    } else {
-        count = XLookupString(x_event, buffer, sizeof(buffer), keysym, NULL);
-    }
 
-    if (xim != NULL) {
-        XCloseIM(xim);
+    if (xic != NULL) {
+        count = Xutf8LookupString(xic, x_event, buffer, sizeof(buffer), NULL, NULL);
+    } else {
+        count = XLookupString(x_event, buffer, sizeof(buffer), NULL, NULL);
     }
 
     // If we produced a string and we have a buffer, convert to 16-bit surrogate pairs.
@@ -402,6 +254,13 @@ size_t event_to_unicode(XKeyEvent *x_event, wchar_t *surrogate, size_t length, K
                 0x0F, // 00001111, first (if 3 bytes)
                 0x07  // 00000111, first (if 4 bytes)
             };
+
+            if (count >= sizeof(utf8_bitmask_table)) {
+                logger(LOG_LEVEL_WARN, "%s [%u]: Cannot convert %zu bytes to a single character!\n",
+                        __FUNCTION__, __LINE__, count);
+
+                return 0;
+            }
 
             uint32_t codepoint = utf8_bitmask_table[count] & buffer[0];
             for (unsigned int i = 1; i < count; i++) {
@@ -476,26 +335,4 @@ void load_key_mappings() {
     XFree(dpy);
 
     key_mappings_loaded = true;
-}
-
-int load_input_helper() {
-    load_key_mappings();
-
-    // Setup memory for mouse button mapping.
-    mouse_button_table = malloc(sizeof(unsigned char) * BUTTON_TABLE_MAX);
-    if (mouse_button_table == NULL) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to allocate memory for mouse button map!\n",
-                __FUNCTION__, __LINE__);
-
-        return UIOHOOK_ERROR_OUT_OF_MEMORY;
-    }
-
-    return UIOHOOK_SUCCESS;
-}
-
-void unload_input_helper() {
-    if (mouse_button_table != NULL) {
-        free(mouse_button_table);
-        mouse_button_table = NULL;
-    }
 }

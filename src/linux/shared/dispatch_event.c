@@ -333,6 +333,8 @@ static void dispatch_mouse_motion_absolute(uint64_t timestamp, struct libinput_e
     if (backend_get_desktop_bounds(&width, &height)) {
         x = round_to_int16(libinput_event_pointer_get_absolute_x_transformed(pointer_event, width));
         y = round_to_int16(libinput_event_pointer_get_absolute_y_transformed(pointer_event, height));
+
+        backend_adjust_absolute_position(&x, &y);
     } else if (!backend_get_pointer_position(&x, &y)) {
         if (!desktop_bounds_unavailable_logged) {
             logger(LOG_LEVEL_WARN, "%s [%u]: Ignoring absolute motion as the desktop bounds are unavailable!\n",

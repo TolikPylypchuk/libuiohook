@@ -17,4 +17,8 @@ bool backend_get_pointer_position(int16_t *x, int16_t *y);
  * Returns false if the back-end cannot provide it. */
 bool backend_get_desktop_bounds(uint16_t *width, uint16_t *height);
 
+/* Adjusts a position which was transformed over the desktop bounding box so that it's in the same
+ * coordinate space as the positions which backend_get_pointer_position reports. */
+void backend_adjust_absolute_position(int16_t *x, int16_t *y);
+
 #endif

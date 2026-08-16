@@ -37,7 +37,9 @@ else()
     add_library(uiohook-x11 SHARED
         "src/logger.c"
         "src/linux/shared/device_procs.c"
-        "src/linux/x11/dispatch_event.c"
+        "src/linux/shared/dispatch_event.c"
+        "src/linux/shared/input_helper.c"
+        "src/linux/shared/input_loop.c"
         "src/linux/x11/input_helper.c"
         "src/linux/x11/input_hook.c"
         "src/linux/x11/post_event.c"

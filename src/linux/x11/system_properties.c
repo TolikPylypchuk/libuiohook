@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
@@ -12,12 +13,16 @@
 
 #include "input_helper.h"
 #include "logger.h"
+#include "system_properties.h"
 
 static XtAppContext xt_context;
 static Display *xt_disp;
 
-static pthread_mutex_t xrandr_mutex = PTHREAD_MUTEX_INITIALIZER;
-static XRRScreenResources *xrandr_resources = NULL;
+static pthread_mutex_t screen_mutex = PTHREAD_MUTEX_INITIALIZER;
+static screen_data *screens = NULL;
+static uint8_t screen_count = 0;
+static uint16_t desktop_width = 0;
+static uint16_t desktop_height = 0;
 
 uint32_t hook_get_optional_feature_support() {
     return UIOHOOK_FEATURE_KEY_TYPED_EVENTS
@@ -27,24 +32,122 @@ uint32_t hook_get_optional_feature_support() {
         | UIOHOOK_FEATURE_POINTER_PROPERTIES;
 }
 
+static void publish_screens(screen_data *new_screens, uint8_t new_count, uint16_t width, uint16_t height) {
+    pthread_mutex_lock(&screen_mutex);
+
+    free(screens);
+
+    screens = new_screens;
+    screen_count = new_count;
+    desktop_width = width;
+    desktop_height = height;
+
+    pthread_mutex_unlock(&screen_mutex);
+}
+
+static void refresh_screens(Display *disp, Window root, bool poll_hardware) {
+    XRRScreenResources *resources = poll_hardware
+        ? XRRGetScreenResources(disp, root)
+        : XRRGetScreenResourcesCurrent(disp, root);
+
+    if (resources == NULL) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: XRandR could not get screen resources!\n",
+                __FUNCTION__, __LINE__);
+
+        return;
+    }
+
+    screen_data *new_screens = NULL;
+    uint8_t new_count = 0;
+
+    int32_t min_x = INT32_MAX, min_y = INT32_MAX, max_x = INT32_MIN, max_y = INT32_MIN;
+
+    if (resources->ncrtc > 0) {
+        new_screens = malloc(sizeof(screen_data) * resources->ncrtc);
+        if (new_screens == NULL) {
+            logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to allocate memory for the screen layout!\n",
+                    __FUNCTION__, __LINE__);
+
+            XRRFreeScreenResources(resources);
+            return;
+        }
+    }
+
+    for (int i = 0; i < resources->ncrtc; i++) {
+        XRRCrtcInfo *crtc_info = XRRGetCrtcInfo(disp, resources, resources->crtcs[i]);
+
+        if (crtc_info == NULL) {
+            logger(LOG_LEVEL_WARN, "%s [%u]: XRandR failed to return crtc information! (%#lX)\n",
+                    __FUNCTION__, __LINE__, resources->crtcs[i]);
+
+            continue;
+        }
+
+        // Disabled crtcs report no mode and a zero size, so ignore them.
+        if (crtc_info->mode != None && crtc_info->width > 0 && crtc_info->height > 0) {
+            if (new_count == UINT8_MAX) {
+                logger(LOG_LEVEL_WARN, "%s [%u]: Screen count overflow detected!\n",
+                        __FUNCTION__, __LINE__);
+
+                XRRFreeCrtcInfo(crtc_info);
+                break;
+            }
+
+            new_screens[new_count] = (screen_data) {
+                .number = new_count + 1,
+                .x = crtc_info->x,
+                .y = crtc_info->y,
+                .width = crtc_info->width,
+                .height = crtc_info->height
+            };
+
+            new_count++;
+
+            if (crtc_info->x < min_x) {
+                min_x = crtc_info->x;
+            }
+
+            if (crtc_info->y < min_y) {
+                min_y = crtc_info->y;
+            }
+
+            if ((int32_t) (crtc_info->x + crtc_info->width) > max_x) {
+                max_x = crtc_info->x + crtc_info->width;
+            }
+
+            if ((int32_t) (crtc_info->y + crtc_info->height) > max_y) {
+                max_y = crtc_info->y + crtc_info->height;
+            }
+        }
+
+        XRRFreeCrtcInfo(crtc_info);
+    }
+
+    if (new_count == 0) {
+        free(new_screens);
+        new_screens = NULL;
+    }
+
+    logger(LOG_LEVEL_DEBUG, "%s [%u]: Resolved %u screen(s) over %i x %i.\n",
+            __FUNCTION__, __LINE__, new_count, new_count > 0 ? max_x - min_x : 0, new_count > 0 ? max_y - min_y : 0);
+
+    publish_screens(
+        new_screens,
+        new_count,
+        new_count > 0 ? (uint16_t) (max_x - min_x) : 0,
+        new_count > 0 ? (uint16_t) (max_y - min_y) : 0);
+
+    XRRFreeScreenResources(resources);
+}
+
 static void settings_cleanup_proc(void *arg) {
-    if (pthread_mutex_trylock(&xrandr_mutex) == 0) {
-        if (xrandr_resources != NULL) {
-            XRRFreeScreenResources(xrandr_resources);
-            xrandr_resources = NULL;
-        }
-
-        if (arg != NULL) {
-            XCloseDisplay((Display *) arg);
-            arg = NULL;
-        }
-
-        pthread_mutex_unlock(&xrandr_mutex);
+    if (arg != NULL) {
+        XCloseDisplay((Display *) arg);
     }
 }
 
 static void *settings_thread_proc(void *arg) {
-    Display *settings_disp = XOpenDisplay(XDisplayName(NULL));;
+    Display *settings_disp = XOpenDisplay(XDisplayName(NULL));
     if (settings_disp != NULL) {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: %s\n",
                 __FUNCTION__, __LINE__, "XOpenDisplay success.");
@@ -55,39 +158,30 @@ static void *settings_thread_proc(void *arg) {
         int error_base = 0;
         if (XRRQueryExtension(settings_disp, &event_base, &error_base)) {
             Window root = XDefaultRootWindow(settings_disp);
-            unsigned long event_mask = RRScreenChangeNotifyMask;
-            XRRSelectInput(settings_disp, root, event_mask);
+            XRRSelectInput(settings_disp, root, RRScreenChangeNotifyMask);
+
+            refresh_screens(settings_disp, root, false);
 
             XEvent ev;
 
-            while(settings_disp != NULL) {
+            while (true) {
                 XNextEvent(settings_disp, &ev);
 
-                if (ev.type == event_base + RRScreenChangeNotifyMask) {
+                if (ev.type == event_base + RRScreenChangeNotify) {
                     logger(LOG_LEVEL_DEBUG, "%s [%u]: Received XRRScreenChangeNotifyEvent.\n",
                             __FUNCTION__, __LINE__);
 
-                    pthread_mutex_lock(&xrandr_mutex);
-                    if (xrandr_resources != NULL) {
-                        XRRFreeScreenResources(xrandr_resources);
-                    }
-
-                    xrandr_resources = XRRGetScreenResources(settings_disp, root);
-                    if (xrandr_resources == NULL) {
-                        logger(LOG_LEVEL_WARN, "%s [%u]: XRandR could not get screen resources!\n",
-                                __FUNCTION__, __LINE__);
-                    }
-                    pthread_mutex_unlock(&xrandr_mutex);
-                } else {
-                    logger(LOG_LEVEL_WARN, "%s [%u]: XRandR is not currently available!\n",
-                            __FUNCTION__, __LINE__);
+                    XRRUpdateConfiguration(&ev);
+                    refresh_screens(settings_disp, root, true);
                 }
             }
+        } else {
+            logger(LOG_LEVEL_WARN, "%s [%u]: XRandR is not currently available!\n",
+                    __FUNCTION__, __LINE__);
         }
 
         // Execute the thread cleanup handler.
         pthread_cleanup_pop(1);
-
     } else {
         logger(LOG_LEVEL_ERROR, "%s [%u]: XOpenDisplay failure!\n",
                 __FUNCTION__, __LINE__);
@@ -96,56 +190,59 @@ static void *settings_thread_proc(void *arg) {
     return NULL;
 }
 
+bool get_desktop_bounds(uint16_t *width, uint16_t *height) {
+    pthread_mutex_lock(&screen_mutex);
+
+    bool available = screen_count > 0;
+    if (available) {
+        *width = desktop_width;
+        *height = desktop_height;
+    }
+
+    pthread_mutex_unlock(&screen_mutex);
+
+    return available;
+}
+
+bool get_screen_origin(int16_t *x, int16_t *y) {
+    pthread_mutex_lock(&screen_mutex);
+
+    // Coordinates are relative to the first screen's origin on multi-monitor layouts only.
+    bool adjusted = screen_count > 1;
+    if (adjusted) {
+        *x = screens[0].x;
+        *y = screens[0].y;
+    }
+
+    pthread_mutex_unlock(&screen_mutex);
+
+    return adjusted;
+}
+
 screen_data* hook_create_screen_info(unsigned char *count) {
     *count = 0;
-    screen_data *screens = NULL;
+    screen_data *result = NULL;
 
-    // Check and make sure we could connect to the x server.
-    if (helper_disp != NULL) {
-        pthread_mutex_lock(&xrandr_mutex);
+    pthread_mutex_lock(&screen_mutex);
 
-        if (xrandr_resources != NULL) {
-            int xrandr_count = xrandr_resources->ncrtc;
-            if (xrandr_count > UINT8_MAX) {
-                *count = UINT8_MAX;
+    if (screen_count > 0) {
+        result = malloc(sizeof(screen_data) * screen_count);
 
-                logger(LOG_LEVEL_WARN, "%s [%u]: Screen count overflow detected!\n",
-                        __FUNCTION__, __LINE__);
-            } else {
-                *count = (uint8_t) xrandr_count;
-            }
-
-            screens = malloc(sizeof(screen_data) * xrandr_count);
-
-            if (screens != NULL) {
-                for (int i = 0; i < xrandr_count; i++) {
-                    XRRCrtcInfo *crtc_info = XRRGetCrtcInfo(helper_disp, xrandr_resources, xrandr_resources->crtcs[i]);
-
-                    if (crtc_info != NULL) {
-                        screens[i] = (screen_data) {
-                            .number = i + 1,
-                            .x = crtc_info->x,
-                            .y = crtc_info->y,
-                            .width = crtc_info->width,
-                            .height = crtc_info->height
-                        };
-
-                        XRRFreeCrtcInfo(crtc_info);
-                    } else {
-                        logger(LOG_LEVEL_WARN, "%s [%u]: XRandr failed to return crtc information! (%#X)\n",
-                                __FUNCTION__, __LINE__, xrandr_resources->crtcs[i]);
-                    }
-                }
-            }
+        if (result != NULL) {
+            memcpy(result, screens, sizeof(screen_data) * screen_count);
+            *count = screen_count;
+        } else {
+            logger(LOG_LEVEL_ERROR, "%s [%u]: Failed to allocate memory for the screen information!\n",
+                    __FUNCTION__, __LINE__);
         }
-
-        pthread_mutex_unlock(&xrandr_mutex);
     } else {
-        logger(LOG_LEVEL_WARN, "%s [%u]: XDisplay helper_disp is unavailable!\n",
+        logger(LOG_LEVEL_WARN, "%s [%u]: The screen layout is unavailable!\n",
                 __FUNCTION__, __LINE__);
     }
 
-    return screens;
+    pthread_mutex_unlock(&screen_mutex);
+
+    return result;
 }
 
 long int hook_get_auto_repeat_rate() {
@@ -338,6 +435,9 @@ void on_library_load() {
     } else {
         logger(LOG_LEVEL_DEBUG, "%s [%u]: %s\n",
                 __FUNCTION__, __LINE__, "XOpenDisplay success.");
+
+        // Refresh screens right away, so we don't wait for the settings thread to initialize.
+        refresh_screens(helper_disp, XDefaultRootWindow(helper_disp), false);
     }
 
     // Create the thread attribute.
@@ -368,7 +468,7 @@ void on_library_load() {
 // Create a shared object destructor.
 __attribute__ ((destructor))
 void on_library_unload() {
-    unload_input_helper();
+    publish_screens(NULL, 0, 0, 0);
 
     if (xt_disp != NULL) {
         XtCloseDisplay(xt_disp);
