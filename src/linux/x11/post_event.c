@@ -160,7 +160,7 @@ static int post_mouse_wheel_event(uiohook_event * const event) {
     uint8_t wheel_button = 0;
 
     if (event->data.wheel.direction == WHEEL_HORIZONTAL_DIRECTION) {
-        wheel_button = event->data.wheel.rotation > 0 ? WheelRight : WheelLeft;
+        wheel_button = event->data.wheel.rotation > 0 ? WheelLeft : WheelRight;
     } else {
         wheel_button = event->data.wheel.rotation > 0 ? WheelUp : WheelDown;
     }

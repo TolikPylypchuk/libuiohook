@@ -235,11 +235,11 @@ static bool dispatch_mouse_wheel_rotated(uint64_t timestamp, XButtonEvent * cons
      * not available on my development platform at this time. For the time being we will just use the Windows default
      * value of 3. */
     uio_event.data.wheel.delta = 100;
-    if (x_event->button == WheelDown || x_event->button == WheelLeft) {
-        // Wheel Rotated Up and Away.
+    if (x_event->button == WheelDown || x_event->button == WheelRight) {
+        // Wheel Rotated Up and Towards.
         uio_event.data.wheel.rotation = -3 * uio_event.data.wheel.delta;
-    } else { // event.button == WheelUp || event.button == WheelRight
-        // Wheel Rotated Down and Towards.
+    } else { // event.button == WheelUp || event.button == WheelLeft
+        // Wheel Rotated Down and Away.
         uio_event.data.wheel.rotation = 3 * uio_event.data.wheel.delta;
     }
 

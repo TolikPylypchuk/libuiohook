@@ -379,6 +379,11 @@ bool dispatch_mouse_wheel(uint64_t timestamp, MSLLHOOKSTRUCT *mshook, uint8_t di
     UINT uiAction = SPI_GETWHEELSCROLLLINES;
     if (direction == WHEEL_HORIZONTAL_DIRECTION) {
         uiAction = SPI_GETWHEELSCROLLCHARS;
+
+        /* A positive value indicates that the wheel was rotated to the right;
+         * a negative value indicates that the wheel was rotated to the left.
+         * libuiohook treats positive values as scrolling left, so negate the rotation. */
+        uio_event.data.wheel.rotation *= -1;
     }
 
     UINT wheel_amount = 3;
