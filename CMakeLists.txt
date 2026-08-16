@@ -66,6 +66,7 @@ else()
         "src/linux/wayland/post_event.c"
         "src/linux/wayland/system_properties.c"
         "src/linux/wayland/unused_functions.c"
+        "src/linux/wayland/wayland_helper.c"
     )
 
     set_target_properties(uiohook-wayland PROPERTIES
@@ -252,10 +253,6 @@ if(UNIX AND NOT APPLE)
     pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
     target_include_directories(uiohook-wayland PRIVATE "${WAYLAND_CLIENT_INCLUDE_DIRS}")
     target_link_libraries(uiohook-wayland "${WAYLAND_CLIENT_LIBRARIES}")
-
-    pkg_check_modules(XKB_COMMON_WAYLAND REQUIRED xkbcommon)
-    target_include_directories(uiohook-wayland PRIVATE "${XKB_COMMON_WAYLAND_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-wayland "${XKB_COMMON_WAYLAND_LIBRARIES}")
 
     find_package(WaylandProtocols REQUIRED)
     find_package(WaylandScanner REQUIRED)
