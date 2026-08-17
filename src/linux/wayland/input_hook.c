@@ -27,6 +27,10 @@ void backend_adjust_absolute_position(int16_t *x, int16_t *y) {
     // Absolute positions are already in the coordinate space which Wayland reports.
 }
 
+void backend_restore_absolute_position(int16_t *x, int16_t *y) {
+    // Absolute positions are already in the coordinate space which Wayland reports.
+}
+
 static int run(bool keyboard, bool mouse) {
     if (mouse) {
         wayland_helper_init();

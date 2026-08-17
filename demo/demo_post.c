@@ -46,6 +46,15 @@ int main() {
         return UIOHOOK_ERROR_OUT_OF_MEMORY;
     }
 
+    // Initialize the virtual devices used for event simulation.
+    int status = hook_init_virtual_devices("uiohook demo");
+    if (status != UIOHOOK_SUCCESS) {
+        logger(LOG_LEVEL_ERROR, "Failed to initialize the virtual devices! (%#X)\n", status);
+
+        free(event);
+        return status;
+    }
+
     sleep(1);
 
     //* Move the mouse cursor in a square shape relative to the current mouse position.
@@ -157,5 +166,5 @@ int main() {
 
     free(event);
 
-    return UIOHOOK_SUCCESS;
+    return hook_destroy_virtual_devices();
 }

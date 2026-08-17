@@ -461,7 +461,7 @@ extern "C" {
     int hook_post_text(const uint16_t * const text);
 
     // Initialize the virtual devices used for event simulation.
-    int hook_init_virtual_devices();
+    int hook_init_virtual_devices(const char * const application_name);
 
     // Destroy the virtual devices used for event simulation.
     int hook_destroy_virtual_devices();

@@ -25,7 +25,7 @@ typedef int (*post_event_t)(uiohook_event * const);
 typedef int (*post_events_t)(uiohook_event * const, uint32_t);
 typedef int (*post_text_t)(const uint16_t * const);
 
-typedef int (*init_virtual_devices_t)();
+typedef int (*init_virtual_devices_t)(const char * const);
 typedef int (*destroy_virtual_devices_t)();
 
 typedef uint32_t (*get_optional_feature_support_t)();
@@ -238,12 +238,12 @@ int hook_post_text(const uint16_t * const text) {
     return post_text(text);
 }
 
-int hook_init_virtual_devices() {
+int hook_init_virtual_devices(const char * const application_name) {
     if (!load_backend()) {
         return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
     }
 
-    return init_virtual_devices();
+    return init_virtual_devices(application_name);
 }
 
 int hook_destroy_virtual_devices() {

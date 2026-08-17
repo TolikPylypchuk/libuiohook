@@ -39,7 +39,7 @@ bool hook_set_linux_backend(int backend) {
     return true;
 }
 
-int hook_init_virtual_devices() {
+int hook_init_virtual_devices(const char * const application_name) {
     return UIOHOOK_SUCCESS;
 }
 

@@ -180,6 +180,14 @@ void backend_adjust_absolute_position(int16_t *x, int16_t *y) {
     }
 }
 
+void backend_restore_absolute_position(int16_t *x, int16_t *y) {
+    int16_t origin_x, origin_y;
+    if (get_screen_origin(&origin_x, &origin_y)) {
+        *x += origin_x;
+        *y += origin_y;
+    }
+}
+
 static int run(bool keyboard, bool mouse) {
     hook_disp = XOpenDisplay(XDisplayName(NULL));
     if (hook_disp == NULL) {
