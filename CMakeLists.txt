@@ -218,9 +218,8 @@ if(UNIX AND NOT APPLE)
     target_include_directories(uiohook-legacy PRIVATE "${X11_INCLUDE_DIRS}")
     target_link_libraries(uiohook-legacy "${X11_LDFLAGS}")
 
+    # XTest and XRecord are only used by the legacy back-end.
     pkg_check_modules(XTST REQUIRED xtst)
-    target_include_directories(uiohook-x11 PRIVATE "${XTST_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-x11 "${XTST_LDFLAGS}")
     target_include_directories(uiohook-legacy PRIVATE "${XTST_INCLUDE_DIRS}")
     target_link_libraries(uiohook-legacy "${XTST_LDFLAGS}")
 

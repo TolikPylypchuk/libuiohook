@@ -364,6 +364,15 @@ int post_virtual_events(virtual_device device, const virtual_event *events, size
     return UIOHOOK_SUCCESS;
 }
 
+int post_virtual_key(uint16_t evdev_code, bool pressed) {
+    virtual_event events[] = {
+        { .type = EV_MSC, .code = MSC_SCAN, .value = evdev_code },
+        { .type = EV_KEY, .code = evdev_code, .value = pressed ? 1 : 0 }
+    };
+
+    return post_virtual_events(VIRTUAL_DEVICE_KEYBOARD, events, sizeof(events) / sizeof(events[0]));
+}
+
 __attribute__((destructor))
 static void unload_virtual_devices() {
     pthread_mutex_lock(&device_mutex);

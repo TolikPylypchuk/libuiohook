@@ -26,12 +26,7 @@ static int post_key_event(uiohook_event * const event) {
         return UIOHOOK_FAILURE;
     }
 
-    virtual_event events[] = {
-        { .type = EV_MSC, .code = MSC_SCAN, .value = evdev_code },
-        { .type = EV_KEY, .code = evdev_code, .value = event->type == EVENT_KEY_PRESSED ? 1 : 0 }
-    };
-
-    return post_virtual_events(VIRTUAL_DEVICE_KEYBOARD, events, sizeof(events) / sizeof(events[0]));
+    return post_virtual_key(evdev_code, event->type == EVENT_KEY_PRESSED);
 }
 
 static int32_t normalize_position(int16_t position, uint16_t size) {

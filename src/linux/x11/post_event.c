@@ -5,11 +5,14 @@
 #include <uiohook.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/extensions/XTest.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "input_helper.h"
 #include "logger.h"
+#include "uinput_helper.h"
+
+#define BORROWED_KEYCODES_MAX 32
+#define KEYSYM_SHIFT_LEVELS 4
 
 static uint64_t post_text_delay = 50 * 1000000;
 
@@ -77,7 +80,7 @@ KeySym *map_to_keysyms(const uint16_t * const text, size_t count, size_t *keysym
     return keysyms;
 }
 
-KeyCode find_unused_keycode() {
+static size_t find_unused_keycodes(KeyCode *keycodes, size_t length) {
     int min_keycode = 0, max_keycode = 0;
     if (!XDisplayKeycodes(helper_disp, &min_keycode, &max_keycode)) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: XDisplayKeycodes() failed!\n",
@@ -85,75 +88,83 @@ KeyCode find_unused_keycode() {
         return 0;
     }
 
-    size_t unused_keycodes_count = 0;
+    if (min_keycode <= EVDEV_KEYCODE_OFFSET) {
+        min_keycode = EVDEV_KEYCODE_OFFSET + 1;
+    }
 
-    for (KeyCode keycode = max_keycode; keycode >= min_keycode; keycode--) {
-        int keysyms_per_keycode = 0;
-        KeySym *keycode_keysyms = XGetKeyboardMapping(helper_disp, keycode, 1, &keysyms_per_keycode);
-        int used = false;
+    int keysyms_per_keycode = 0;
+    KeySym *keysyms = XGetKeyboardMapping(
+            helper_disp, min_keycode, max_keycode - min_keycode + 1, &keysyms_per_keycode);
 
-        for (int i = 0; i < keysyms_per_keycode; i++) {
-            if (keycode_keysyms[i] != NoSymbol) {
-                used = true;
-                break;
-            }
-        }
+    if (keysyms == NULL) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: XGetKeyboardMapping() failed!\n",
+                __FUNCTION__, __LINE__);
+        return 0;
+    }
 
-        if (!XFree(keycode_keysyms)) {
-            logger(LOG_LEVEL_ERROR, "%s [%u]: XFree() failed!\n",
-                    __FUNCTION__, __LINE__);
-            return 0;
+    size_t count = 0;
+
+    for (int keycode = max_keycode; keycode >= min_keycode && count < length; keycode--) {
+        bool used = false;
+
+        for (int i = 0; i < keysyms_per_keycode && !used; i++) {
+            used = keysyms[(keycode - min_keycode) * keysyms_per_keycode + i] != NoSymbol;
         }
 
         if (!used) {
-            return keycode;
+            keycodes[count++] = (KeyCode) keycode;
         }
     }
 
-    return 0;
+    XFree(keysyms);
+
+    return count;
 }
 
-int post_keysym(KeySym keysym, KeyCode keycode) {
-    if (keysym == NoSymbol) {
-        return UIOHOOK_SUCCESS;
-    }
+static int map_keysym(KeyCode keycode, KeySym keysym) {
+    KeySym keysyms[KEYSYM_SHIFT_LEVELS] = { keysym, keysym, keysym, keysym };
+    int result = XChangeKeyboardMapping(helper_disp, keycode, KEYSYM_SHIFT_LEVELS, keysyms, 1);
 
-    KeySym keysyms[4] = { keysym, keysym, keysym, keysym }; // Use the same KeySym for 4 shift levels
-    int result = XChangeKeyboardMapping(helper_disp, keycode, 4, keysyms, 1);
     if (result != Success) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: XChangeKeyboardMapping() failed! (%d)\n",
                 __FUNCTION__, __LINE__, result);
         return UIOHOOK_FAILURE;
     }
 
-    XSync(helper_disp, True);
+    return UIOHOOK_SUCCESS;
+}
 
+static int unmap_keysym(KeyCode keycode) {
+    KeySym keysyms[KEYSYM_SHIFT_LEVELS] = { NoSymbol, NoSymbol, NoSymbol, NoSymbol };
+    int result = XChangeKeyboardMapping(helper_disp, keycode, KEYSYM_SHIFT_LEVELS, keysyms, 1);
+
+    if (result != Success) {
+        logger(LOG_LEVEL_ERROR, "%s [%u]: XChangeKeyboardMapping() failed! (%d)\n",
+                __FUNCTION__, __LINE__, result);
+        return UIOHOOK_FAILURE;
+    }
+
+    return UIOHOOK_SUCCESS;
+}
+
+static int press_keycode(KeyCode keycode) {
+    uint16_t evdev_code = keycode - EVDEV_KEYCODE_OFFSET;
+
+    int status = post_virtual_key(evdev_code, true);
+    if (status == UIOHOOK_SUCCESS) {
+        status = post_virtual_key(evdev_code, false);
+    }
+
+    return status;
+}
+
+static void wait_for_delay() {
     struct timespec ts = {
         .tv_sec = post_text_delay / 1000000000,
         .tv_nsec = post_text_delay % 1000000000
     };
 
     nanosleep(&ts, NULL);
-
-    if (!XTestFakeKeyEvent(helper_disp, keycode, true, 0)) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: XTestFakeKeyEvent() failed!\n",
-                __FUNCTION__, __LINE__);
-        return UIOHOOK_FAILURE;
-    }
-
-    XSync(helper_disp, True);
-
-    if (!XTestFakeKeyEvent(helper_disp, keycode, false, 0)) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: XTestFakeKeyEvent() failed!\n",
-                __FUNCTION__, __LINE__);
-        return UIOHOOK_FAILURE;
-    }
-
-    XSync(helper_disp, True);
-
-    nanosleep(&ts, NULL);
-
-    return UIOHOOK_SUCCESS;
 }
 
 int hook_post_text(const uint16_t * const text) {
@@ -167,6 +178,11 @@ int hook_post_text(const uint16_t * const text) {
         return UIOHOOK_ERROR_X_OPEN_DISPLAY;
     }
 
+    int lock_status = lock_virtual_devices();
+    if (lock_status != UIOHOOK_SUCCESS) {
+        return lock_status;
+    }
+
     XLockDisplay(helper_disp);
 
     size_t count = 0;
@@ -175,40 +191,89 @@ int hook_post_text(const uint16_t * const text) {
         count++;
     }
 
-    KeyCode unused_keycode = find_unused_keycode();
+    KeyCode keycodes[BORROWED_KEYCODES_MAX];
+    size_t keycode_count = find_unused_keycodes(keycodes, BORROWED_KEYCODES_MAX);
 
-    if (unused_keycode == 0) {
+    if (keycode_count == 0) {
         logger(LOG_LEVEL_ERROR, "%s [%u]: Cannot find an unused key code!\n",
                 __FUNCTION__, __LINE__);
 
         XUnlockDisplay(helper_disp);
+        unlock_virtual_devices();
         return UIOHOOK_FAILURE;
     }
 
     size_t keysym_count = 0;
     KeySym *keysyms = map_to_keysyms(text, count, &keysym_count);
 
-    int status = UIOHOOK_SUCCESS;
+    KeyCode *press_keycodes = calloc(keysym_count, sizeof(KeyCode));
 
-    for (size_t i = 0; i < keysym_count; i++) {
-        if (post_keysym(keysyms[i], unused_keycode) != UIOHOOK_SUCCESS) {
-            status = UIOHOOK_FAILURE;
+    int status = keysyms != NULL && (press_keycodes != NULL || keysym_count == 0)
+        ? UIOHOOK_SUCCESS
+        : UIOHOOK_ERROR_OUT_OF_MEMORY;
+
+    for (size_t index = 0; index < keysym_count && status == UIOHOOK_SUCCESS; ) {
+        size_t mapped = 0;
+        size_t end = index;
+
+        while (end < keysym_count && status == UIOHOOK_SUCCESS) {
+            if (keysyms[end] == NoSymbol) {
+                end++;
+                continue;
+            }
+
+            KeyCode keycode = 0;
+            for (size_t i = index; i < end && keycode == 0; i++) {
+                if (keysyms[i] == keysyms[end]) {
+                    keycode = press_keycodes[i];
+                }
+            }
+
+            if (keycode == 0) {
+                if (mapped == keycode_count) {
+                    break;
+                }
+
+                keycode = keycodes[mapped++];
+                status = map_keysym(keycode, keysyms[end]);
+            }
+
+            press_keycodes[end++] = keycode;
+        }
+
+        if (status != UIOHOOK_SUCCESS) {
             break;
         }
+
+        XSync(helper_disp, True);
+        wait_for_delay();
+
+        for (size_t i = index; i < end && status == UIOHOOK_SUCCESS; i++) {
+            if (press_keycodes[i] != 0) {
+                status = press_keycode(press_keycodes[i]);
+                wait_for_delay();
+            }
+        }
+
+        wait_for_delay();
+
+        index = end;
     }
 
+    free(press_keycodes);
     free(keysyms);
 
-    KeySym keysym = NoSymbol;
-    int result = XChangeKeyboardMapping(helper_disp, unused_keycode, 1, &keysym, 1);
-    if (result != Success) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: XChangeKeyboardMapping() failed! (%d)\n",
-                __FUNCTION__, __LINE__, result);
-        return UIOHOOK_FAILURE;
+    wait_for_delay();
+
+    for (size_t i = 0; i < keycode_count; i++) {
+        if (unmap_keysym(keycodes[i]) != UIOHOOK_SUCCESS) {
+            status = UIOHOOK_FAILURE;
+        }
     }
 
     XSync(helper_disp, True);
     XUnlockDisplay(helper_disp);
+    unlock_virtual_devices();
 
     return status;
 }
