@@ -195,7 +195,9 @@ int hook_post_text(const uint16_t * const text) {
     size_t keycode_count = find_unused_keycodes(keycodes, BORROWED_KEYCODES_MAX);
 
     if (keycode_count == 0) {
-        logger(LOG_LEVEL_ERROR, "%s [%u]: Cannot find an unused key code!\n",
+        logger(LOG_LEVEL_ERROR, "%s [%u]: Cannot find an unused key code to type through! "
+                "The keyboard mapping may still hold the ones which a process that was killed "
+                "while posting text has borrowed, in which case reloading the layout frees them.\n",
                 __FUNCTION__, __LINE__);
 
         XUnlockDisplay(helper_disp);
@@ -211,6 +213,8 @@ int hook_post_text(const uint16_t * const text) {
     int status = keysyms != NULL && (press_keycodes != NULL || keysym_count == 0)
         ? UIOHOOK_SUCCESS
         : UIOHOOK_ERROR_OUT_OF_MEMORY;
+
+    size_t borrowed = 0;
 
     for (size_t index = 0; index < keysym_count && status == UIOHOOK_SUCCESS; ) {
         size_t mapped = 0;
@@ -241,6 +245,10 @@ int hook_post_text(const uint16_t * const text) {
             press_keycodes[end++] = keycode;
         }
 
+        if (mapped > borrowed) {
+            borrowed = mapped;
+        }
+
         if (status != UIOHOOK_SUCCESS) {
             break;
         }
@@ -265,7 +273,7 @@ int hook_post_text(const uint16_t * const text) {
 
     wait_for_delay();
 
-    for (size_t i = 0; i < keycode_count; i++) {
+    for (size_t i = 0; i < borrowed; i++) {
         if (unmap_keysym(keycodes[i]) != UIOHOOK_SUCCESS) {
             status = UIOHOOK_FAILURE;
         }

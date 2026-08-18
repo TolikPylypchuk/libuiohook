@@ -18,10 +18,15 @@ static Display *hook_disp = NULL;
 static XIM hook_xim = NULL;
 static XIC hook_xic = NULL;
 
+static int xkb_event_base = 0;
+static bool xkb_events_selected = false;
+
 static bool pointer_position_unavailable_logged = false;
 
-// The input context is only needed for key typed events, so it's created along with the first one.
+// The input context is only needed for key typed events.
 static bool input_context_loaded = false;
+
+static void select_keyboard_mapping_events();
 
 static void load_input_context() {
     if (input_context_loaded) {
@@ -29,6 +34,8 @@ static void load_input_context() {
     }
 
     input_context_loaded = true;
+
+    select_keyboard_mapping_events();
 
     XSetLocaleModifiers("");
     hook_xim = XOpenIM(hook_disp, NULL, NULL, NULL);
@@ -70,6 +77,7 @@ static void unload_input_context() {
     }
 
     input_context_loaded = false;
+    xkb_events_selected = false;
 }
 
 // Converts a uiohook modifier mask into the state mask of an X11 key event.
@@ -100,12 +108,42 @@ static unsigned int get_x11_key_state(uint16_t modifier_mask) {
     return get_x11_modifier_mask(modifier_mask);
 }
 
+static void select_keyboard_mapping_events() {
+    int opcode = 0, error_base = 0;
+    int major = XkbMajorVersion, minor = XkbMinorVersion;
+
+    xkb_events_selected = XkbQueryExtension(hook_disp, &opcode, &xkb_event_base, &error_base, &major, &minor)
+        && XkbSelectEvents(hook_disp, XkbUseCoreKbd,
+                XkbMapNotifyMask | XkbNewKeyboardNotifyMask,
+                XkbMapNotifyMask | XkbNewKeyboardNotifyMask);
+
+    if (!xkb_events_selected) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: Cannot watch for keyboard mapping changes! "
+                "Key typed events will not follow a change of the keyboard layout.\n",
+                __FUNCTION__, __LINE__);
+    }
+}
+
+static void refresh_keyboard_mapping() {
+    if (!xkb_events_selected) {
+        return;
+    }
+
+    XkbEvent event;
+    while (XCheckTypedEvent(hook_disp, xkb_event_base, &event.core)) {
+        if (event.any.xkb_type == XkbMapNotify) {
+            XkbRefreshKeyboardMapping(&event.map);
+        }
+    }
+}
+
 size_t backend_key_to_unicode(uint16_t evdev_code, uint16_t modifier_mask, wchar_t *buffer, size_t length) {
     if (hook_disp == NULL) {
         return 0;
     }
 
     load_input_context();
+    refresh_keyboard_mapping();
 
     Window root = XDefaultRootWindow(hook_disp);
 
