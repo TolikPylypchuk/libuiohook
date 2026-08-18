@@ -9,7 +9,7 @@ if (WIN32 OR WIN64)
 elseif (APPLE)
     set(UIOHOOK_SOURCE_DIR "macos")
 else()
-    set(UIOHOOK_SOURCE_DIR "linux/legacy")
+    set(UIOHOOK_SOURCE_DIR "linux/xrecord")
 endif()
 
 if (WIN32 OR WIN64)
@@ -81,21 +81,21 @@ else()
         PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/uiohook.h
     )
 
-    add_library(uiohook-legacy SHARED
+    add_library(uiohook-xrecord SHARED
         "src/logger.c"
-        "src/linux/legacy/dispatch_event.c"
-        "src/linux/legacy/input_helper.c"
-        "src/linux/legacy/input_hook.c"
-        "src/linux/legacy/post_event.c"
-        "src/linux/legacy/system_properties.c"
-        "src/linux/legacy/unused_functions.c"
+        "src/linux/xrecord/dispatch_event.c"
+        "src/linux/xrecord/input_helper.c"
+        "src/linux/xrecord/input_hook.c"
+        "src/linux/xrecord/post_event.c"
+        "src/linux/xrecord/system_properties.c"
+        "src/linux/xrecord/unused_functions.c"
     )
 
-    set_target_properties(uiohook-legacy PROPERTIES
+    set_target_properties(uiohook-xrecord PROPERTIES
         C_STANDARD 23
         C_STANDARD_REQUIRED ON
         POSITION_INDEPENDENT_CODE 1
-        OUTPUT_NAME "uiohook-legacy"
+        OUTPUT_NAME "uiohook-xrecord"
         PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/uiohook.h
     )
 
@@ -137,14 +137,14 @@ if (UNIX AND NOT APPLE)
             ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/shared
     )
 
-    target_include_directories(uiohook-legacy
+    target_include_directories(uiohook-xrecord
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
 
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/legacy
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/linux/xrecord
     )
 
     target_include_directories(uiohook
@@ -169,7 +169,7 @@ else()
 endif()
 
 if (UNIX AND NOT APPLE)
-    install(TARGETS uiohook uiohook-x11 uiohook-wayland uiohook-legacy
+    install(TARGETS uiohook uiohook-x11 uiohook-wayland uiohook-xrecord
         EXPORT ${PROJECT_NAME}-config
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -177,7 +177,7 @@ if (UNIX AND NOT APPLE)
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
     )
 
-    export(TARGETS uiohook uiohook-x11 uiohook-wayland uiohook-legacy FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
+    export(TARGETS uiohook uiohook-x11 uiohook-wayland uiohook-xrecord FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
     install(EXPORT ${PROJECT_NAME}-config DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 else()
     install(TARGETS uiohook
@@ -215,13 +215,13 @@ if(UNIX AND NOT APPLE)
     pkg_check_modules(X11 REQUIRED x11)
     target_include_directories(uiohook-x11 PRIVATE "${X11_INCLUDE_DIRS}")
     target_link_libraries(uiohook-x11 "${X11_LDFLAGS}")
-    target_include_directories(uiohook-legacy PRIVATE "${X11_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${X11_LDFLAGS}")
+    target_include_directories(uiohook-xrecord PRIVATE "${X11_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-xrecord "${X11_LDFLAGS}")
 
-    # XTest and XRecord are only used by the legacy back-end.
+    # XTest and XRecord are only used by the xrecord back-end.
     pkg_check_modules(XTST REQUIRED xtst)
-    target_include_directories(uiohook-legacy PRIVATE "${XTST_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${XTST_LDFLAGS}")
+    target_include_directories(uiohook-xrecord PRIVATE "${XTST_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-xrecord "${XTST_LDFLAGS}")
 
     include(CheckLibraryExists)
     check_library_exists(Xtst XRecordQueryVersion "" HAVE_XRECORD)
@@ -232,26 +232,26 @@ if(UNIX AND NOT APPLE)
     pkg_check_modules(XKB_COMMON REQUIRED xkbcommon-x11)
     target_include_directories(uiohook-x11 PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
     target_link_libraries(uiohook-x11 "${XKB_COMMON_LDFLAGS}")
-    target_include_directories(uiohook-legacy PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${XKB_COMMON_LDFLAGS}")
+    target_include_directories(uiohook-xrecord PRIVATE "${XKB_COMMON_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-xrecord "${XKB_COMMON_LDFLAGS}")
 
     pkg_check_modules(X11_XCB REQUIRED x11-xcb)
     target_include_directories(uiohook-x11 PRIVATE "${X11_XCB_INCLUDE_DIRS}")
     target_link_libraries(uiohook-x11 "${X11_XCB_LDFLAGS}")
-    target_include_directories(uiohook-legacy PRIVATE "${X11_XCB_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${X11_XCB_LDFLAGS}")
+    target_include_directories(uiohook-xrecord PRIVATE "${X11_XCB_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-xrecord "${X11_XCB_LDFLAGS}")
 
     pkg_check_modules(XT REQUIRED xt)
     target_include_directories(uiohook-x11 PRIVATE "${XT_INCLUDE_DIRS}")
     target_link_libraries(uiohook-x11 "${XT_LDFLAGS}")
-    target_include_directories(uiohook-legacy PRIVATE "${XT_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${XT_LDFLAGS}")
+    target_include_directories(uiohook-xrecord PRIVATE "${XT_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-xrecord "${XT_LDFLAGS}")
 
     pkg_check_modules(XRANDR REQUIRED xrandr)
     target_include_directories(uiohook-x11 PRIVATE "${XRANDR_INCLUDE_DIRS}")
     target_link_libraries(uiohook-x11 "${XRANDR_LDFLAGS}")
-    target_include_directories(uiohook-legacy PRIVATE "${XRANDR_INCLUDE_DIRS}")
-    target_link_libraries(uiohook-legacy "${XRANDR_LDFLAGS}")
+    target_include_directories(uiohook-xrecord PRIVATE "${XRANDR_INCLUDE_DIRS}")
+    target_link_libraries(uiohook-xrecord "${XRANDR_LDFLAGS}")
 
     pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
     target_include_directories(uiohook-wayland PRIVATE "${WAYLAND_CLIENT_INCLUDE_DIRS}")
@@ -370,8 +370,8 @@ if(BUILD_TEST)
 
         target_include_directories(uiohook_tests PRIVATE "./src/linux")
 
-        add_dependencies(uiohook_tests uiohook-legacy)
-        target_link_libraries(uiohook_tests uiohook-legacy)
+        add_dependencies(uiohook_tests uiohook-xrecord)
+        target_link_libraries(uiohook_tests uiohook-xrecord)
     endif()
 endif()
 

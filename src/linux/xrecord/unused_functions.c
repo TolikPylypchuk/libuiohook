@@ -24,12 +24,16 @@ void hook_set_ax_poll_frequency(uint32_t frequency) {
 
 // Linux-specific functions
 
-int hook_get_linux_backend() {
-    return LINUX_BACKEND_LEGACY;
+int hook_get_linux_mode() {
+    return LINUX_MODE_XRECORD;
 }
 
-bool hook_set_linux_backend(int backend) {
-    return false;
+int hook_set_linux_mode(int mode) {
+    return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
+}
+
+int hook_get_loaded_linux_backend() {
+    return LINUX_LOADED_BACKEND_XRECORD;
 }
 
 int hook_init_virtual_devices(const char * const application_name) {

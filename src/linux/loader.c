@@ -53,15 +53,19 @@ typedef long int (*get_pointer_sensitivity_t)();
 typedef long int (*get_multi_click_time_t)();
 
 static bool backend_loaded = false;
-static const char *backend_name = NULL;
+static int loaded_backend = LINUX_LOADED_BACKEND_NONE;
+static int linux_mode = LINUX_MODE_AUTO_XRECORD;
 static pthread_mutex_t backend_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static const char const * BACKEND_X11_NAME = "x11";
 static const char const * BACKEND_WAYLAND_NAME = "wayland";
-static const char const * BACKEND_LEGACY_NAME = "legacy";
+static const char const * BACKEND_XRECORD_NAME = "xrecord";
 
 static logger_t callback = NULL;
 static void *callback_data = NULL;
+
+static dispatcher_t dispatch_callback = NULL;
+static void *dispatch_callback_data = NULL;
 
 static set_logger_proc_t set_logger_proc = NULL;
 static set_dispatch_proc_t set_dispatch_proc = NULL;
@@ -114,77 +118,92 @@ void logger(unsigned int level, const char *format, ...) {
     }
 }
 
-int hook_get_linux_backend() {
-    int result = LINUX_BACKEND_AUTO;
-
+int hook_get_linux_mode() {
     pthread_mutex_lock(&backend_mutex);
 
-    if (backend_name == NULL) {
-        result = LINUX_BACKEND_AUTO;
-    } else if (strcmp(backend_name, BACKEND_X11_NAME) == 0) {
-        result = LINUX_BACKEND_X11;
-    } else if (strcmp(backend_name, BACKEND_WAYLAND_NAME) == 0) {
-        result = LINUX_BACKEND_WAYLAND;
-    } else if (strcmp(backend_name, BACKEND_LEGACY_NAME) == 0) {
-        result = LINUX_BACKEND_LEGACY;
-    } else {
-        result = LINUX_BACKEND_AUTO;
-    }
+    int result = linux_mode;
 
     pthread_mutex_unlock(&backend_mutex);
 
     return result;
 }
 
-bool hook_set_linux_backend(int backend) {
+int hook_set_linux_mode(int mode) {
+    switch (mode) {
+        case LINUX_MODE_AUTO_XRECORD:
+        case LINUX_MODE_AUTO_LOW_LEVEL:
+        case LINUX_MODE_XRECORD:
+        case LINUX_MODE_X11:
+        case LINUX_MODE_WAYLAND:
+            break;
+
+        default:
+            logger(LOG_LEVEL_WARN, "%s [%u]: Ignoring the unknown Linux mode %#X.\n",
+                    __FUNCTION__, __LINE__, mode);
+
+            return UIOHOOK_FAILURE;
+    }
+
     pthread_mutex_lock(&backend_mutex);
 
     if (backend_loaded) {
         pthread_mutex_unlock(&backend_mutex);
-        return false;
+
+        logger(LOG_LEVEL_WARN, "%s [%u]: The Linux mode cannot be changed as a back-end is already loaded.\n",
+                __FUNCTION__, __LINE__);
+
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
-    switch (backend) {
-        case LINUX_BACKEND_X11:
-            backend_name = BACKEND_X11_NAME;
-            break;
-        case LINUX_BACKEND_WAYLAND:
-            backend_name = BACKEND_WAYLAND_NAME;
-            break;
-        case LINUX_BACKEND_LEGACY:
-            backend_name = BACKEND_LEGACY_NAME;
-            break;
-        default:
-            backend_name = NULL;
-            break;
-    }
+    linux_mode = mode;
 
     pthread_mutex_unlock(&backend_mutex);
-    return true;
+    return UIOHOOK_SUCCESS;
+}
+
+int hook_get_loaded_linux_backend() {
+    pthread_mutex_lock(&backend_mutex);
+
+    int result = loaded_backend;
+
+    pthread_mutex_unlock(&backend_mutex);
+
+    return result;
 }
 
 void hook_set_logger_proc(logger_t logger_proc, void *user_data) {
+    pthread_mutex_lock(&backend_mutex);
+
     callback = logger_proc;
     callback_data = user_data;
 
-    if (!load_backend()) {
-        return;
-    }
+    bool loaded = backend_loaded;
 
-    set_logger_proc(logger_proc, user_data);
+    pthread_mutex_unlock(&backend_mutex);
+
+    if (loaded) {
+        set_logger_proc(logger_proc, user_data);
+    }
 }
 
 void hook_set_dispatch_proc(dispatcher_t dispatch_proc, void *user_data) {
-    if (!load_backend()) {
-        return;
-    }
+    pthread_mutex_lock(&backend_mutex);
 
-    set_dispatch_proc(dispatch_proc, user_data);
+    dispatch_callback = dispatch_proc;
+    dispatch_callback_data = user_data;
+
+    bool loaded = backend_loaded;
+
+    pthread_mutex_unlock(&backend_mutex);
+
+    if (loaded) {
+        set_dispatch_proc(dispatch_proc, user_data);
+    }
 }
 
 int hook_run() {
     if (!load_backend()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
     return run();
@@ -192,7 +211,7 @@ int hook_run() {
 
 int hook_run_keyboard() {
     if (!load_backend()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
     return run_keyboard();
@@ -200,7 +219,7 @@ int hook_run_keyboard() {
 
 int hook_run_mouse() {
     if (!load_backend()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
     return run_mouse();
@@ -208,7 +227,7 @@ int hook_run_mouse() {
 
 int hook_stop() {
     if (!load_backend()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
     return stop();
@@ -216,7 +235,7 @@ int hook_stop() {
 
 int hook_post_event(uiohook_event * const event) {
     if (!load_backend()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
     return post_event(event);
@@ -224,7 +243,7 @@ int hook_post_event(uiohook_event * const event) {
 
 int hook_post_events(uiohook_event * const events, uint32_t size) {
     if (!load_backend()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
     return post_events(events, size);
@@ -232,7 +251,7 @@ int hook_post_events(uiohook_event * const events, uint32_t size) {
 
 int hook_post_text(const uint16_t * const text) {
     if (!load_backend()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
     return post_text(text);
@@ -240,7 +259,7 @@ int hook_post_text(const uint16_t * const text) {
 
 int hook_init_virtual_devices(const char * const application_name) {
     if (!load_backend()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
     return init_virtual_devices(application_name);
@@ -248,7 +267,7 @@ int hook_init_virtual_devices(const char * const application_name) {
 
 int hook_destroy_virtual_devices() {
     if (!load_backend()) {
-        return UIOHOOK_ERROR_LOAD_LINUX_BACKEND;
+        return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
     }
 
     return destroy_virtual_devices();
@@ -398,24 +417,48 @@ long int hook_get_multi_click_time() {
     return get_multi_click_time();
 }
 
-static const char *get_backend_name() {
+static bool is_wayland_session() {
     const char *session_type = getenv("XDG_SESSION_TYPE");
     const char *wayland_display = getenv("WAYLAND_DISPLAY");
 
-    bool use_wayland =
-        session_type != NULL && strcasecmp(session_type, "wayland") == 0 ||
+    return session_type != NULL && strcasecmp(session_type, "wayland") == 0 ||
         wayland_display != NULL && wayland_display[0] != '\0';
+}
 
-    if (use_wayland) {
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: Using the Wayland backend.\n",
-                __FUNCTION__, __LINE__);
+// Resolves the mode into the back-end which it selects on the current session.
+static int get_backend(int mode) {
+    switch (mode) {
+        case LINUX_MODE_XRECORD:
+            return LINUX_LOADED_BACKEND_XRECORD;
 
-        return BACKEND_WAYLAND_NAME;
-    } else {
-        logger(LOG_LEVEL_DEBUG, "%s [%u]: Using the X11 backend.\n",
-                __FUNCTION__, __LINE__);
+        case LINUX_MODE_X11:
+            return LINUX_LOADED_BACKEND_X11;
 
-        return BACKEND_X11_NAME;
+        case LINUX_MODE_WAYLAND:
+            return LINUX_LOADED_BACKEND_WAYLAND;
+
+        case LINUX_MODE_AUTO_LOW_LEVEL:
+            return is_wayland_session() ? LINUX_LOADED_BACKEND_WAYLAND : LINUX_LOADED_BACKEND_X11;
+
+        case LINUX_MODE_AUTO_XRECORD:
+        default:
+            return is_wayland_session() ? LINUX_LOADED_BACKEND_WAYLAND : LINUX_LOADED_BACKEND_XRECORD;
+    }
+}
+
+static const char *get_backend_name(int backend) {
+    switch (backend) {
+        case LINUX_LOADED_BACKEND_XRECORD:
+            return BACKEND_XRECORD_NAME;
+
+        case LINUX_LOADED_BACKEND_X11:
+            return BACKEND_X11_NAME;
+
+        case LINUX_LOADED_BACKEND_WAYLAND:
+            return BACKEND_WAYLAND_NAME;
+
+        default:
+            return NULL;
     }
 }
 
@@ -580,9 +623,11 @@ static bool load_backend() {
         return true;
     }
 
-    const char* selected_backend_name = backend_name != NULL
-        ? backend_name
-        : get_backend_name();
+    int selected_backend = get_backend(linux_mode);
+    const char *selected_backend_name = get_backend_name(selected_backend);
+
+    logger(LOG_LEVEL_DEBUG, "%s [%u]: Using the %s back-end.\n",
+            __FUNCTION__, __LINE__, selected_backend_name);
 
     Dl_info info;
     if (dladdr((void *) load_backend, &info) == 0) {
@@ -619,7 +664,18 @@ static bool load_backend() {
         return false;
     }
 
+    // Hand over the callbacks which were set before the back-end existed.
+    if (callback != NULL) {
+        set_logger_proc(callback, callback_data);
+    }
+
+    if (dispatch_callback != NULL) {
+        set_dispatch_proc(dispatch_callback, dispatch_callback_data);
+    }
+
     backend_loaded = true;
+    loaded_backend = selected_backend;
+
     pthread_mutex_unlock(&backend_mutex);
 
     return true;

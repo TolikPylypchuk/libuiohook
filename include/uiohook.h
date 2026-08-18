@@ -16,7 +16,7 @@
 #define UIOHOOK_ERROR_UNSUPPORTED_FEATURE                     0x04
 
 // Linux-specific errors.
-#define UIOHOOK_ERROR_LOAD_LINUX_BACKEND                      0x10
+#define UIOHOOK_ERROR_LINUX_LOAD_BACKEND                      0x10
 #define UIOHOOK_ERROR_LINUX_INIT_UDEV                         0x11
 #define UIOHOOK_ERROR_LINUX_INIT_LIBINPUT                     0x12
 #define UIOHOOK_ERROR_LINUX_ASSIGN_SEAT                       0x13
@@ -29,7 +29,7 @@
 #define UIOHOOK_ERROR_LINUX_OPEN_WAYLAND_DISPLAY              0x1A
 #define UIOHOOK_ERROR_LINUX_VIRTUAL_DEVICES_NOT_INITIALIZED   0x1B
 
-// Legacy X11-specific errors.
+// XRecord back-end specific errors.
 #define UIOHOOK_ERROR_X_OPEN_DISPLAY                          0x20
 #define UIOHOOK_ERROR_X_RECORD_NOT_FOUND                      0x21
 #define UIOHOOK_ERROR_X_RECORD_ALLOC_RANGE                    0x22
@@ -60,11 +60,22 @@
 #define UIOHOOK_FEATURE_POINTER_PROPERTIES             (1 << 5)
 /* End Optional Features */
 
+/* Begin Linux Modes */
+// Which back-end to load on Linux. The two automatic modes pick the back-end by session type, and
+// differ only in what they choose on an X11 session.
+#define LINUX_MODE_AUTO_XRECORD     0x0   // xrecord on X11, wayland on Wayland; the default
+#define LINUX_MODE_AUTO_LOW_LEVEL   0x1   // x11 on X11, wayland on Wayland
+#define LINUX_MODE_XRECORD          0x2
+#define LINUX_MODE_X11              0x3
+#define LINUX_MODE_WAYLAND          0x4
+/* End Linux Modes */
+
 /* Begin Linux Back-ends */
-#define LINUX_BACKEND_AUTO      0x0
-#define LINUX_BACKEND_X11       0x1
-#define LINUX_BACKEND_WAYLAND   0x2
-#define LINUX_BACKEND_LEGACY    0x3
+// The back-end which is actually loaded, as opposed to the mode which selects it.
+#define LINUX_LOADED_BACKEND_NONE      0x0
+#define LINUX_LOADED_BACKEND_XRECORD   0x1
+#define LINUX_LOADED_BACKEND_X11       0x2
+#define LINUX_LOADED_BACKEND_WAYLAND   0x3
 /* End Linux Back-ends */
 
 /* Begin Log Levels and Function Prototype */
@@ -508,11 +519,14 @@ extern "C" {
     // Set the delay between character sending when posting text on X11.
     void hook_set_post_text_delay_x11(uint64_t delay);
 
-    // Get the back-end for Linux.
-    int hook_get_linux_backend();
+    // Get the mode which selects the back-end on Linux.
+    int hook_get_linux_mode();
 
-    // Set the back-end for Linux.
-    bool hook_set_linux_backend(int backend);
+    // Set the mode which selects the back-end on Linux.
+    int hook_set_linux_mode(int mode);
+
+    // Get the back-end which is currently loaded on Linux.
+    int hook_get_loaded_linux_backend();
 
     // Supply the device node descriptors instead of opening them directly.
     void hook_set_device_procs(device_open_t open_proc, device_close_t close_proc, void *user_data);

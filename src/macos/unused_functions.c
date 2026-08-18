@@ -11,12 +11,16 @@ uint64_t hook_get_post_text_delay_x11() {
 void hook_set_post_text_delay_x11(uint64_t delay) {
 }
 
-int hook_get_linux_backend() {
-    return LINUX_BACKEND_AUTO;
+int hook_get_linux_mode() {
+    return LINUX_MODE_AUTO_XRECORD;
 }
 
-bool hook_set_linux_backend(int backend) {
-    return true;
+int hook_set_linux_mode(int mode) {
+    return UIOHOOK_SUCCESS;
+}
+
+int hook_get_loaded_linux_backend() {
+    return LINUX_LOADED_BACKEND_NONE;
 }
 
 int hook_init_virtual_devices(const char * const application_name) {

@@ -24,10 +24,14 @@ void hook_set_ax_poll_frequency(uint32_t frequency) {
 
 // Linux-specific functions
 
-int hook_get_linux_backend() {
-    return LINUX_BACKEND_WAYLAND;
+int hook_get_linux_mode() {
+    return LINUX_MODE_WAYLAND;
 }
 
-bool hook_set_linux_backend(int backend) {
-    return false;
+int hook_set_linux_mode(int mode) {
+    return UIOHOOK_ERROR_LINUX_LOAD_BACKEND;
+}
+
+int hook_get_loaded_linux_backend() {
+    return LINUX_LOADED_BACKEND_WAYLAND;
 }
