@@ -238,18 +238,18 @@ typedef void (*device_close_t)(int fd, void *user_data);
 #define VC_CLOSE_BRACKET                         0x4B
 #define VC_BACK_SLASH                            0x4C
 
-#define VC_SEMICOLON                             0x4E
-#define VC_QUOTE                                 0x4F
-#define VC_ENTER                                 0x50
+#define VC_SEMICOLON                             0x4D
+#define VC_QUOTE                                 0x4E
+#define VC_ENTER                                 0x4F
 
-#define VC_COMMA                                 0x51
-#define VC_PERIOD                                0x52
-#define VC_SLASH                                 0x53
+#define VC_COMMA                                 0x50
+#define VC_PERIOD                                0x51
+#define VC_SLASH                                 0x52
 
-#define VC_SPACE                                 0x54
+#define VC_SPACE                                 0x53
 
-#define VC_102                                   0x55
-#define VC_MISC                                  0x56
+#define VC_SECTION                               0x54
+#define VC_MISC                                  0x55
 // End Alphanumeric Zone
 
 
@@ -355,24 +355,22 @@ typedef void (*device_close_t)(int fd, void *user_data);
 #define VC_KATAKANA                              0xC1
 #define VC_HIRAGANA                              0xC2
 #define VC_KANA                                  0xC3
-#define VC_KANJI                                 0xC4
-#define VC_HANGUL                                0xC5
-#define VC_JUNJA                                 0xC6
-#define VC_FINAL                                 0xC7
-#define VC_HANJA                                 0xC8
+#define VC_JUNJA                                 0xC4
+#define VC_FINAL                                 0xC5
+#define VC_HANJA                                 0xC6
 
-#define VC_ACCEPT                                0xC9
-#define VC_CONVERT                               0xCA
-#define VC_NONCONVERT                            0xCB
-#define VC_IME_ON                                0xCD
-#define VC_IME_OFF                               0xCE
-#define VC_MODE_CHANGE                           0xCF
-#define VC_PROCESS                               0xD0
+#define VC_ACCEPT                                0xC7
+#define VC_CONVERT                               0xC8
+#define VC_NONCONVERT                            0xC9
+#define VC_IME_ON                                0xCA
+#define VC_IME_OFF                               0xCB
+#define VC_MODE_CHANGE                           0xCC
+#define VC_PROCESS                               0xCD
 
-#define VC_ALPHANUMERIC                          0xD1
-#define VC_UNDERSCORE                            0xD2
-#define VC_YEN                                   0xD3
-#define VC_JP_COMMA                              0xD4
+#define VC_ALPHANUMERIC                          0xCE
+#define VC_UNDERSCORE                            0xCF
+#define VC_YEN                                   0xD1
+#define VC_JP_COMMA                              0xD2
 // End Asian Language Keys
 
 #define VC_UNDEFINED                             0x00    // KeyCode Unknown
