@@ -88,21 +88,21 @@ typedef void (*logger_t)(unsigned int, void *, const char *, va_list);
 /* End Log Levels and Function Prototype */
 
 /* Begin Virtual Event Types and Data Structures */
-#define EVENT_HOOK_ENABLED                   0x1
-#define EVENT_HOOK_DISABLED                  0x2
-#define EVENT_KEY_TYPED                      0x3
-#define EVENT_KEY_PRESSED                    0x4
-#define EVENT_KEY_RELEASED                   0x5
-#define EVENT_MOUSE_CLICKED                  0x6
-#define EVENT_MOUSE_PRESSED                  0x7
-#define EVENT_MOUSE_PRESSED_IGNORE_COORDS    0x8
-#define EVENT_MOUSE_RELEASED                 0x9
-#define EVENT_MOUSE_RELEASED_IGNORE_COORDS   0xA
-#define EVENT_MOUSE_MOVED                    0xB
-#define EVENT_MOUSE_MOVED_RELATIVE           0xC
-#define EVENT_MOUSE_DRAGGED                  0xD
-#define EVENT_MOUSE_DRAGGED_RELATIVE         0xE
-#define EVENT_MOUSE_WHEEL                    0xF
+#define EVENT_HOOK_ENABLED                   0x01
+#define EVENT_HOOK_DISABLED                  0x02
+#define EVENT_KEY_TYPED                      0x03
+#define EVENT_KEY_PRESSED                    0x04
+#define EVENT_KEY_RELEASED                   0x05
+#define EVENT_MOUSE_CLICKED                  0x06
+#define EVENT_MOUSE_PRESSED                  0x07
+#define EVENT_MOUSE_PRESSED_IGNORE_COORDS    0x08
+#define EVENT_MOUSE_RELEASED                 0x09
+#define EVENT_MOUSE_RELEASED_IGNORE_COORDS   0x0A
+#define EVENT_MOUSE_MOVED                    0x0B
+#define EVENT_MOUSE_MOVED_RELATIVE           0x0C
+#define EVENT_MOUSE_DRAGGED                  0x0D
+#define EVENT_MOUSE_DRAGGED_RELATIVE         0x0E
+#define EVENT_MOUSE_WHEEL                    0x0F
 
 typedef struct _screen_data {
     uint8_t number;
@@ -137,7 +137,7 @@ typedef struct _mouse_wheel_event_data {
 typedef struct _uiohook_event {
     uint64_t time;
     uint32_t mask;
-    uint8_t type;
+    uint16_t type;
     union {
         keyboard_event_data keyboard;
         mouse_event_data mouse;
