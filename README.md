@@ -8,9 +8,8 @@
 ## Compiling
 
 Prerequisites:
-
 - [CMake](https://cmake.org) - at least version 4.2
-- GCC, Clang, or MSVC
+- GCC, Clang, or MSVC with C23 support
 - X11 dependencies:
   - libx11-dev
   - libxtst-dev
@@ -20,6 +19,13 @@ Prerequisites:
   - libxkbcommon-dev
   - libxkbcommon-x11-dev
   - libxkbfile-dev
+- Wayland dependencies:
+  - libwayland-dev
+  - wayland-protocols
+  - extra-cmake-modules
+- libinput dependencies:
+  - libinput-dev
+  - libudev-dev
 
 To build, run the following commands:
 

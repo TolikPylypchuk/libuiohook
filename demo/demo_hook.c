@@ -92,6 +92,14 @@ void dispatch_proc(uiohook_event * const event, void *user_data) {
                 event->data.mouse.button, event->data.mouse.clicks);
             break;
 
+        case EVENT_MOUSE_MOVED_RELATIVE:
+        case EVENT_MOUSE_DRAGGED_RELATIVE:
+            snprintf(buffer + length, sizeof(buffer) - length,
+                ",dx=%i,dy=%i,button=%i,clicks=%i",
+                event->data.mouse.x, event->data.mouse.y,
+                event->data.mouse.button, event->data.mouse.clicks);
+            break;
+
         case EVENT_MOUSE_WHEEL:
             snprintf(buffer + length, sizeof(buffer) - length,
                 ",type=%u,rotation=%i,delta=%u,direction=%u",
@@ -132,7 +140,37 @@ int main() {
             break;
 
 
-        // X11 specific errors.
+        // Linux specific errors.
+        case UIOHOOK_ERROR_LINUX_LOAD_BACKEND:
+            logger(LOG_LEVEL_ERROR, "Failed to load the Linux back-end. (%#X)", status);
+            break;
+
+        case UIOHOOK_ERROR_LINUX_INIT_UDEV:
+            logger(LOG_LEVEL_ERROR, "Failed to create a udev context. (%#X)", status);
+            break;
+
+        case UIOHOOK_ERROR_LINUX_INIT_LIBINPUT:
+            logger(LOG_LEVEL_ERROR, "Failed to create a libinput context. (%#X)", status);
+            break;
+
+        case UIOHOOK_ERROR_LINUX_ASSIGN_SEAT:
+            logger(LOG_LEVEL_ERROR, "Failed to assign the libinput seat. (%#X)", status);
+            break;
+
+        case UIOHOOK_ERROR_LINUX_NO_INPUT_DEVICES:
+            logger(LOG_LEVEL_ERROR, "Found no input devices to read. (%#X)", status);
+            break;
+
+        case UIOHOOK_ERROR_LINUX_INIT_STOP_NOTIFICATION:
+            logger(LOG_LEVEL_ERROR, "Failed to create the stop notification. (%#X)", status);
+            break;
+
+        case UIOHOOK_ERROR_LINUX_EXEC_STOP_NOTIFICATION:
+            logger(LOG_LEVEL_ERROR, "Failed to signal the stop notification. (%#X)", status);
+            break;
+
+
+        // XRecord back-end specific errors.
         case UIOHOOK_ERROR_X_OPEN_DISPLAY:
             logger(LOG_LEVEL_ERROR, "Failed to open X11 display. (%#X)", status);
             break;

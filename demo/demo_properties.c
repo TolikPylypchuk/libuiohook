@@ -29,6 +29,24 @@ int main() {
     // Disable the logger.
     hook_set_logger_proc(&logger_proc, NULL);
 
+    uint32_t features = hook_get_optional_feature_support();
+    logger(LOG_LEVEL_INFO, "Optional Features:\t0x%02X\n", features);
+    logger(LOG_LEVEL_INFO, "\tEvent Suppression:\t%s\n",
+        features & UIOHOOK_FEATURE_EVENT_SUPPRESSION ? "yes" : "no");
+    logger(LOG_LEVEL_INFO, "\tKey Typed Events:\t%s\n",
+        features & UIOHOOK_FEATURE_KEY_TYPED_EVENTS ? "yes" : "no");
+    logger(LOG_LEVEL_INFO, "\tPost Text:\t\t%s\n",
+        features & UIOHOOK_FEATURE_POST_TEXT ? "yes" : "no");
+    logger(LOG_LEVEL_INFO, "\tAbsolute Mouse Movement:\t%s\n",
+        features & UIOHOOK_FEATURE_ABSOLUTE_MOUSE_MOVEMENT ? "yes" : "no");
+    logger(LOG_LEVEL_INFO, "\tAbsolute Mouse Button Coords:\t%s\n",
+        features & UIOHOOK_FEATURE_ABSOLUTE_MOUSE_BUTTON_COORDS ? "yes" : "no");
+    logger(LOG_LEVEL_INFO, "\tPointer Properties:\t%s\n",
+        features & UIOHOOK_FEATURE_POINTER_PROPERTIES ? "yes" : "no");
+    logger(LOG_LEVEL_INFO, "\n");
+
+    logger(LOG_LEVEL_INFO, "Loaded Linux Back-end:\t%i\n\n", hook_get_loaded_linux_backend());
+
     // Retrieves current monitor layout and size.
     unsigned char count;
     screen_data* monitors = hook_create_screen_info(&count);
