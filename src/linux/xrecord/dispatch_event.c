@@ -6,6 +6,8 @@
 #include "input_helper.h"
 #include "logger.h"
 
+#define WHEEL_DELTA 120
+
 typedef struct _mouse_click {
     uint16_t count;
     uint64_t time;
@@ -234,7 +236,7 @@ static bool dispatch_mouse_wheel_rotated(uint64_t timestamp, XButtonEvent * cons
     /* Some scroll wheel properties are available via the new XInput2 (XI2) extension. Unfortunately the extension is
      * not available on my development platform at this time. For the time being we will just use the Windows default
      * value of 3. */
-    uio_event.data.wheel.delta = 100;
+    uio_event.data.wheel.delta = WHEEL_DELTA;
     if (x_event->button == WheelDown || x_event->button == WheelRight) {
         // Wheel Rotated Up and Towards.
         uio_event.data.wheel.rotation = -3 * uio_event.data.wheel.delta;
