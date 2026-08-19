@@ -331,14 +331,17 @@ if (BUILD_DEMO)
         demo_properties
     )
 
-    set_target_properties(all_demos PROPERTIES
-        C_STANDARD 99
+    # The standard has to be set on the executables themselves - a custom target compiles nothing.
+    set_target_properties(demo_hook demo_hook_async demo_post demo_properties PROPERTIES
+        C_STANDARD 23
         C_STANDARD_REQUIRED ON
     )
 
     if(MSVC)
-        add_compile_definitions(all_demos PRIVATE inline=__inline)
-        add_compile_definitions(all_demos PRIVATE _CRT_SECURE_NO_WARNINGS)
+        target_compile_definitions(demo_hook PRIVATE _CRT_SECURE_NO_WARNINGS)
+        target_compile_definitions(demo_hook_async PRIVATE _CRT_SECURE_NO_WARNINGS)
+        target_compile_definitions(demo_post PRIVATE _CRT_SECURE_NO_WARNINGS)
+        target_compile_definitions(demo_properties PRIVATE _CRT_SECURE_NO_WARNINGS)
     endif()
 
     install(TARGETS demo_hook demo_hook_async demo_post demo_properties RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -354,7 +357,7 @@ if(BUILD_TEST)
     )
 
     set_target_properties(uiohook_tests PROPERTIES
-        C_STANDARD 99
+        C_STANDARD 23
         C_STANDARD_REQUIRED ON
     )
 
