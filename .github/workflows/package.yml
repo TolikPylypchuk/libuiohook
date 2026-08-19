@@ -89,7 +89,7 @@ jobs:
       - name: Compile
         env:
           CC: clang
-          CFLAGS: "-O2 -g -target arm64-apple-macos -mmacosx-version-min=10.5 -flto -fomit-frame-pointer -fno-stack-protector -pipe"
+          CFLAGS: "-O2 -g -target arm64-apple-macos10.15 -flto -fomit-frame-pointer -fno-stack-protector -pipe"
           LDFLAGS: "-Wl,-dead_strip_dylibs"
         shell: bash
         run: |
@@ -124,7 +124,7 @@ jobs:
       - name: Compile
         env:
           CC: clang
-          CFLAGS: "-O2 -g -target x86_64-apple-macos -mmacosx-version-min=10.5 -flto -fomit-frame-pointer -fno-stack-protector -pipe"
+          CFLAGS: "-O2 -g -target x86_64-apple-macos10.15 -flto -fomit-frame-pointer -fno-stack-protector -pipe"
           LDFLAGS: "-Wl,-dead_strip_dylibs"
         shell: bash
         run: |
@@ -200,7 +200,7 @@ jobs:
         env:
           CC: arm-linux-gnueabihf-gcc
           CFLAGS: "-Os -march=armv7ve -mfpu=vfp -mfloat-abi=hard -g -flto -fomit-frame-pointer -fno-stack-protector -pipe"
-          LDFLAGS: "-fuse-ld=gold -Wl,-O1 -Wl,--as-needed"
+          LDFLAGS: "-Wl,-O1 -Wl,--as-needed"
           PKG_CONFIG_PATH: "/usr/lib/arm-linux-gnueabihf/pkgconfig"
         shell: bash
         run: |
@@ -276,7 +276,7 @@ jobs:
         env:
           CC: aarch64-linux-gnu-gcc
           CFLAGS: "-Os -march=armv8-a+crc -mtune=cortex-a53 -g -flto -fomit-frame-pointer -fno-stack-protector -pipe"
-          LDFLAGS: "-fuse-ld=gold -Wl,-O1 -Wl,--as-needed"
+          LDFLAGS: "-Wl,-O1 -Wl,--as-needed"
           PKG_CONFIG_PATH: "/usr/lib/aarch64-linux-gnu/pkgconfig"
         shell: bash
         run: |
@@ -346,7 +346,7 @@ jobs:
         env:
           CC: i686-linux-gnu-gcc
           CFLAGS: "-O2 -march=i686 -mtune=generic -g -fomit-frame-pointer -flto -fno-stack-protector -pipe"
-          LDFLAGS: "-fuse-ld=gold -Wl,-O1 -Wl,--as-needed"
+          LDFLAGS: "-Wl,-O1 -Wl,--as-needed"
           PKG_CONFIG_PATH: "/usr/lib/i386-linux-gnu/pkgconfig"
         shell: bash
         run: |
@@ -402,7 +402,7 @@ jobs:
         env:
           CC: x86_64-linux-gnu-gcc
           CFLAGS: "-O2 -march=x86-64 -mtune=generic -g -fomit-frame-pointer -flto -fno-stack-protector -pipe"
-          LDFLAGS: "-fuse-ld=gold -Wl,-O1 -Wl,--as-needed"
+          LDFLAGS: "-Wl,-O1 -Wl,--as-needed"
           PKG_CONFIG_PATH: "/usr/lib/x86_64-linux-gnu/pkgconfig"
         shell: bash
         run: |
