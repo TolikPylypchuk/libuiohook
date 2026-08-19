@@ -9,7 +9,7 @@
 
 Display *helper_disp;  // Where do we open this display?  FIXME Use the ctrl display via init param
 
-size_t event_to_unicode(XKeyEvent *x_event, XIC xic, wchar_t *surrogate, size_t length) {
+size_t event_to_unicode(XKeyEvent *x_event, XIC xic, uint16_t *surrogate, size_t length) {
     size_t count = 0;
     char buffer[5] = {};
 
@@ -48,15 +48,15 @@ size_t event_to_unicode(XKeyEvent *x_event, XIC xic, wchar_t *surrogate, size_t 
 
             if (codepoint <= 0xFFFF) {
                 count = 1;
-                surrogate[0] = codepoint;
+                surrogate[0] = (uint16_t) codepoint;
             } else if (length > 1) {
                 // if codepoint > 0xFFFF, split into lead (high) / trail (low) surrogate ranges
                 // See https://unicode.org/faq/utf_bom.html#utf16-4
                 const uint32_t lead_offset = 0xD800 - (0x10000 >> 10);
 
                 count = 2;
-                surrogate[0] = lead_offset + (codepoint >> 10); // lead,  first  [0]
-                surrogate[1] = 0xDC00 + (codepoint & 0x3FF);    // trail, second [1]
+                surrogate[0] = (uint16_t) (lead_offset + (codepoint >> 10)); // lead,  first  [0]
+                surrogate[1] = (uint16_t) (0xDC00 + (codepoint & 0x3FF));    // trail, second [1]
             } else {
                 count = 0;
                 logger(LOG_LEVEL_WARN, "%s [%u]: Surrogate buffer overflow detected!\n",

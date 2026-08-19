@@ -128,8 +128,8 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
     if (key_typed_enabled) {
         KeySym keysym = 0x00;
 
-        wchar_t surrogate[2] = {};
-        size_t count = event_to_unicode(x_event, surrogate, sizeof(surrogate) - 1, &keysym);
+        uint16_t surrogate[2] = {};
+        size_t count = event_to_unicode(x_event, surrogate, sizeof(surrogate) / sizeof(uint16_t), &keysym);
 
         for (unsigned int i = 0; i < count; i++) {
             // Populate key typed event.
@@ -147,7 +147,7 @@ bool dispatch_key_press(uint64_t timestamp, XKeyPressedEvent * const x_event) {
             logger(LOG_LEVEL_DEBUG, "%s [%u]: Key %#X typed. (%lc)\n",
                     __FUNCTION__, __LINE__,
                     uio_event.data.keyboard.keycode,
-                    uio_event.data.keyboard.keychar);
+                    (wint_t) uio_event.data.keyboard.keychar);
 
             // Fire key typed event.
             dispatch_event(&uio_event);

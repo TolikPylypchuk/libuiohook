@@ -3,6 +3,7 @@
 #endif
 
 #include <mach/mach_time.h>
+#include <wchar.h>
 
 #include "dispatch_event.h"
 #include "input_helper.h"

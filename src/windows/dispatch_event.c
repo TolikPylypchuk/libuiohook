@@ -1,3 +1,5 @@
+#include <wchar.h>
+
 #include <uiohook.h>
 
 #include "dispatch_event.h"

@@ -131,8 +131,8 @@ void dispatch_hook_disabled() {
 }
 
 static void dispatch_key_typed(uint64_t timestamp, uint16_t evdev_code, uint16_t uiocode, bool emulated) {
-    wchar_t surrogate[2] = {};
-    size_t count = backend_key_to_unicode(evdev_code, get_modifiers(), surrogate, sizeof(surrogate) / sizeof(wchar_t));
+    uint16_t surrogate[2] = {};
+    size_t count = backend_key_to_unicode(evdev_code, get_modifiers(), surrogate, sizeof(surrogate) / sizeof(uint16_t));
 
     for (size_t i = 0; i < count; i++) {
         uio_event.time = timestamp;
@@ -148,7 +148,7 @@ static void dispatch_key_typed(uint64_t timestamp, uint16_t evdev_code, uint16_t
 
         logger(LOG_LEVEL_DEBUG, "%s [%u]: Key %#X typed. (%lc)\n",
                 __FUNCTION__, __LINE__,
-                uio_event.data.keyboard.keycode, uio_event.data.keyboard.keychar);
+                uio_event.data.keyboard.keycode, (wint_t) uio_event.data.keyboard.keychar);
 
         dispatch_event(&uio_event);
     }

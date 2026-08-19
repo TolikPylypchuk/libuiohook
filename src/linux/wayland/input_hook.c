@@ -1,6 +1,6 @@
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
-#include <wchar.h>
 
 #include <uiohook.h>
 
@@ -9,7 +9,7 @@
 #include "monitor_helper.h"
 #include "wayland_helper.h"
 
-size_t backend_key_to_unicode(uint16_t evdev_code, uint16_t modifier_mask, wchar_t *buffer, size_t length) {
+size_t backend_key_to_unicode(uint16_t evdev_code, uint16_t modifier_mask, uint16_t *buffer, size_t length) {
     // Key typed events are not supported by this back-end.
     return 0;
 }

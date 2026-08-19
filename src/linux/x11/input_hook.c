@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <stdint.h>
-#include <wchar.h>
 
 #include <X11/XKBlib.h>
 #include <X11/Xlib.h>
@@ -137,7 +136,7 @@ static void refresh_keyboard_mapping() {
     }
 }
 
-size_t backend_key_to_unicode(uint16_t evdev_code, uint16_t modifier_mask, wchar_t *buffer, size_t length) {
+size_t backend_key_to_unicode(uint16_t evdev_code, uint16_t modifier_mask, uint16_t *buffer, size_t length) {
     if (hook_disp == NULL) {
         return 0;
     }

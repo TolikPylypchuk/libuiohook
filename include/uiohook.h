@@ -4,7 +4,6 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <wchar.h>
 
 /* Begin Error Codes */
 #define UIOHOOK_SUCCESS                                       0x00
@@ -115,7 +114,7 @@ typedef struct _screen_data {
 typedef struct _keyboard_event_data {
     uint16_t keycode;
     uint16_t rawcode;
-    wchar_t keychar;
+    uint16_t keychar;
 } keyboard_event_data;
 
 typedef struct _mouse_event_data {
@@ -128,16 +127,16 @@ typedef struct _mouse_event_data {
 typedef struct _mouse_wheel_event_data {
     int16_t x;
     int16_t y;
-    uint8_t type;
     int16_t rotation;
     uint16_t delta;
+    uint8_t type;
     uint8_t direction;
 } mouse_wheel_event_data;
 
 typedef struct _uiohook_event {
-    uint8_t type;
     uint64_t time;
     uint32_t mask;
+    uint8_t type;
     union {
         keyboard_event_data keyboard;
         mouse_event_data mouse;
@@ -382,33 +381,33 @@ typedef void (*device_close_t)(int fd, void *user_data);
 
 
 /* Begin Virtual Modifier Masks */
-#define MASK_SHIFT_L                             1 << 0
-#define MASK_CTRL_L                              1 << 1
-#define MASK_META_L                              1 << 2
-#define MASK_ALT_L                               1 << 3
+#define MASK_SHIFT_L                             (1 << 0)
+#define MASK_CTRL_L                              (1 << 1)
+#define MASK_META_L                              (1 << 2)
+#define MASK_ALT_L                               (1 << 3)
 
-#define MASK_SHIFT_R                             1 << 4
-#define MASK_CTRL_R                              1 << 5
-#define MASK_META_R                              1 << 6
-#define MASK_ALT_R                               1 << 7
+#define MASK_SHIFT_R                             (1 << 4)
+#define MASK_CTRL_R                              (1 << 5)
+#define MASK_META_R                              (1 << 6)
+#define MASK_ALT_R                               (1 << 7)
 
-#define MASK_SHIFT                               MASK_SHIFT_L | MASK_SHIFT_R
-#define MASK_CTRL                                MASK_CTRL_L  | MASK_CTRL_R
-#define MASK_META                                MASK_META_L  | MASK_META_R
-#define MASK_ALT                                 MASK_ALT_L   | MASK_ALT_R
+#define MASK_SHIFT                               (MASK_SHIFT_L | MASK_SHIFT_R)
+#define MASK_CTRL                                (MASK_CTRL_L  | MASK_CTRL_R)
+#define MASK_META                                (MASK_META_L  | MASK_META_R)
+#define MASK_ALT                                 (MASK_ALT_L   | MASK_ALT_R)
 
-#define MASK_BUTTON1                             1 << 8
-#define MASK_BUTTON2                             1 << 9
-#define MASK_BUTTON3                             1 << 10
-#define MASK_BUTTON4                             1 << 11
-#define MASK_BUTTON5                             1 << 12
+#define MASK_BUTTON1                             (1 << 8)
+#define MASK_BUTTON2                             (1 << 9)
+#define MASK_BUTTON3                             (1 << 10)
+#define MASK_BUTTON4                             (1 << 11)
+#define MASK_BUTTON5                             (1 << 12)
 
-#define MASK_NUM_LOCK                            1 << 13
-#define MASK_CAPS_LOCK                           1 << 14
-#define MASK_SCROLL_LOCK                         1 << 15
+#define MASK_NUM_LOCK                            (1 << 13)
+#define MASK_CAPS_LOCK                           (1 << 14)
+#define MASK_SCROLL_LOCK                         (1 << 15)
 
-#define MASK_EMULATED                            1 << 30
-#define MASK_CONSUMED                            1 << 31
+#define MASK_EMULATED                            (1 << 30)
+#define MASK_CONSUMED                            (1U << 31)
 /* End Virtual Modifier Masks */
 
 

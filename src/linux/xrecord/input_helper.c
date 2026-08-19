@@ -342,7 +342,7 @@ bool enable_key_repeat() {
     return is_auto_repeat;
 }
 
-size_t event_to_unicode(XKeyEvent *x_event, wchar_t *surrogate, size_t length, KeySym *keysym) {
+size_t event_to_unicode(XKeyEvent *x_event, uint16_t *surrogate, size_t length, KeySym *keysym) {
     XIC xic = NULL;
     XIM xim = NULL;
 
@@ -410,15 +410,15 @@ size_t event_to_unicode(XKeyEvent *x_event, wchar_t *surrogate, size_t length, K
 
             if (codepoint <= 0xFFFF) {
                 count = 1;
-                surrogate[0] = codepoint;
+                surrogate[0] = (uint16_t) codepoint;
             } else if (length > 1) {
                 // if codepoint > 0xFFFF, split into lead (high) / trail (low) surrogate ranges
                 // See https://unicode.org/faq/utf_bom.html#utf16-4
                 const uint32_t lead_offset = 0xD800 - (0x10000 >> 10);
 
                 count = 2;
-                surrogate[0] = lead_offset + (codepoint >> 10); // lead,  first  [0]
-                surrogate[1] = 0xDC00 + (codepoint & 0x3FF);    // trail, second [1]
+                surrogate[0] = (uint16_t) (lead_offset + (codepoint >> 10)); // lead,  first  [0]
+                surrogate[1] = (uint16_t) (0xDC00 + (codepoint & 0x3FF));    // trail, second [1]
             } else {
                 count = 0;
                 logger(LOG_LEVEL_WARN, "%s [%u]: Surrogate buffer overflow detected!\n",
