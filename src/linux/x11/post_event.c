@@ -16,11 +16,11 @@
 
 static uint64_t post_text_delay = 50 * 1000000;
 
-uint64_t hook_get_post_text_delay_x11() {
+uint64_t hook_get_post_text_delay_linux() {
     return post_text_delay;
 }
 
-void hook_set_post_text_delay_x11(uint64_t delay) {
+void hook_set_post_text_delay_linux(uint64_t delay) {
     post_text_delay = delay;
 }
 

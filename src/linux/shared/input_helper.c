@@ -98,7 +98,7 @@ static const key_mapping uiocode_evdev_table[] = {
     { .uiocode = VC_PERIOD,            .evdev_code = KEY_DOT },
     { .uiocode = VC_SLASH,             .evdev_code = KEY_SLASH },
     { .uiocode = VC_SHIFT_R,           .evdev_code = KEY_RIGHTSHIFT },
-    { .uiocode = VC_102,               .evdev_code = KEY_102ND },
+    { .uiocode = VC_SECTION,           .evdev_code = KEY_102ND },
     { .uiocode = VC_ALT_L,             .evdev_code = KEY_LEFTALT },
     { .uiocode = VC_CONTROL_L,         .evdev_code = KEY_LEFTCTRL },
     { .uiocode = VC_META_L,            .evdev_code = KEY_LEFTMETA },

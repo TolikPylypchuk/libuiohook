@@ -170,7 +170,7 @@ static const uint16_t uiocode_keycode_table[][2] = {
     { VC_CLOSE_BRACKET,       VK_OEM_6               },
     { VC_QUOTE,               VK_OEM_7               },
     { VC_MISC,                VK_OEM_8               },
-    { VC_102,                 VK_OEM_102             },
+    { VC_SECTION,             VK_OEM_102             },
     { VC_PROCESS,             VK_PROCESSKEY          },
 };
 

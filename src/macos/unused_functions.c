@@ -4,11 +4,11 @@
 
 // Linux-specific functions
 
-uint64_t hook_get_post_text_delay_x11() {
+uint64_t hook_get_post_text_delay_linux() {
     return 0;
 }
 
-void hook_set_post_text_delay_x11(uint64_t delay) {
+void hook_set_post_text_delay_linux(uint64_t delay) {
 }
 
 int hook_get_linux_mode() {

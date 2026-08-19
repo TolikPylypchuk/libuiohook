@@ -39,8 +39,8 @@ typedef void (*set_prompt_user_if_ax_api_disabled_t)(bool);
 typedef uint32_t (*get_ax_poll_frequency_t)();
 typedef void (*set_ax_poll_frequency_t)(uint32_t);
 
-typedef uint64_t (*get_post_text_delay_x11_t)();
-typedef void (*set_post_text_delay_x11_t)(uint64_t);
+typedef uint64_t (*get_post_text_delay_linux_t)();
+typedef void (*set_post_text_delay_linux_t)(uint64_t);
 
 typedef void (*set_device_procs_t)(device_open_t, device_close_t, void *);
 
@@ -93,8 +93,8 @@ static set_prompt_user_if_ax_api_disabled_t set_prompt_user_if_ax_api_disabled =
 static get_ax_poll_frequency_t get_ax_poll_frequency = NULL;
 static set_ax_poll_frequency_t set_ax_poll_frequency = NULL;
 
-static get_post_text_delay_x11_t get_post_text_delay_x11 = NULL;
-static set_post_text_delay_x11_t set_post_text_delay_x11 = NULL;
+static get_post_text_delay_linux_t get_post_text_delay_linux = NULL;
+static set_post_text_delay_linux_t set_post_text_delay_linux = NULL;
 
 static set_device_procs_t set_device_procs = NULL;
 
@@ -337,20 +337,20 @@ void hook_set_ax_poll_frequency(uint32_t frequency) {
     set_ax_poll_frequency(frequency);
 }
 
-uint64_t hook_get_post_text_delay_x11() {
+uint64_t hook_get_post_text_delay_linux() {
     if (!load_backend()) {
         return 0;
     }
 
-    return get_post_text_delay_x11();
+    return get_post_text_delay_linux();
 }
 
-void hook_set_post_text_delay_x11(uint64_t delay) {
+void hook_set_post_text_delay_linux(uint64_t delay) {
     if (!load_backend()) {
         return;
     }
 
-    set_post_text_delay_x11(delay);
+    set_post_text_delay_linux(delay);
 }
 
 void hook_set_device_procs(device_open_t open_proc, device_close_t close_proc, void *user_data) {
@@ -558,13 +558,13 @@ static bool load_backend_symbols(void *handle) {
         return false;
     }
 
-    get_post_text_delay_x11 = (get_post_text_delay_x11_t) dlsym(handle, "hook_get_post_text_delay_x11");
-    if (get_post_text_delay_x11 == NULL) {
+    get_post_text_delay_linux = (get_post_text_delay_linux_t) dlsym(handle, "hook_get_post_text_delay_linux");
+    if (get_post_text_delay_linux == NULL) {
         return false;
     }
 
-    set_post_text_delay_x11 = (set_post_text_delay_x11_t) dlsym(handle, "hook_set_post_text_delay_x11");
-    if (set_post_text_delay_x11 == NULL) {
+    set_post_text_delay_linux = (set_post_text_delay_linux_t) dlsym(handle, "hook_set_post_text_delay_linux");
+    if (set_post_text_delay_linux == NULL) {
         return false;
     }
 

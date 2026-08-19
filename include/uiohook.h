@@ -500,11 +500,11 @@ extern "C" {
 
     /* Begin Linux Configuration Functions */
 
-    // Get the delay between character sending when posting text on X11.
-    uint64_t hook_get_post_text_delay_x11();
+    // Get the delay between character sending when posting text on Linux.
+    uint64_t hook_get_post_text_delay_linux();
 
-    // Set the delay between character sending when posting text on X11.
-    void hook_set_post_text_delay_x11(uint64_t delay);
+    // Set the delay between character sending when posting text on Linux.
+    void hook_set_post_text_delay_linux(uint64_t delay);
 
     // Get the mode which selects the back-end on Linux.
     int hook_get_linux_mode();

@@ -104,7 +104,7 @@ static key_mapping uiocode_keycode_table[] = {
     { .uiocode = VC_PERIOD,                .x11_key_name = "AB09" },
     { .uiocode = VC_SLASH,                 .x11_key_name = "AB10" },
     { .uiocode = VC_SHIFT_R,               .x11_key_name = "RTSH" },
-    { .uiocode = VC_102,                   .x11_key_name = "LSGT" },
+    { .uiocode = VC_SECTION,               .x11_key_name = "LSGT" },
     { .uiocode = VC_ALT_L,                 .x11_key_name = "LALT" },
     { .uiocode = VC_CONTROL_L,             .x11_key_name = "LCTL" },
     { .uiocode = VC_META_L,                .x11_key_name = "LWIN" },
