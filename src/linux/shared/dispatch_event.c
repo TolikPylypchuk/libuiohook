@@ -36,6 +36,10 @@ static mouse_click click = {
 // Whether the pointer moved between the last press and release, which suppresses the click event.
 static bool pointer_moved = false;
 
+// The sub-pixel part of the relative motion which hasn't been reported yet.
+static double motion_remainder_x = 0.0;
+static double motion_remainder_y = 0.0;
+
 static bool desktop_bounds_unavailable_logged = false;
 
 static uiohook_event uio_event;
@@ -84,6 +88,15 @@ static int16_t round_to_int16(double value) {
     return (int16_t) (value + (value >= 0 ? 0.5 : -0.5));
 }
 
+static int16_t accumulate_motion(double delta, double *remainder) {
+    double value = *remainder + delta;
+    int16_t whole = (int16_t) value;
+
+    *remainder = value - whole;
+
+    return whole;
+}
+
 static uint64_t get_multi_click_time() {
     long int multi_click_time = hook_get_multi_click_time();
     return multi_click_time > 0 ? (uint64_t) multi_click_time : 0;
@@ -113,6 +126,8 @@ void dispatch_hook_enabled() {
     click.time = 0;
     click.button = MOUSE_NOBUTTON;
     pointer_moved = false;
+    motion_remainder_x = 0.0;
+    motion_remainder_y = 0.0;
     desktop_bounds_unavailable_logged = false;
 
     uio_event.time = get_unix_timestamp();
@@ -316,14 +331,18 @@ static void dispatch_mouse_motion(uint64_t timestamp, struct libinput_event_poin
 
     if (backend_get_pointer_position(&x, &y)) {
         dispatch_mouse_moved(timestamp, x, y, true, emulated);
-    } else {
-        dispatch_mouse_moved(
-            timestamp,
-            round_to_int16(libinput_event_pointer_get_dx(pointer_event)),
-            round_to_int16(libinput_event_pointer_get_dy(pointer_event)),
-            false,
-            emulated);
+        return;
     }
+
+    int16_t dx = accumulate_motion(libinput_event_pointer_get_dx(pointer_event), &motion_remainder_x);
+    int16_t dy = accumulate_motion(libinput_event_pointer_get_dy(pointer_event), &motion_remainder_y);
+
+    if (dx == 0 && dy == 0) {
+        // The movement is still shorter than a pixel, so there is nothing to report yet.
+        return;
+    }
+
+    dispatch_mouse_moved(timestamp, dx, dy, false, emulated);
 }
 
 static void dispatch_mouse_motion_absolute(uint64_t timestamp, struct libinput_event_pointer *pointer_event, bool emulated) {

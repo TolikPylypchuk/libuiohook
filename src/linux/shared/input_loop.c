@@ -56,6 +56,15 @@ static void add_device(struct libinput_device *device) {
 
     input_device_count++;
 
+    // Tapping is disabled by default in libinput, but most desktop environments enable it, so a tap
+    // on a touchpad must be reported as a button event here as well.
+    if (libinput_device_config_tap_get_finger_count(device) > 0
+            && libinput_device_config_tap_set_enabled(device, LIBINPUT_CONFIG_TAP_ENABLED)
+                != LIBINPUT_CONFIG_STATUS_SUCCESS) {
+        logger(LOG_LEVEL_WARN, "%s [%u]: Failed to enable tapping for %s!\n",
+                __FUNCTION__, __LINE__, libinput_device_get_name(device));
+    }
+
     struct udev_device *udev_device = libinput_device_get_udev_device(device);
     if (udev_device == NULL) {
         return;
