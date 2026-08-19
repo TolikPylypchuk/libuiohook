@@ -37,6 +37,8 @@ int main() {
         features & UIOHOOK_FEATURE_KEY_TYPED_EVENTS ? "yes" : "no");
     logger(LOG_LEVEL_INFO, "\tPost Text:\t\t%s\n",
         features & UIOHOOK_FEATURE_POST_TEXT ? "yes" : "no");
+    logger(LOG_LEVEL_INFO, "\tKey Auto-Repeat:\t%s\n",
+        features & UIOHOOK_FEATURE_KEY_AUTOREPEAT ? "yes" : "no");
     logger(LOG_LEVEL_INFO, "\tAbsolute Mouse Movement:\t%s\n",
         features & UIOHOOK_FEATURE_ABSOLUTE_MOUSE_MOVEMENT ? "yes" : "no");
     logger(LOG_LEVEL_INFO, "\tAbsolute Mouse Button Coords:\t%s\n",

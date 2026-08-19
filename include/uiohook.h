@@ -54,9 +54,10 @@
 #define UIOHOOK_FEATURE_EVENT_SUPPRESSION              (1 << 0)
 #define UIOHOOK_FEATURE_KEY_TYPED_EVENTS               (1 << 1)
 #define UIOHOOK_FEATURE_POST_TEXT                      (1 << 2)
-#define UIOHOOK_FEATURE_ABSOLUTE_MOUSE_MOVEMENT        (1 << 3)
-#define UIOHOOK_FEATURE_ABSOLUTE_MOUSE_BUTTON_COORDS   (1 << 4)
-#define UIOHOOK_FEATURE_POINTER_PROPERTIES             (1 << 5)
+#define UIOHOOK_FEATURE_KEY_AUTOREPEAT                 (1 << 3)
+#define UIOHOOK_FEATURE_ABSOLUTE_MOUSE_MOVEMENT        (1 << 4)
+#define UIOHOOK_FEATURE_ABSOLUTE_MOUSE_BUTTON_COORDS   (1 << 5)
+#define UIOHOOK_FEATURE_POINTER_PROPERTIES             (1 << 6)
 /* End Optional Features */
 
 /* Begin Linux Modes */
