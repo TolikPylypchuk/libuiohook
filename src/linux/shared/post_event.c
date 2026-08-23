@@ -12,11 +12,6 @@
 
 #define WHEEL_DELTA 120
 
-#define WHEEL_AXIS_VERTICAL   0
-#define WHEEL_AXIS_HORIZONTAL 1
-
-static int32_t wheel_remainder[2] = { 0, 0 };
-
 static int post_key_event(uiohook_event * const event) {
     uint16_t evdev_code = uiocode_to_evdev_code(event->data.keyboard.keycode);
     if (evdev_code == 0) {
@@ -111,15 +106,11 @@ static int post_mouse_wheel_event(uiohook_event * const event) {
         return UIOHOOK_SUCCESS;
     }
 
-    unsigned int axis = horizontal ? WHEEL_AXIS_HORIZONTAL : WHEEL_AXIS_VERTICAL;
-    int32_t total = wheel_remainder[axis] + value;
-    wheel_remainder[axis] = total % WHEEL_DELTA;
-
     // Events whose value is zero are dropped by the kernel, so a fraction of a click is posted only on
-    // the high-resolution axis.
+    // the high-resolution axis, which is the one libinput reads when a device has it.
     virtual_event events[] = {
         { .type = EV_REL, .code = horizontal ? REL_HWHEEL_HI_RES : REL_WHEEL_HI_RES, .value = value },
-        { .type = EV_REL, .code = horizontal ? REL_HWHEEL : REL_WHEEL, .value = total / WHEEL_DELTA }
+        { .type = EV_REL, .code = horizontal ? REL_HWHEEL : REL_WHEEL, .value = value / WHEEL_DELTA }
     };
 
     return post_virtual_events(VIRTUAL_DEVICE_POINTER, events, sizeof(events) / sizeof(events[0]));

@@ -11,6 +11,9 @@
 #include "input_helper.h"
 #include "logger.h"
 
+// A wheel click is 120 units of rotation, which is the same unit as WHEEL_DELTA on Windows.
+#define WHEEL_DELTA 120
+
 static uint64_t post_text_delay = 50 * 1000000;
 
 uint64_t hook_get_post_text_delay_linux() {
@@ -132,47 +135,29 @@ static int post_mouse_button_event(uiohook_event * const event) {
 }
 
 static int post_mouse_wheel_event(uiohook_event * const event) {
-    int status = UIOHOOK_FAILURE;
+    bool horizontal = event->data.wheel.direction == WHEEL_HORIZONTAL_DIRECTION;
 
-    XButtonEvent btn_event = {
-        .serial = 0,
-        .send_event = False,
-        .display = helper_disp,
+    int32_t clicks = event->data.wheel.rotation / WHEEL_DELTA;
+    if (clicks == 0) {
+        return UIOHOOK_SUCCESS;
+    }
 
-        .window = None,                                /* “event” window it is reported relative to */
-        .root = None,                                  /* root window that the event occurred on */
-        .subwindow = XDefaultRootWindow(helper_disp),  /* child window */
-
-        .time = CurrentTime,
-
-        .x = event->data.wheel.x,                      /* pointer x, y coordinates in event window */
-        .y = event->data.wheel.y,
-
-        .x_root = 0,                                   /* coordinates relative to root */
-        .y_root = 0,
-
-        .state = 0x00,                                 /* key or button mask */
-        .same_screen = True
-    };
-
-    // Wheel events should be the same as click events on X11.
-
-    uint8_t wheel_button = 0;
-
-    if (event->data.wheel.direction == WHEEL_HORIZONTAL_DIRECTION) {
-        wheel_button = event->data.wheel.rotation > 0 ? WheelLeft : WheelRight;
+    uint8_t wheel_button;
+    if (horizontal) {
+        wheel_button = clicks > 0 ? WheelLeft : WheelRight;
     } else {
-        wheel_button = event->data.wheel.rotation > 0 ? WheelUp : WheelDown;
+        wheel_button = clicks > 0 ? WheelUp : WheelDown;
     }
 
     unsigned int button = button_map_lookup(wheel_button);
 
-    if (XTestFakeButtonEvent(helper_disp, button, True, 0) != 0) {
-        status = UIOHOOK_SUCCESS;
-    }
-
-    if (status == UIOHOOK_SUCCESS && XTestFakeButtonEvent(helper_disp, button, False, 0) == 0) {
-        status = UIOHOOK_FAILURE;
+    for (int32_t i = 0; i < abs(clicks); i++) {
+        if (XTestFakeButtonEvent(helper_disp, button, True, 0) == 0
+                || XTestFakeButtonEvent(helper_disp, button, False, 0) == 0) {
+            logger(LOG_LEVEL_ERROR, "%s [%u]: XTestFakeButtonEvent() failed!\n",
+                    __FUNCTION__, __LINE__);
+            return UIOHOOK_FAILURE;
+        }
     }
 
     return UIOHOOK_SUCCESS;
