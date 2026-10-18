@@ -50,7 +50,7 @@ else()
     )
 
     set_target_properties(uiohook-x11 PROPERTIES
-        C_STANDARD 23
+        C_STANDARD 17
         C_STANDARD_REQUIRED ON
         POSITION_INDEPENDENT_CODE 1
         OUTPUT_NAME "uiohook-x11"
@@ -74,7 +74,7 @@ else()
     )
 
     set_target_properties(uiohook-wayland PROPERTIES
-        C_STANDARD 23
+        C_STANDARD 17
         C_STANDARD_REQUIRED ON
         POSITION_INDEPENDENT_CODE 1
         OUTPUT_NAME "uiohook-wayland"
@@ -92,7 +92,7 @@ else()
     )
 
     set_target_properties(uiohook-xrecord PROPERTIES
-        C_STANDARD 23
+        C_STANDARD 17
         C_STANDARD_REQUIRED ON
         POSITION_INDEPENDENT_CODE 1
         OUTPUT_NAME "uiohook-xrecord"
@@ -105,7 +105,7 @@ else()
 endif()
 
 set_target_properties(uiohook PROPERTIES
-    C_STANDARD 23
+    C_STANDARD 17
     C_STANDARD_REQUIRED ON
     POSITION_INDEPENDENT_CODE 1
     OUTPUT_NAME "${PROJECT_NAME}"
@@ -333,7 +333,7 @@ if (BUILD_DEMO)
 
     # The standard has to be set on the executables themselves - a custom target compiles nothing.
     set_target_properties(demo_hook demo_hook_async demo_post demo_properties PROPERTIES
-        C_STANDARD 23
+        C_STANDARD 17
         C_STANDARD_REQUIRED ON
     )
 
@@ -357,7 +357,7 @@ if(BUILD_TEST)
     )
 
     set_target_properties(uiohook_tests PROPERTIES
-        C_STANDARD 23
+        C_STANDARD 17
         C_STANDARD_REQUIRED ON
     )
 
