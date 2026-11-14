@@ -71,33 +71,49 @@ static uint64_t get_unix_timestamp() {
 static void set_modifiers() {
     clear_modifier_mask();
 
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Shift)) {
+    CGEventFlags flags = CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState);
+
+    if (flags & NX_DEVICELSHIFTKEYMASK) {
         set_modifier_mask(MASK_SHIFT_L);
     }
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightShift)) {
+
+    if (flags & NX_DEVICERSHIFTKEYMASK) {
         set_modifier_mask(MASK_SHIFT_R);
     }
 
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Control)) {
+    if (flags & NX_DEVICELCTLKEYMASK) {
         set_modifier_mask(MASK_CTRL_L);
     }
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightControl)) {
+
+    if (flags & NX_DEVICERCTLKEYMASK) {
         set_modifier_mask(MASK_CTRL_R);
     }
 
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Option)) {
+    if (flags & NX_DEVICELALTKEYMASK) {
         set_modifier_mask(MASK_ALT_L);
     }
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightOption)) {
+
+    if (flags & NX_DEVICERALTKEYMASK) {
         set_modifier_mask(MASK_ALT_R);
     }
 
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_Command)) {
+    if (flags & NX_DEVICELCMDKEYMASK) {
         set_modifier_mask(MASK_META_L);
     }
-    if (CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, kVK_RightCommand)) {
+
+    if (flags & NX_DEVICERCMDKEYMASK) {
         set_modifier_mask(MASK_META_R);
     }
+
+    if (flags & kCGEventFlagMaskAlphaShift) {
+        set_modifier_mask(MASK_CAPS_LOCK);
+    }
+
+    if (flags & kCGEventFlagMaskNumericPad) {
+        set_modifier_mask(MASK_NUM_LOCK);
+    }
+
+    // Best I can tell, macOS does not support Scroll lock.
 
     if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_LBUTTON)) {
         set_modifier_mask(MASK_BUTTON1);
@@ -115,12 +131,6 @@ static void set_modifiers() {
     if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, kVK_XBUTTON2)) {
         set_modifier_mask(MASK_BUTTON5);
     }
-
-    if (CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) & kCGEventFlagMaskAlphaShift) {
-        set_modifier_mask(MASK_CAPS_LOCK);
-    }
-
-    // Best I can tell, macOS does not support Num or Scroll lock.
 }
 
 static CGEventRef hook_event_proc(CGEventTapProxy tap_proxy, CGEventType type, CGEventRef event_ref, void *refcon) {
