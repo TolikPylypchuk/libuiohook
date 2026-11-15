@@ -7,6 +7,8 @@
 #include <X11/XKBlib.h>
 static XkbDescPtr keyboard_map;
 
+#include <uiohook.h>
+
 #include "input_helper.h"
 #include "logger.h"
 

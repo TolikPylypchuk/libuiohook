@@ -4,6 +4,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <uiohook.h>
+
 #include "input_helper.h"
 #include "logger.h"
 
