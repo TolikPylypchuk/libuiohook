@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -500,4 +501,16 @@ void unload_input_helper() {
         free(mouse_button_table);
         mouse_button_table = NULL;
     }
+}
+
+int hook_vsprintf(char *buffer, const char *format, va_list args) {
+    return vsprintf(buffer, format, args);
+}
+
+int hook_vsnprintf(char *buffer, size_t size, const char *format, va_list args) {
+    return vsnprintf(buffer, size, format, args);
+}
+
+int hook_vasprintf(char **buffer, const char *format, va_list args) {
+    return vasprintf(buffer, format, args);
 }

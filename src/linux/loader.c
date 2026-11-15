@@ -680,3 +680,15 @@ static bool load_backend() {
 
     return true;
 }
+
+int hook_vsprintf(char *buffer, const char *format, va_list args) {
+    return vsprintf(buffer, format, args);
+}
+
+int hook_vsnprintf(char *buffer, size_t size, const char *format, va_list args) {
+    return vsnprintf(buffer, size, format, args);
+}
+
+int hook_vasprintf(char **buffer, const char *format, va_list args) {
+    return vasprintf(buffer, format, args);
+}
