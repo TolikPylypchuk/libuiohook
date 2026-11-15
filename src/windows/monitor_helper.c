@@ -1,3 +1,5 @@
+#include <uiohook.h>
+
 #include "monitor_helper.h"
 #include "logger.h"
 

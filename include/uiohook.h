@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 /* Begin Error Codes */
 #define UIOHOOK_SUCCESS                                       0x00
