@@ -53,3 +53,9 @@ int hook_destroy_virtual_devices() {
 
 void hook_set_device_procs(device_open_t open_proc, device_close_t close_proc, void *user_data) {
 }
+
+// Logging-specific functions
+
+int hook_vasprintf(char **buffer, const char *format, va_list args) {
+    return 0;
+}

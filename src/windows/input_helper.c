@@ -287,3 +287,11 @@ bool is_scroll_direction_reversed() {
 
     return result;
 }
+
+int hook_vsprintf(char *buffer, const char *format, va_list args) {
+    return vsprintf(buffer, format, args);
+}
+
+int hook_vsnprintf(char *buffer, size_t size, const char *format, va_list args) {
+    return vsnprintf(buffer, size, format, args);
+}

@@ -545,6 +545,16 @@ extern "C" {
 
     /* End System Info Functions */
 
+    /* Begin Logging Helper Functions */
+
+    int hook_vsprintf(char *buffer, const char *format, va_list args);
+
+    int hook_vsnprintf(char *buffer, size_t size, const char *format, va_list args);
+
+    int hook_vasprintf(char **buffer, const char *format, va_list args);
+
+    /* End Logging Helper Functions */
+
 #ifdef __cplusplus
 }
 #endif
